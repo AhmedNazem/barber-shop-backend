@@ -66,7 +66,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 - [x] **S1.1** `package.json` — init with `express`, `prisma`, `@prisma/client`, `zod`, `jsonwebtoken`, `bcrypt`, `helmet`, `cors`, `express-rate-limit`, `morgan`, `winston`, `dotenv`. Dev: `typescript`, `tsx`, `@types/*`, `vitest`, `supertest`.
 - [x] **S1.2** `tsconfig.json` — strict mode, `moduleResolution: bundler`, `outDir: dist`, `rootDir: src`, path aliases `@/*` → `src/*`.
-- [ ] **S1.3** Folder structure — create all directories from `AGENTS.md` project structure section.
+- [x] **S1.3** Folder structure — create all directories from `AGENTS.md` project structure section.
 - [ ] **S1.4** `src/config/env.ts` — Zod schema validates all required env vars on startup. Hard crash if any missing.
 - [ ] **S1.5** `src/config/prisma.ts` — singleton PrismaClient. `process.env.NODE_ENV !== 'production'` → attach to `global` to survive hot reload.
 - [ ] **S1.6** `src/app.ts` — `createApp()` factory: helmet, cors, rate-limit, morgan, json parser, mount routes, error handler. No `app.listen` here.
