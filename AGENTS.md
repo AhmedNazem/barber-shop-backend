@@ -444,6 +444,196 @@ A single `src/middleware/request-id.ts` middleware handles this — runs before 
 
 ---
 
+## Frontend Contract — Gaps Found in Client Codebase
+
+These rules come directly from reading the frontend source. They are not in BLUEPRINT.md but the backend must honour them or the frontend will break.
+
+---
+
+### `/auth/me` — Full Session Shape
+
+`GET /auth/me` must return **exactly** this shape — `getSession()` in `lib/auth/session.ts` reads every field:
+
+```typescript
+{
+  id: string;
+  phone: string;
+  name: string;
+  role: 'customer' | 'barber' | 'shop_owner' | 'admin';
+  shopId?: string;
+  shopStatus?: 'pending' | 'approved' | 'rejected' | 'suspended';
+  plan?: 'free' | 'starter' | 'pro';
+  isVip?: boolean;
+}
+```
+
+`shopStatus` and `plan` are used by Next.js middleware to render the correct dashboard state — if they are missing, the pending/rejected screens will not show and plan gates will silently pass.
+
+---
+
+### OTP — HTTP Status Code Contract
+
+The frontend OTP screen switches on HTTP status codes, not error message strings:
+
+| Scenario | HTTP Status | Response Body |
+|---|---|---|
+| Wrong OTP code | `401` | `{ error: 'invalid_otp' }` |
+| OTP code expired (past 5-min TTL) | `410` | `{ error: 'otp_expired' }` |
+| Too many attempts (≥ 5 failures) | `429` | `{ error: 'otp_locked', retryAfter: <seconds> }` |
+| Phone not found | `401` | same as wrong OTP — never distinguish |
+| OTP request rate limit (3/min per IP) | `429` | `{ error: 'rate_limited', retryAfter: <seconds> }` |
+
+The `retryAfter` field is **required** on every `429` — the frontend renders a countdown timer from this value.
+
+---
+
+### Discount — URL Singularity
+
+The canonical URL is **singular** everywhere:
+- `GET /shops/:id/discount` — not `/discounts`
+- `POST /shops/:id/discount`
+- `DELETE /shops/:id/discount`
+
+Discount claiming is **never** a standalone endpoint. It happens atomically inside `POST /bookings`. There is no `POST /discounts/claim` route — the BFF stub is a dev artifact and must not be implemented as a real endpoint.
+
+---
+
+### Contact Form — Subject Values
+
+Frontend sends these exact subject values — the Zod schema on the server must accept them:
+
+```
+'general' | 'booking' | 'partnership' | 'technical' | 'complaint'
+```
+
+The BLUEPRINT lists different values (`support | partnership | feedback | other`) — the **frontend values take precedence**. Use the list above.
+
+---
+
+### Hair Profile Endpoints (Not in BLUEPRINT — Must Be Added)
+
+The frontend calls these endpoints (`lib/api/user.ts`, `app/api/user/hair-profile/route.ts`):
+
+| Method | Route | Auth | Shape |
+|---|---|---|---|
+| GET | `/user/hair-profile` | Bearer JWT | Returns `HairQuestionnaire` object |
+| PUT | `/user/hair-profile` | Bearer JWT | Body: `HairQuestionnaire`, returns `{ ok: true }` |
+| GET | `/user/hair-history` | Bearer JWT | Returns `HairHistoryEntry[]` |
+
+**`HairQuestionnaire` shape:**
+```typescript
+{
+  dryness: number;          // 1–5
+  damage: number;           // 1–5
+  scalpCondition: 'normal' | 'dry' | 'oily' | 'sensitive';
+  lastTreatmentDate: string; // ISO date or empty string
+  cutFrequencyWeeks: number;
+}
+```
+
+**`HairHistoryEntry` shape:**
+```typescript
+{
+  id: string;
+  date: string;              // ISO date
+  hairType: 'straight' | 'wavy' | 'curly' | 'coily';
+  conditionScore: number;    // 0–100
+  dryness: number;           // 1–5
+  damage: number;            // 1–5
+  scalpCondition: string;
+}
+```
+
+**DB models to add:**
+```prisma
+model HairProfile {
+  userId              String   @id
+  dryness             Int      // 1-5
+  damage              Int      // 1-5
+  scalpCondition      String
+  lastTreatmentDate   String?
+  cutFrequencyWeeks   Int
+  updatedAt           DateTime @updatedAt
+}
+
+model HairAnalysisHistory {
+  id             String   @id @default(cuid())
+  userId         String
+  hairType       String
+  conditionScore Int
+  dryness        Int
+  damage         Int
+  scalpCondition String
+  createdAt      DateTime @default(now())
+}
+```
+
+---
+
+### Hair Analysis — Questionnaire in FormData
+
+`POST /hair-analysis` receives `multipart/form-data` with two fields:
+- `image: File` — JPEG/PNG/WebP, max 5MB
+- `questionnaire: string` — JSON-encoded `HairQuestionnaire` (optional)
+
+The backend must `JSON.parse(req.body.questionnaire)` and validate it through Zod before enqueuing the job. Pass the parsed questionnaire to the BullMQ worker so the ML service can use it as context.
+
+After a successful analysis, write a `HairAnalysisHistory` row for the authenticated user (if JWT present).
+
+---
+
+### Password Reset — Clarification
+
+The frontend has a stub `POST /api/auth/reset-password` — this is a **dev artifact** from an earlier email/password design. BarberOS auth is phone + OTP only. **Do not implement `/auth/reset-password`.** If a user loses phone access, that is handled via the admin panel (`PATCH /admin/users/:id`).
+
+---
+
+### `x-user-id` Header — Dev Pattern Only
+
+Some BFF routes pass `x-user-id` to the backend. This is a **development-only bypass** from the early build phase. In production all authentication is via `Authorization: Bearer <token>`. The Express backend must **never** trust `x-user-id` — always validate from the JWT. Middleware must reject requests that send `x-user-id` without a valid Bearer token.
+
+---
+
+### Queue Polling — Terminal State Contract
+
+`GET /queue/:bookingId` is polled every 30 seconds. The frontend **stops polling** when the response `status` is `'completed'` or `'no_show'`. The backend must ensure these are the only two terminal states returned — any other string keeps the poll running indefinitely.
+
+Valid status values: `'waiting' | 'next' | 'in_chair' | 'completed' | 'no_show'`
+
+---
+
+### Onboarding Wizard — Hours Format
+
+`POST /onboarding/hours` receives this shape from the frontend:
+
+```typescript
+hours: {
+  mon: { closed: boolean, open: string, close: string },
+  tue: { ... },
+  wed: { ... },
+  thu: { ... },
+  fri: { ... },
+  sat: { ... },
+  sun: { ... },
+}
+```
+
+Keys are **3-letter lowercase day names** (`mon`–`sun`), not integers. The backend must map them to `dayOfWeek` integers (mon=1, tue=2, wed=3, thu=4, fri=5, sat=6, sun=0) when writing to `BusinessHours`.
+
+---
+
+### ApiError — Error Response Must Include `code` Field
+
+The frontend `ApiError` class reads `response.code` alongside `response.message`. Every error response must include both:
+
+```json
+{ "error": "snake_case_code", "message": "Human readable in resolved lang" }
+```
+
+The frontend switches on `error` (the code) for programmatic handling. `message` is shown in toasts. Missing `error` field causes the error to be silently swallowed as an unknown error.
+
+---
+
 ## Authoritative References
 
 Before implementing any feature, read the relevant section in `BLUEPRINT.md`:
