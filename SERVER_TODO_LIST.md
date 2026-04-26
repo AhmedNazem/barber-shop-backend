@@ -68,7 +68,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S1.2** `tsconfig.json` — strict mode, `moduleResolution: bundler`, `outDir: dist`, `rootDir: src`, path aliases `@/*` → `src/*`.
 - [x] **S1.3** Folder structure — create all directories from `AGENTS.md` project structure section.
 - [x] **S1.4** `src/config/env.ts` — Zod schema validates all required env vars on startup. Hard crash if any missing.
-- [ ] **S1.5** `src/config/prisma.ts` — singleton PrismaClient. `process.env.NODE_ENV !== 'production'` → attach to `global` to survive hot reload.
+- [x] **S1.5** `src/config/prisma.ts` — singleton PrismaClient. `process.env.NODE_ENV !== 'production'` → attach to `global` to survive hot reload.
 - [ ] **S1.6** `src/app.ts` — `createApp()` factory: helmet, cors, rate-limit, morgan, json parser, mount routes, error handler. No `app.listen` here.
 - [ ] **S1.7** `src/server.ts` — calls `createApp()`, `prisma.$connect()`, then `app.listen(PORT)`.
 - [ ] **S1.8** `src/middleware/error-handler.ts` — global Express error handler. Maps known error codes to HTTP status. Logs via Winston. Never exposes stack traces in production.
