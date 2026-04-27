@@ -72,7 +72,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S1.6** `src/app.ts` — `createApp()` factory: helmet, cors, rate-limit, morgan, json parser, mount routes, error handler. No `app.listen` here.
 - [x] **S1.7** `src/server.ts` — calls `createApp()`, `prisma.$connect()`, then `app.listen(PORT)`.
 - [x] **S1.8** `src/middleware/error-handler.ts` — global Express error handler. Maps known error codes to HTTP status. Logs via Winston. Never exposes stack traces in production.
-- [ ] **S1.9** `src/lib/redis.ts` — singleton ioredis client. Attach to `globalThis` in non-production to survive hot reload. Export `redisClient`. Wire `redisClient.quit()` into SIGTERM/SIGINT handler in `server.ts`.
+- [x] **S1.9** `src/lib/redis.ts` — singleton ioredis client. Attach to `globalThis` in non-production to survive hot reload. Export `redisClient`. Wire `redisClient.quit()` into SIGTERM/SIGINT handler in `server.ts`.
 - [ ] **S1.10** `src/lib/lang.ts` — `getLang(req): 'ar' | 'en'`. Resolves: `?lang=` param → `Accept-Language` header → default `'ar'`. Single source of truth — all route handlers and error handler import from here.
 - [ ] **S1.11** `src/lib/response.ts` — typed response helpers: `ok(res, data)` → `{ data }`, `paginated(res, data, meta)` → `{ data, meta }`. Keeps all responses in the documented envelope shape.
 - [ ] **S1.12** `src/lib/queue.ts` — BullMQ `Queue` factory. Export named queues: `hairAnalysisQueue`, `notificationQueue`, `loyaltyQueue`. Each backed by the same `redisClient` connection options. Used by route handlers to enqueue; workers live in `src/jobs/`.

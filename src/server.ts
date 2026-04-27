@@ -1,12 +1,16 @@
 import { createApp } from '@/app'
 import { prisma } from '@/config/prisma'
 import { validateEnv } from '@/config/env'
+import { redisClient } from '@/lib/redis'
 
 const env = validateEnv()
 const app = createApp(env)
 
 const shutdown = async () => {
-  await prisma.$disconnect()
+  await Promise.allSettled([
+    prisma.$disconnect(),
+    redisClient.quit(),
+  ])
   process.exit(0)
 }
 
