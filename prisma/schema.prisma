@@ -1,0 +1,531 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  CUSTOMER
+  BARBER
+  SHOP_OWNER
+  ADMIN
+}
+
+enum ShopStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ShopPlan {
+  FREE
+  STARTER
+  PRO
+}
+
+enum BookingMode {
+  QUEUE_ONLY
+  BOOKING_ONLY
+  BOTH
+}
+
+enum PriceRange {
+  BUDGET
+  MID
+  PREMIUM
+}
+
+enum BookingStatus {
+  UPCOMING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  ZAINCASH
+  FIB
+  PAYTABS
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum QueueStatus {
+  WAITING
+  IN_CHAIR
+  DONE
+  NO_SHOW
+}
+
+enum FlagStatus {
+  PENDING
+  APPROVED
+  REMOVED
+}
+
+enum FlagReason {
+  SPAM
+  INAPPROPRIATE
+  FAKE
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  REMINDER
+  CANCELLATION
+  NEW_REVIEW
+  PAYMENT_RECEIVED
+  SYSTEM_ALERT
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+}
+
+enum TransactionType {
+  EARN
+  REDEEM
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  phone        String    @unique
+  name         String
+  role         UserRole  @default(CUSTOMER)
+  shopId       String?
+  isVip        Boolean   @default(false)
+  vipGrantedAt DateTime?
+  vipGrantedBy String?
+  suspended    Boolean   @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  refreshTokens       RefreshToken[]
+  loyaltyAccount      LoyaltyAccount?
+  loyaltyTransactions LoyaltyTransaction[]
+  reliabilityRecord   ReliabilityRecord?
+  notifications       Notification[]
+  savedShops          SavedShop[]
+  hairProfile         HairProfile?
+
+  @@index([phone])
+  @@index([role])
+}
+
+model OtpCode {
+  id        String    @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int       @default(0)
+  locked    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  @@index([phone])
+}
+
+model InviteCode {
+  id        String    @id @default(cuid())
+  shopId    String
+  staffId   String
+  code      String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([shopId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Shop ─────────────────────────────────────────────────────────────────────
+
+model Shop {
+  id              String      @id @default(cuid())
+  ownerId         String
+  nameEn          String
+  nameAr          String
+  address         String
+  city            String
+  phone           String
+  lat             Float
+  lng             Float
+  coverUrl        String?
+  logoUrl         String?
+  priceRange      PriceRange  @default(MID)
+  status          ShopStatus  @default(PENDING)
+  rejectionReason String?
+  suspendedAt     DateTime?
+  suspendReason   String?
+  plan            ShopPlan    @default(FREE)
+  planUpdatedAt   DateTime?
+  planExpiresAt   DateTime?
+  bookingMode     BookingMode @default(QUEUE_ONLY)
+  depositRequired Boolean     @default(false)
+  depositPercent  Int         @default(20)
+  vipLaneEnabled  Boolean     @default(false)
+  isActive        Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+
+  hours    BusinessHours[]
+  services Service[]
+  barbers  Barber[]
+  discount ShopDiscount?
+  bookings Booking[]
+
+  @@index([status])
+  @@index([city])
+  @@index([ownerId])
+}
+
+model BusinessHours {
+  id        String  @id @default(cuid())
+  shopId    String
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  isClosed  Boolean @default(false)
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+}
+
+// ─── Services ─────────────────────────────────────────────────────────────────
+
+model Service {
+  id          String  @id @default(cuid())
+  shopId      String
+  nameEn      String
+  nameAr      String
+  price       Int
+  durationMin Int
+  category    String
+  coverUrl    String?
+  isActive    Boolean @default(true)
+
+  shop   Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  photos ServicePhoto[]
+
+  @@index([shopId, isActive])
+}
+
+model ServicePhoto {
+  id        String @id @default(cuid())
+  serviceId String
+  url       String
+  order     Int
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+}
+
+// ─── Barbers ──────────────────────────────────────────────────────────────────
+
+model Barber {
+  id              String   @id @default(cuid())
+  userId          String?
+  shopId          String
+  nameEn          String
+  nameAr          String
+  photoUrl        String?
+  bio             String?
+  bioAr           String?
+  specialties     String[]
+  experienceYears Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  shop      Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  schedule  BarberSchedule[]
+  portfolio BarberPortfolio[]
+
+  @@index([shopId, isActive])
+}
+
+model BarberSchedule {
+  id          String  @id @default(cuid())
+  barberId    String
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  isAvailable Boolean @default(true)
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId])
+}
+
+model BarberPortfolio {
+  id       String @id @default(cuid())
+  barberId String
+  photoUrl String
+  order    Int
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId])
+}
+
+// ─── Bookings ─────────────────────────────────────────────────────────────────
+
+model Booking {
+  id                 String        @id @default(cuid())
+  customerId         String
+  shopId             String
+  barberId           String?
+  barberName         String?
+  slot               DateTime
+  status             BookingStatus @default(UPCOMING)
+  totalPrice         Int
+  depositPaid        Int
+  discountPct        Int?
+  paymentMethod      PaymentMethod
+  paymentStatus      PaymentStatus @default(PENDING)
+  hasReview          Boolean       @default(false)
+  cancelledBy        String?
+  cancellationReason String?
+  createdAt          DateTime      @default(now())
+
+  shop     Shop             @relation(fields: [shopId], references: [id])
+  services BookingService[]
+  review   Review?
+  queue    QueueEntry?
+
+  @@index([customerId, status])
+  @@index([shopId, status])
+  @@index([barberId, slot])
+  @@index([slot])
+}
+
+model BookingService {
+  bookingId   String
+  serviceId   String
+  nameEn      String
+  nameAr      String
+  price       Int
+  durationMin Int
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@id([bookingId, serviceId])
+}
+
+// ─── Queue ────────────────────────────────────────────────────────────────────
+
+model QueueEntry {
+  id            String      @id @default(cuid())
+  shopId        String
+  bookingId     String?     @unique
+  customerName  String
+  serviceIds    String[]
+  barberId      String?
+  position      Int
+  status        QueueStatus @default(WAITING)
+  estimatedWait Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([shopId, status])
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id            String      @id @default(cuid())
+  bookingId     String      @unique
+  customerId    String
+  shopId        String
+  barberId      String?
+  rating        Int
+  comment       String
+  isVisible     Boolean     @default(true)
+  flagStatus    FlagStatus?
+  flagReason    FlagReason?
+  flaggedBy     String?
+  flaggedAt     DateTime?
+  removalReason String?
+  resolvedAt    DateTime?
+  createdAt     DateTime    @default(now())
+
+  booking Booking       @relation(fields: [bookingId], references: [id])
+  photos  ReviewPhoto[]
+
+  @@index([shopId, isVisible])
+  @@index([barberId])
+}
+
+model ReviewPhoto {
+  id       String @id @default(cuid())
+  reviewId String
+  url      String
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  message   String
+  messageAr String
+  isRead    Boolean          @default(false)
+  bookingId String?
+  reviewId  String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+// ─── Loyalty ──────────────────────────────────────────────────────────────────
+
+model LoyaltyAccount {
+  userId    String      @id
+  points    Int         @default(0)
+  tier      LoyaltyTier @default(BRONZE)
+  updatedAt DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LoyaltyTransaction {
+  id        String          @id @default(cuid())
+  userId    String
+  type      TransactionType
+  points    Int
+  bookingId String?
+  rewardId  String?
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Reliability ──────────────────────────────────────────────────────────────
+
+model ReliabilityRecord {
+  userId      String   @id
+  score       Int      @default(100)
+  noShowCount Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Discounts ────────────────────────────────────────────────────────────────
+
+model ShopDiscount {
+  id           String   @id @default(cuid())
+  shopId       String   @unique
+  pct          Int
+  maxUsers     Int
+  slotsClaimed Int      @default(0)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}
+
+// ─── Saved Shops ──────────────────────────────────────────────────────────────
+
+model SavedShop {
+  userId  String
+  shopId  String
+  savedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, shopId])
+  @@index([userId])
+}
+
+// ─── Contact ──────────────────────────────────────────────────────────────────
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+// ─── Platform ─────────────────────────────────────────────────────────────────
+
+model PlatformConfig {
+  id                    String   @id @default("singleton")
+  maintenanceMode       Boolean  @default(false)
+  defaultDepositPercent Int      @default(20)
+  commissionPercent     Float    @default(10)
+  smsProvider           String   @default("unifonic")
+  smsApiKeyEncrypted    String?
+  smsSenderId           String?
+  updatedAt             DateTime @updatedAt
+}
+
+// ─── Hair Profile & Analysis ──────────────────────────────────────────────────
+
+model HairProfile {
+  userId    String   @id
+  texture   String
+  concerns  String[]
+  goals     String[]
+  updatedAt DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses HairAnalysis[]
+}
+
+model HairAnalysis {
+  id                String   @id @default(cuid())
+  userId            String
+  jobId             String   @unique
+  imageKey          String
+  hairType          String?
+  conditionScore    Int?
+  recommendations   String[]
+  suggestedServices String[]
+  status            String   @default("processing")
+  createdAt         DateTime @default(now())
+
+  profile HairProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([jobId])
+}
