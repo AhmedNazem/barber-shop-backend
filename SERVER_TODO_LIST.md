@@ -65,21 +65,27 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 > Zero features. Get the shell right first — everything else builds on it.
 
 - [x] **S1.1** `package.json` — init with `express`, `prisma`, `@prisma/client`, `zod`, `jsonwebtoken`, `bcrypt`, `helmet`, `cors`, `express-rate-limit`, `morgan`, `winston`, `dotenv`. Dev: `typescript`, `tsx`, `@types/*`, `vitest`, `supertest`.
-- [x] **S1.2** `tsconfig.json` — strict mode, `moduleResolution: bundler`, `outDir: dist`, `rootDir: src`, path aliases `@/*` → `src/*`.
+- [x] **S1.2** `tsconfig.json` — strict mode, `moduleResolution: Node`, `module: CommonJS`, `outDir: dist`, `rootDir: src`, path aliases `@/*` → `src/*`.
 - [x] **S1.3** Folder structure — create all directories from `AGENTS.md` project structure section.
 - [x] **S1.4** `src/config/env.ts` — Zod schema validates all required env vars on startup. Hard crash if any missing.
 - [x] **S1.5** `src/config/prisma.ts` — singleton PrismaClient. `process.env.NODE_ENV !== 'production'` → attach to `global` to survive hot reload.
 - [x] **S1.6** `src/app.ts` — `createApp()` factory: helmet, cors, rate-limit, morgan, json parser, mount routes, error handler. No `app.listen` here.
 - [x] **S1.7** `src/server.ts` — calls `createApp()`, `prisma.$connect()`, then `app.listen(PORT)`.
 - [x] **S1.8** `src/middleware/error-handler.ts` — global Express error handler. Maps known error codes to HTTP status. Logs via Winston. Never exposes stack traces in production.
-- [ ] **S1.9** `src/middleware/validate.ts` — factory: `validate(schema)` → Zod parse → `next()` or `400 { errors }`.
-- [ ] **S1.10** `src/middleware/auth.ts` — reads `Authorization: Bearer <token>`, verifies JWT, sets `req.user = { id, role, shopId }`. Returns `401` if missing/invalid, `403` if expired.
-- [ ] **S1.11** `src/middleware/require-role.ts` — `requireRole(...roles)` factory. Returns `403` if `req.user.role` not in list.
-- [ ] **S1.12** `src/middleware/require-plan.ts` — `requirePlan(minPlan)` factory. Fetches shop from DB, checks plan rank. Returns `403 { error: 'plan_required', requiredPlan }`.
-- [ ] **S1.13** `src/types/express.d.ts` — augment `Express.Request` with `user: { id: string; role: UserRole; shopId?: string }`.
-- [ ] **S1.14** `prisma/schema.prisma` — full schema from `BLUEPRINT.md` (all models from §1 through §21). Run `prisma generate` + `prisma migrate dev --name init`.
-- [ ] **S1.15** `.env.example` — all required env vars with placeholder values. No real secrets.
-- [ ] **S1.16** Health check — `GET /health` returns `{ ok: true, env, version }`. No auth. Used by deploy pipeline.
+- [ ] **S1.9** `src/lib/redis.ts` — singleton ioredis client. Attach to `globalThis` in non-production to survive hot reload. Export `redisClient`. Wire `redisClient.quit()` into SIGTERM/SIGINT handler in `server.ts`.
+- [ ] **S1.10** `src/lib/lang.ts` — `getLang(req): 'ar' | 'en'`. Resolves: `?lang=` param → `Accept-Language` header → default `'ar'`. Single source of truth — all route handlers and error handler import from here.
+- [ ] **S1.11** `src/lib/response.ts` — typed response helpers: `ok(res, data)` → `{ data }`, `paginated(res, data, meta)` → `{ data, meta }`. Keeps all responses in the documented envelope shape.
+- [ ] **S1.12** `src/lib/queue.ts` — BullMQ `Queue` factory. Export named queues: `hairAnalysisQueue`, `notificationQueue`, `loyaltyQueue`. Each backed by the same `redisClient` connection options. Used by route handlers to enqueue; workers live in `src/jobs/`.
+- [ ] **S1.13** `src/middleware/validate.ts` — factory: `validate(schema)` → Zod parse → `next()` or `400 { errors }`.
+- [ ] **S1.14** `src/middleware/auth.ts` — reads `Authorization: Bearer <token>`, verifies JWT, sets `req.user = { id, role, shopId }`. Returns `401` if missing/invalid, `403` if expired.
+- [ ] **S1.15** `src/middleware/require-role.ts` — `requireRole(...roles)` factory. Returns `403` if `req.user.role` not in list.
+- [ ] **S1.16** `src/middleware/require-plan.ts` — `requirePlan(minPlan)` factory. Fetches shop from DB, checks plan rank. Returns `403 { error: 'plan_required', requiredPlan }`.
+- [ ] **S1.17** `src/middleware/require-ownership.ts` — `requireOwnership(getShopId)` factory. Extracts `shopId` from route via the provided getter, compares to `req.user.shopId`. Returns `403` on mismatch. Admin role bypasses.
+- [ ] **S1.18** `src/middleware/require-shop-status.ts` — for `APPROVED`-only routes (e.g. `/dashboard/*`). Reads shop from DB, returns `403` with the correct status code (`shop_pending`, `shop_rejected`, `shop_suspended`) if not `APPROVED`.
+- [ ] **S1.19** `src/types/express.d.ts` — augment `Express.Request` with `user: { id: string; role: UserRole; shopId?: string; isVip?: boolean }` and `requestId: string`.
+- [ ] **S1.20** `prisma/schema.prisma` — full schema from `BLUEPRINT.md` (all models from §1 through §21). Run `prisma generate` + `prisma migrate dev --name init`.
+- [ ] **S1.21** `.env.example` — all required env vars with placeholder values. No real secrets.
+- [ ] **S1.22** Health check — `GET /health` returns `{ ok: true, env, version }`. No auth. Used by deploy pipeline.
 
 ---
 
@@ -93,7 +99,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [ ] **S2.4** `POST /auth/verify-otp` — public. Zod: `{ phone, otp, name?, shopName?, isRegister? }`. Creates or finds `User`. Issues access + refresh tokens. Sets `refreshToken` as httpOnly cookie. Returns `{ accessToken, role }`.
 - [ ] **S2.5** `POST /auth/refresh` — reads refresh token from cookie or body. Validates against `RefreshToken` table. Issues new access token. Returns `{ accessToken }`.
 - [ ] **S2.6** `POST /auth/logout` — auth required. Deletes `RefreshToken` record. Clears cookie. Returns `{ ok: true }`.
-- [ ] **S2.7** `GET /auth/me` — auth required. Returns `{ id, phone, name, role, shopId, shopStatus? }`. This is what `getSession()` in the frontend calls.
+- [ ] **S2.7** `GET /auth/me` — auth required. Returns `{ id, phone, name, role, shopId, shopStatus?, plan, isVip }`. `plan` and `isVip` are read by the frontend `getSession()` to gate features. Never compute these client-side.
 - [ ] **S2.8** OTP rate-limit lockout — after 5 failed `verifyOtp` attempts: set `OtpCode.locked = true`, return `429 { retryAfter: seconds }`. Frontend already handles this state.
 - [ ] **S2.9** Barber invite — `POST /auth/invite/generate` (Owner JWT): create `InviteCode` (48h TTL, one-time). `GET /auth/invite?code=`: validate + return shop/barber names. `POST /auth/invite/accept`: verify code, run OTP flow, link `User` to `Barber` record, mark code used.
 - [ ] **S2.10** Shop status endpoint — `GET /shop/status` (Owner JWT): returns `{ status, rejectionReason? }`. Frontend pending screen polls this every 30s.
@@ -278,6 +284,9 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [ ] **S14.8** `POST /admin/users/:id/unblock` — Admin/Owner JWT. Resets `score=60, noShowCount=0`.
 - [ ] **S14.9** VIP endpoints — `GET /user/vip`, `POST /admin/users/:id/vip`.
 - [ ] **S14.10** Tests — loyalty earn idempotency (no double-credit), reliability clamp at 0/100, block enforcement, VIP auto-grant at 500pts.
+- [ ] **S14.11** `GET /user/hair-profile` — Customer JWT. Returns `HairProfile` for the authenticated user (texture, concerns, goals). Returns `404` if not yet set.
+- [ ] **S14.12** `PUT /user/hair-profile` — Customer JWT. Zod: `{ texture, concerns[], goals[] }`. Upsert `HairProfile`. Returns the saved profile.
+- [ ] **S14.13** `GET /user/hair-history` — Customer JWT. Returns the last N `HairAnalysis` results for this user, newest first. Sourced from the `HairAnalysis` table populated by the S16 worker.
 
 ---
 
@@ -319,6 +328,12 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ## Phase S18 — Testing & Hardening ⏳ LAST
 
+### TTL Cleanup Jobs
+
+- [ ] Expired `OtpCode` cleanup — BullMQ repeatable job (every 10 min): `DELETE FROM OtpCode WHERE expiresAt < NOW()`. Prevents table bloat.
+- [ ] Expired `RefreshToken` cleanup — BullMQ repeatable job (every 1h): `DELETE FROM RefreshToken WHERE expiresAt < NOW()`.
+- [ ] Expired `InviteCode` cleanup — BullMQ repeatable job (every 1h): `DELETE FROM InviteCode WHERE expiresAt < NOW() AND used = false`.
+
 ### Security Audit
 
 - [ ] OWASP Top 10 checklist — injection, broken auth, sensitive data, XXE, broken access control, security misconfiguration, XSS, insecure deserialisation, known vulnerabilities, insufficient logging.
@@ -326,6 +341,8 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [ ] All payment callback endpoints verify gateway signatures — never trust unsigned webhooks.
 - [ ] All file upload endpoints validate MIME type server-side, not just file extension.
 - [ ] No secrets in logs — Winston transport configured to redact `Authorization`, `password`, `apiKey` fields.
+- [ ] `requireOwnership` applied on every mutating shop/barber/service route — verify with a test that attempts cross-shop access (expect 403).
+- [ ] `requireShopStatus` applied on all `/dashboard/*` routes — verify with a test using a PENDING shop (expect 403 with `shop_pending`).
 
 ### Integration Tests
 
