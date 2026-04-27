@@ -359,6 +359,8 @@ A single `src/middleware/request-id.ts` middleware handles this — runs before 
 - `/payments/*` — 10 req/min per user.
 - All other routes — 100 req/min per IP.
 - Return `429` with `Retry-After` header on breach.
+- Current implementation uses `express-rate-limit` (in-process, zero latency).
+- **Future upgrade → Arcjet** (`@arcjet/node`): drop-in middleware that adds bot detection, credential stuffing protection, and IP fingerprinting on top of rate limiting. Swap in when traffic exceeds ~10k req/day or abuse becomes a real issue. No route changes needed — just replace the rate-limit middleware in `src/app.ts`.
 
 **Input & Injection**
 - Every request body, query param, and URL param is parsed through a Zod schema before the controller runs. No exceptions.
