@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { AppError, ERROR_MESSAGES } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { getLang } from "@/lib/lang";
 
 // Lazy import — Prisma client may not be generated yet at build time
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -9,13 +10,6 @@ let PrismaKnownError: (new (...args: any[]) => { code: string }) | undefined
 try {
   PrismaKnownError = require('@prisma/client').Prisma.PrismaClientKnownRequestError
 } catch { /* not generated yet */ }
-
-function getLang(req: Request): "ar" | "en" {
-  const param = req.query["lang"];
-  if (param === "ar" || param === "en") return param;
-  const header = req.headers["accept-language"] ?? "";
-  return header.startsWith("ar") ? "ar" : "en";
-}
 
 function getMessage(code: string, lang: "ar" | "en"): string {
   return (
