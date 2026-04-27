@@ -6,7 +6,13 @@ import { redisClient } from '@/lib/redis'
 const env = validateEnv()
 const app = createApp(env)
 
+let httpServer: ReturnType<typeof app.listen> | undefined
+
 const shutdown = async () => {
+  await new Promise<void>((resolve) => {
+    if (httpServer) httpServer.close(() => resolve())
+    else resolve()
+  })
   await Promise.allSettled([
     prisma.$disconnect(),
     redisClient.quit(),
@@ -18,8 +24,9 @@ process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
 
 const start = async () => {
-  await prisma.$connect()
-  app.listen(env.PORT, () => {
+  // Prisma connects lazily on first query — no explicit connect needed.
+  // This avoids startup failures when Neon wakes from sleep.
+  httpServer = app.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`)
   })
 }

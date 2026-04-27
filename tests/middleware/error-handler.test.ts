@@ -20,16 +20,16 @@ describe('errorHandler', () => {
     expect(res.body.error).toBe('not_found')
   })
 
-  it('returns English message by default', async () => {
+  it('returns Arabic message by default (default lang is ar)', async () => {
     const app = makeApp((_req, _res, next) => next(new AppError('forbidden', 403)))
     const res = await request(app).get('/test')
-    expect(res.body.message).toBe('Access denied')
+    expect(res.body.message).toBe('غير مصرح لك')
   })
 
-  it('returns Arabic message when lang=ar', async () => {
+  it('returns English message when lang=en', async () => {
     const app = makeApp((_req, _res, next) => next(new AppError('forbidden', 403)))
-    const res = await request(app).get('/test?lang=ar')
-    expect(res.body.message).toBe('غير مصرح لك')
+    const res = await request(app).get('/test?lang=en')
+    expect(res.body.message).toBe('Access denied')
   })
 
   it('returns 400 for unknown errors with HTTP status', async () => {

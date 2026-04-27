@@ -26,12 +26,12 @@ describe('getLang', () => {
     expect(getLang(makeReq({}, 'ar-IQ,ar;q=0.9'))).toBe('ar')
   })
 
-  it('returns "en" when Accept-Language is something else', () => {
-    expect(getLang(makeReq({}, 'fr-FR'))).toBe('en')
+  it('returns "ar" when Accept-Language is something else (default is ar)', () => {
+    expect(getLang(makeReq({}, 'fr-FR'))).toBe('ar')
   })
 
-  it('returns "en" when no lang param and no header', () => {
-    expect(getLang(makeReq())).toBe('en')
+  it('returns "ar" when no lang param and no header (default is ar)', () => {
+    expect(getLang(makeReq())).toBe('ar')
   })
 
   it('?lang param takes priority over Accept-Language header', () => {

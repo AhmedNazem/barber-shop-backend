@@ -115,6 +115,7 @@ model User {
   suspended    Boolean   @default(false)
   deletedAt    DateTime?
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   refreshTokens       RefreshToken[]
   loyaltyAccount      LoyaltyAccount?
@@ -139,6 +140,7 @@ model OtpCode {
   createdAt DateTime  @default(now())
 
   @@index([phone])
+  @@index([expiresAt])
 }
 
 model InviteCode {
@@ -151,6 +153,7 @@ model InviteCode {
   createdAt DateTime  @default(now())
 
   @@index([shopId])
+  @@index([expiresAt])
 }
 
 model RefreshToken {
@@ -163,36 +166,39 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([expiresAt])
 }
 
 // ─── Shop ─────────────────────────────────────────────────────────────────────
 
 model Shop {
-  id              String      @id @default(cuid())
-  ownerId         String
-  nameEn          String
-  nameAr          String
-  address         String
-  city            String
-  phone           String
-  lat             Float
-  lng             Float
-  coverUrl        String?
-  logoUrl         String?
-  priceRange      PriceRange  @default(MID)
-  status          ShopStatus  @default(PENDING)
-  rejectionReason String?
-  suspendedAt     DateTime?
-  suspendReason   String?
-  plan            ShopPlan    @default(FREE)
-  planUpdatedAt   DateTime?
-  planExpiresAt   DateTime?
-  bookingMode     BookingMode @default(QUEUE_ONLY)
-  depositRequired Boolean     @default(false)
-  depositPercent  Int         @default(20)
-  vipLaneEnabled  Boolean     @default(false)
-  isActive        Boolean     @default(false)
-  createdAt       DateTime    @default(now())
+  id                String      @id @default(cuid())
+  ownerId           String
+  nameEn            String
+  nameAr            String
+  address           String
+  city              String
+  phone             String
+  lat               Float
+  lng               Float
+  coverUrl          String?
+  logoUrl           String?
+  priceRange        PriceRange  @default(MID)
+  status            ShopStatus  @default(PENDING)
+  rejectionReason   String?
+  rejectionReasonAr String?
+  suspendedAt       DateTime?
+  suspendReason     String?
+  plan              ShopPlan    @default(FREE)
+  planUpdatedAt     DateTime?
+  planExpiresAt     DateTime?
+  bookingMode       BookingMode @default(QUEUE_ONLY)
+  depositRequired   Boolean     @default(false)
+  depositPercent    Int         @default(20)
+  vipLaneEnabled    Boolean     @default(false)
+  isActive          Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   hours    BusinessHours[]
   services Service[]
@@ -221,7 +227,7 @@ model BusinessHours {
 // ─── Services ─────────────────────────────────────────────────────────────────
 
 model Service {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   shopId      String
   nameEn      String
   nameAr      String
@@ -229,7 +235,9 @@ model Service {
   durationMin Int
   category    String
   coverUrl    String?
-  isActive    Boolean @default(true)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   shop   Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
   photos ServicePhoto[]
@@ -263,6 +271,7 @@ model Barber {
   experienceYears Int      @default(0)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   shop      Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
   schedule  BarberSchedule[]
@@ -314,6 +323,7 @@ model Booking {
   cancelledBy        String?
   cancellationReason String?
   createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   shop     Shop             @relation(fields: [shopId], references: [id])
   services BookingService[]
@@ -352,6 +362,7 @@ model QueueEntry {
   status        QueueStatus @default(WAITING)
   estimatedWait Int         @default(0)
   createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   booking Booking? @relation(fields: [bookingId], references: [id])
 
@@ -376,6 +387,7 @@ model Review {
   removalReason String?
   resolvedAt    DateTime?
   createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   booking Booking       @relation(fields: [bookingId], references: [id])
   photos  ReviewPhoto[]
@@ -458,6 +470,7 @@ model ShopDiscount {
   slotsClaimed Int      @default(0)
   expiresAt    DateTime
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 }
@@ -502,14 +515,17 @@ model PlatformConfig {
 // ─── Hair Profile & Analysis ──────────────────────────────────────────────────
 
 model HairProfile {
-  userId    String   @id
-  texture   String
-  concerns  String[]
-  goals     String[]
-  updatedAt DateTime @updatedAt
+  userId            String   @id
+  dryness           Int      // 1-5 scale
+  damage            Int      // 1-5 scale
+  scalpCondition    String
+  lastTreatmentDate String?
+  cutFrequencyWeeks Int
+  updatedAt         DateTime @updatedAt
 
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   analyses HairAnalysis[]
+  history  HairAnalysisHistory[]
 }
 
 model HairAnalysis {
@@ -528,4 +544,19 @@ model HairAnalysis {
 
   @@index([userId])
   @@index([jobId])
+}
+
+model HairAnalysisHistory {
+  id             String   @id @default(cuid())
+  userId         String
+  hairType       String
+  conditionScore Int
+  dryness        Int
+  damage         Int
+  scalpCondition String
+  createdAt      DateTime @default(now())
+
+  profile HairProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
 }

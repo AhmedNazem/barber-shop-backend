@@ -7,5 +7,5 @@ export function getLang(req: Request): Lang {
   if (param === 'ar' || param === 'en') return param
 
   const header = req.headers['accept-language'] ?? ''
-  return header.startsWith('ar') ? 'ar' : 'en'
+  return header.startsWith('en') ? 'en' : 'ar'
 }
