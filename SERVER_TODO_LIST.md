@@ -77,7 +77,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S1.11** `src/lib/response.ts` — typed response helpers: `ok(res, data)` → `{ data }`, `paginated(res, data, meta)` → `{ data, meta }`. Keeps all responses in the documented envelope shape.
 - [x] **S1.12** `src/lib/queue.ts` — BullMQ `Queue` factory. Export named queues: `hairAnalysisQueue`, `notificationQueue`, `loyaltyQueue`. Each backed by the same `redisClient` connection options. Used by route handlers to enqueue; workers live in `src/jobs/`.
 - [x] **S1.13** `src/middleware/validate.ts` — factory: `validate(schema)` → Zod parse → `next()` or `400 { errors }`.
-- [ ] **S1.14** `src/middleware/auth.ts` — reads `Authorization: Bearer <token>`, verifies JWT, sets `req.user = { id, role, shopId }`. Returns `401` if missing/invalid, `403` if expired.
+- [x] **S1.14** `src/middleware/auth.ts` — reads `Authorization: Bearer <token>`, verifies JWT, sets `req.user = { id, role, shopId }`. Returns `401` if missing/invalid, `403` if expired.
 - [ ] **S1.15** `src/middleware/require-role.ts` — `requireRole(...roles)` factory. Returns `403` if `req.user.role` not in list.
 - [ ] **S1.16** `src/middleware/require-plan.ts` — `requirePlan(minPlan)` factory. Fetches shop from DB, checks plan rank. Returns `403 { error: 'plan_required', requiredPlan }`.
 - [ ] **S1.17** `src/middleware/require-ownership.ts` — `requireOwnership(getShopId)` factory. Extracts `shopId` from route via the provided getter, compares to `req.user.shopId`. Returns `403` on mismatch. Admin role bypasses.
@@ -94,7 +94,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 > Blueprint: §1. This phase unlocks real sessions. Frontend can drop `dev_session` fallback once this is live.
 
 - [ ] **S2.1** OTP service (`src/services/otp.service.ts`) — `requestOtp(phone)`: generate 6-digit code, bcrypt-hash, save to `OtpCode` table (5-min TTL), send via WhatsApp (Unifonic/Twilio). `verifyOtp(phone, code)`: find latest unused code, check attempts ≤ 5, compare hash, mark used.
-- [ ] **S2.2** JWT lib (`src/lib/jwt.ts`) — `signAccess(payload)` (15min), `signRefresh(payload)` (7d), `verifyAccess(token)`, `verifyRefresh(token)`.
+- [x] **S2.2** JWT lib (`src/lib/jwt.ts`) — `signAccess(payload)` (15min), `signRefresh(payload)` (7d), `verifyAccess(token)`, `verifyRefresh(token)`.
 - [ ] **S2.3** `POST /auth/request-otp` — public. Zod: `{ phone }`. Rate-limit: 3 req/min per IP. Returns `{ ok: true }`.
 - [ ] **S2.4** `POST /auth/verify-otp` — public. Zod: `{ phone, otp, name?, shopName?, isRegister? }`. Creates or finds `User`. Issues access + refresh tokens. Sets `refreshToken` as httpOnly cookie. Returns `{ accessToken, role }`.
 - [ ] **S2.5** `POST /auth/refresh` — reads refresh token from cookie or body. Validates against `RefreshToken` table. Issues new access token. Returns `{ accessToken }`.
