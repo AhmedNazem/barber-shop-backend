@@ -33,6 +33,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 
 | Phase | Name                                 | Status       |
 |-------|--------------------------------------|--------------|
+| S0.5  | Blueprint Gaps & Pre-Build Fixes     | ⏳ Pending   |
 | S1    | Project Scaffold                     | ✅ Complete  |
 | S2    | Auth — OTP + JWT + Invites           | ⏳ Pending   |
 | S3    | Shops & Discovery                    | ⏳ Pending   |
@@ -57,6 +58,111 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 ## Build Order Rationale
 
 Each phase unblocks the next. S1–S3 must be done before any frontend wiring can begin. S6 (payments) requires S5 (booking). S14 (loyalty/VIP) requires S6 (booking creation is the earn trigger).
+
+---
+
+## Phase S0.5 — Blueprint Gaps & Pre-Build Fixes ⏳
+
+> These gaps were found during a senior-DB audit of BLUEPRINT.md and AGENTS.md. Resolve each one before entering the phase it blocks. The first 5 are schema/logic decisions that affect migrations — agree on the answer, update BLUEPRINT.md, then proceed.
+
+### CRITICAL BLOCKERS (must fix before the phase they block)
+
+- [ ] **S0.5-A** `QueueStatus` enum vs frontend contract mismatch — **blocks S7**
+  - DB enum: `WAITING | IN_CHAIR | DONE | NO_SHOW`
+  - Frontend contract (AGENTS.md): `'waiting' | 'next' | 'in_chair' | 'completed' | 'no_show'`
+  - Decision needed: (1) `DONE` must map to `'completed'` in all API responses (never expose the raw enum string). (2) `'next'` is a **derived** state — position=1 in the WAITING list — not stored in the DB. The queue service must compute it: if `entry.position === 1 && entry.status === 'WAITING'` → return `status: 'next'`. Document this in BLUEPRINT.md §7.
+  - Action: update BLUEPRINT.md §7 DB model note + add `'next'` derivation rule. Update `QueueEntry` API response mapper in the queue service when building S7.
+
+- [ ] **S0.5-B** Missing `Reward` model — loyalty redemption impossible — **blocks S14**
+  - `POST /user/loyalty/redeem` takes `{ rewardId }` but no `Reward` table is defined anywhere.
+  - Decision needed: define the Reward model. Suggested:
+    ```prisma
+    model LoyaltyReward {
+      id          String   @id @default(cuid())
+      nameEn      String
+      nameAr      String
+      pointsCost  Int
+      discountIQD Int
+      isActive    Boolean  @default(true)
+      createdAt   DateTime @default(now())
+    }
+    ```
+  - Action: add model to `schema.prisma`, run migration, add to BLUEPRINT.md §19, add `GET /loyalty/rewards` endpoint to S14.
+
+- [ ] **S0.5-C** `neighborhood`/`neighborhoodAr` missing from Shop model — **blocks S3 migration**
+  - Frontend DiscoveryShop expects `{ neighborhood: string; neighborhoodAr: string; }` on every shop card and map pin.
+  - DB model has `address` and `city` only — neighborhood is missing entirely.
+  - Action: add `neighborhood String` and `neighborhoodAr String` to `Shop` in `schema.prisma`. Run migration before S3. Update BLUEPRINT.md §2 DB model.
+
+- [ ] **S0.5-D** Suspension logic references `status = PENDING` which doesn't exist — **blocks S11**
+  - BLUEPRINT §1 step 3: "Pending bookings (`status = PENDING`) — set `status = CANCELLED`"
+  - `BookingStatus` enum: `UPCOMING | CONFIRMED | COMPLETED | CANCELLED | NO_SHOW` — no `PENDING`.
+  - The initial booking status is `UPCOMING`. Suspension should cancel `UPCOMING` bookings, not `PENDING` ones.
+  - Action: fix BLUEPRINT.md §1 suspension transaction step 3 to say `status = UPCOMING` instead of `PENDING`.
+
+- [x] **S0.5-E** SERVER_TODO_LIST S14 tasks use old HairProfile field names — **blocks S14**
+  - S14.11 says "texture, concerns, goals" and S14.12 Zod says "texture, concerns[], goals[]"
+  - Actual schema (fixed in last session): `dryness Int, damage Int, scalpCondition String, lastTreatmentDate String?, cutFrequencyWeeks Int`
+  - Action: update S14.11 and S14.12 task descriptions below to use the correct field names. ✅ Done.
+
+### IMPORTANT INCONSISTENCIES (fix when entering the relevant phase)
+
+- [ ] **S0.5-F** `/auth/me` missing `plan` and `isVip` in BLUEPRINT §1 — **fix before S2.7**
+  - BLUEPRINT §1 shows: `{ id, phone, name, role, shopStatus? }`
+  - Correct shape (from AGENTS.md frontend contract): `{ id, phone, name, role, shopId?, shopStatus?, plan?, isVip? }`
+  - Missing `plan` and `isVip` breaks Next.js plan gates and VIP features silently.
+  - Action: update BLUEPRINT.md §1 `/auth/me` output column before implementing S2.7.
+
+- [ ] **S0.5-G** Contact form subject values wrong in BLUEPRINT §10 — **fix before S17.1**
+  - BLUEPRINT §10: `'support' | 'partnership' | 'feedback' | 'other'`
+  - Correct (from actual frontend): `'general' | 'booking' | 'partnership' | 'technical' | 'complaint'`
+  - Action: update BLUEPRINT.md §10 shape. Zod schema in S17.1 must use the correct list.
+
+- [ ] **S0.5-H** Onboarding hours format wrong in BLUEPRINT §13 — **fix before S11.4**
+  - BLUEPRINT §13 step 4 says: `{ hours: [{dayOfWeek: Int, openTime, closeTime, isClosed}] }`
+  - Actual frontend sends: `{ mon: { closed, open, close }, tue: {...}, ... }` (3-letter day keys)
+  - Backend must map `mon→1, tue→2, wed→3, thu→4, fri→5, sat→6, sun→0` when writing `BusinessHours`.
+  - Action: update BLUEPRINT.md §13 step 4. The mapping logic goes in the S11.4 service.
+
+- [ ] **S0.5-I** `BookingService` snapshot fields missing from BLUEPRINT §5 — **fix before S5.3**
+  - BLUEPRINT §5 DB model shows only `{ bookingId, serviceId }` — no snapshot columns.
+  - BLUEPRINT §8 (correct) shows: `nameEn, nameAr, price, durationMin` snapshot columns.
+  - A developer reading only §5 will create the wrong table and miss the snapshot requirement.
+  - Action: update BLUEPRINT.md §5 BookingService model to match §8.
+
+### NOTABLE GAPS (decision required before the phase)
+
+- [ ] **S0.5-J** `isOpen` computation not specified — **decide before S3**
+  - Every shop in `GET /shops` needs `isOpen: boolean`.
+  - Requires: check today's `BusinessHours` for day-of-week, compare server time (Iraq = GMT+3) against `openTime`/`closeTime`.
+  - Decision: server always computes in GMT+3 (`Asia/Baghdad` timezone). Helper: `isShopOpen(hours[], now)`.
+  - Action: document in BLUEPRINT.md §2. Build helper in `src/lib/shop-hours.ts` during S3.
+
+- [ ] **S0.5-K** `avgRating`/`reviewCount` — computation strategy not specified — **decide before S3**
+  - `GET /shops` returns `rating` and `reviewCount` per shop but no column stores these.
+  - Decision: compute live with Prisma `_avg` + `_count` on Review (acceptable until ~5k reviews per shop). Cache per-shop result in Redis with 5-min TTL, invalidated on new review POST.
+  - Action: document in BLUEPRINT.md §2. Wire cache invalidation in S4 when review POST is built.
+
+- [ ] **S0.5-L** Notification model missing `title`/`titleAr` — **fix before S10**
+  - Frontend `AccountNotification` type expects `{ title, titleAr, message, messageAr }`.
+  - DB model in BLUEPRINT §12 only has `message` and `messageAr`.
+  - Action: add `title String` and `titleAr String` to `Notification` model in `schema.prisma`. Run migration before S10. Update BLUEPRINT.md §12.
+
+- [ ] **S0.5-M** VIP sort in queue impossible for walk-ins — **fix before S7**
+  - `QueueEntry` has no `isVip` field. Walk-in entries have no customer ID — can't look up VIP status.
+  - Fix: add `isVip Boolean @default(false)` to `QueueEntry`. Walk-in form passes this flag; booking-linked entries copy it from `User.isVip` at insert time.
+  - Action: add field to schema, run migration, update BLUEPRINT.md §7 DB model.
+
+- [ ] **S0.5-N** `distance` field — format and who computes it — **decide before S3**
+  - Frontend DiscoveryShop expects a `distance` field (currently `"1.2 km"` in mock).
+  - AGENTS.md rule: never return pre-formatted strings.
+  - Decision: `GET /shops` accepts optional `?lat&lng` query params. Backend computes Haversine distance in meters, returns raw `distanceMeters: number | null` (null if no coords sent). Frontend formats via its own `fmtDistance()` util.
+  - Action: update BLUEPRINT.md §2 to document `?lat&lng` params and `distanceMeters` field. Frontend type update needed when wiring.
+
+- [ ] **S0.5-O** Review `commentAr` — bilingual strategy unclear — **decide before S4/S8**
+  - BLUEPRINT §3 frontend shape shows `{ comment, commentAr }` but the FormData only has one `comment` field, and the DB model has no `commentAr` column.
+  - Decision: customers write in one language. `commentAr` is not a separate field — the API returns `comment` for both language contexts (the review is shown as-is regardless of the reader's language). Remove `commentAr` from the frontend type contract and always return `comment`.
+  - Action: update BLUEPRINT.md §3 review shape to remove `commentAr`. Confirm with frontend that the type change is acceptable.
 
 ---
 
@@ -284,9 +390,9 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [ ] **S14.8** `POST /admin/users/:id/unblock` — Admin/Owner JWT. Resets `score=60, noShowCount=0`.
 - [ ] **S14.9** VIP endpoints — `GET /user/vip`, `POST /admin/users/:id/vip`.
 - [ ] **S14.10** Tests — loyalty earn idempotency (no double-credit), reliability clamp at 0/100, block enforcement, VIP auto-grant at 500pts.
-- [ ] **S14.11** `GET /user/hair-profile` — Customer JWT. Returns `HairProfile` for the authenticated user (texture, concerns, goals). Returns `404` if not yet set.
-- [ ] **S14.12** `PUT /user/hair-profile` — Customer JWT. Zod: `{ texture, concerns[], goals[] }`. Upsert `HairProfile`. Returns the saved profile.
-- [ ] **S14.13** `GET /user/hair-history` — Customer JWT. Returns the last N `HairAnalysis` results for this user, newest first. Sourced from the `HairAnalysis` table populated by the S16 worker.
+- [ ] **S14.11** `GET /user/hair-profile` — Customer JWT. Returns `HairProfile` for the authenticated user. Shape: `{ dryness, damage, scalpCondition, lastTreatmentDate, cutFrequencyWeeks }`. Returns `404` if not yet set.
+- [ ] **S14.12** `PUT /user/hair-profile` — Customer JWT. Zod: `{ dryness: z.number().int().min(1).max(5), damage: z.number().int().min(1).max(5), scalpCondition: z.enum(['normal','dry','oily','sensitive']), lastTreatmentDate: z.string().optional(), cutFrequencyWeeks: z.number().int().positive() }`. Upsert `HairProfile`. Returns the saved profile.
+- [ ] **S14.13** `GET /user/hair-history` — Customer JWT. Returns the last N `HairAnalysisHistory` rows for this user (newest first). Shape per entry: `{ id, date, hairType, conditionScore, dryness, damage, scalpCondition }`. Sourced from the `HairAnalysisHistory` table (snapshot per analysis), NOT `HairAnalysis` (job tracking).
 
 ---
 
