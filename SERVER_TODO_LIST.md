@@ -33,7 +33,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 
 | Phase | Name                                 | Status       |
 |-------|--------------------------------------|--------------|
-| S1    | Project Scaffold                     | ⏳ Pending   |
+| S1    | Project Scaffold                     | ✅ Complete  |
 | S2    | Auth — OTP + JWT + Invites           | ⏳ Pending   |
 | S3    | Shops & Discovery                    | ⏳ Pending   |
 | S4    | Shop Detail + Barbers + Services     | ⏳ Pending   |
@@ -85,7 +85,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S1.19** `src/types/express.d.ts` — augment `Express.Request` with `user: { id: string; role: UserRole; shopId?: string; isVip?: boolean }` and `requestId: string`.
 - [x] **S1.20** `prisma/schema.prisma` — full schema from `BLUEPRINT.md` (all models from §1 through §21). Run `prisma generate` + `prisma migrate dev --name init`.
 - [x] **S1.21** `.env.example` — all required env vars with placeholder values. No real secrets.
-- [ ] **S1.22** Health check — `GET /health` returns `{ ok: true, env, version }`. No auth. Used by deploy pipeline.
+- [x] **S1.22** Health check — `GET /health` returns `{ ok: true, env, version }`. No auth. Used by deploy pipeline.
 
 ---
 

@@ -7,7 +7,6 @@ import { requestId } from "@/middleware/request-id";
 import { errorHandler } from "@/middleware/error-handler";
 import { router } from "@/routes";
 import { Env } from "@/config/env";
-import { ObjectLockLegalHold$ } from "@aws-sdk/client-s3";
 
 export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
   const app = express();
@@ -40,6 +39,14 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
       }),
     );
   }
+
+  app.get("/health", (_req, res) => {
+    res.json({
+      ok: true,
+      env: config.NODE_ENV,
+      version: process.env["npm_package_version"] ?? "1.0.0",
+    });
+  });
 
   app.use("/api/v1", router);
 
