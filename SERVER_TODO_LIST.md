@@ -78,7 +78,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S1.12** `src/lib/queue.ts` — BullMQ `Queue` factory. Export named queues: `hairAnalysisQueue`, `notificationQueue`, `loyaltyQueue`. Each backed by the same `redisClient` connection options. Used by route handlers to enqueue; workers live in `src/jobs/`.
 - [x] **S1.13** `src/middleware/validate.ts` — factory: `validate(schema)` → Zod parse → `next()` or `400 { errors }`.
 - [x] **S1.14** `src/middleware/auth.ts` — reads `Authorization: Bearer <token>`, verifies JWT, sets `req.user = { id, role, shopId }`. Returns `401` if missing/invalid, `403` if expired.
-- [ ] **S1.15** `src/middleware/require-role.ts` — `requireRole(...roles)` factory. Returns `403` if `req.user.role` not in list.
+- [x] **S1.15** `src/middleware/require-role.ts` — `requireRole(...roles)` factory. Returns `403` if `req.user.role` not in list.
 - [ ] **S1.16** `src/middleware/require-plan.ts` — `requirePlan(minPlan)` factory. Fetches shop from DB, checks plan rank. Returns `403 { error: 'plan_required', requiredPlan }`.
 - [ ] **S1.17** `src/middleware/require-ownership.ts` — `requireOwnership(getShopId)` factory. Extracts `shopId` from route via the provided getter, compares to `req.user.shopId`. Returns `403` on mismatch. Admin role bypasses.
 - [ ] **S1.18** `src/middleware/require-shop-status.ts` — for `APPROVED`-only routes (e.g. `/dashboard/*`). Reads shop from DB, returns `403` with the correct status code (`shop_pending`, `shop_rejected`, `shop_suspended`) if not `APPROVED`.
