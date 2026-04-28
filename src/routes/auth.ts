@@ -26,7 +26,7 @@ const otpRateLimit = rateLimit({
   skipFailedRequests: false,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => env.NODE_ENV === 'test',
+  skip: () => process.env['NODE_ENV'] === 'test',
   message: { error: 'rate_limited', retryAfter: 60 },
 })
 
