@@ -50,7 +50,7 @@ export async function verifyOtp(phone: string, plainCode: string): Promise<void>
   // Already locked from too many attempts
   if (record.locked) {
     const retryAfter = Math.max(0, Math.ceil((record.expiresAt.getTime() - Date.now()) / 1000))
-    throw new AppError('otp_locked', 429, `retryAfter:${retryAfter}`)
+    throw new AppError('otp_locked', 429, { retryAfter })
   }
 
   // Code window has passed
@@ -73,7 +73,7 @@ export async function verifyOtp(phone: string, plainCode: string): Promise<void>
 
     if (willLock) {
       const retryAfter = Math.max(0, Math.ceil((record.expiresAt.getTime() - Date.now()) / 1000))
-      throw new AppError('otp_locked', 429, `retryAfter:${retryAfter}`)
+      throw new AppError('otp_locked', 429, { retryAfter })
     }
 
     throw new AppError('invalid_otp', 401)

@@ -75,7 +75,7 @@ describe('POST /api/v1/auth/verify-otp', () => {
     expect(res.body.error).toBe('otp_expired')
   })
 
-  it('returns 429 for a locked OTP', async () => {
+  it('returns 429 with retryAfter for a locked OTP', async () => {
     await seedOtp(E164, { locked: true })
 
     const res = await request(app)
@@ -84,6 +84,8 @@ describe('POST /api/v1/auth/verify-otp', () => {
 
     expect(res.status).toBe(429)
     expect(res.body.error).toBe('otp_locked')
+    expect(typeof res.body.retryAfter).toBe('number')
+    expect(res.body.retryAfter).toBeGreaterThan(0)
   })
 
   it('returns 400 when registering without a name', async () => {

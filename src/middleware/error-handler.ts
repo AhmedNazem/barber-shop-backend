@@ -36,6 +36,7 @@ export function errorHandler(
     return res.status(err.status).json({
       error: err.code,
       message: getMessage(err.code, lang),
+      ...err.meta,
     });
   }
 
