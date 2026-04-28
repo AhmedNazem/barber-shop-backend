@@ -91,6 +91,12 @@ Authorization: Bearer {{accessToken}}
 
 ###
 
+### S2.10 — Get shop approval status (Owner JWT)
+GET {{baseUrl}}/shop/status
+Authorization: Bearer {{accessToken}}
+
+###
+
 ### S2.9a — Generate barber invite (Owner JWT)
 POST {{baseUrl}}/auth/invite/generate
 Authorization: Bearer {{accessToken}}
