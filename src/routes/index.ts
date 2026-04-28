@@ -1,4 +1,6 @@
 import { Router } from 'express'
+import { authRouter } from '@/routes/auth'
 
-// Routes mounted here as each phase is built
 export const router = Router()
+
+router.use('/auth', authRouter)
