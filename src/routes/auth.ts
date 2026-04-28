@@ -106,7 +106,7 @@ authRouter.post(
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
       })
 
-      ok(res, { accessToken, role: user.role })
+      ok(res, { accessToken, refreshToken, role: user.role })
     } catch (err) {
       next(err)
     }
