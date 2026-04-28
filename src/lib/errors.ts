@@ -28,5 +28,7 @@ export const ERROR_MESSAGES: Record<string, { en: string; ar: string }> = {
   shop_pending:         { en: 'Shop is pending approval',      ar: 'المحل قيد المراجعة' },
   shop_rejected:        { en: 'Shop application was rejected', ar: 'تم رفض طلب المحل' },
   shop_suspended:       { en: 'Shop is suspended',             ar: 'المحل موقوف' },
+  name_required:        { en: 'Name is required for registration', ar: 'الاسم مطلوب للتسجيل' },
+  user_not_found:       { en: 'No account found for this phone', ar: 'لا يوجد حساب لهذا الرقم' },
   internal_error:       { en: 'Something went wrong',          ar: 'حدث خطأ ما' },
 }

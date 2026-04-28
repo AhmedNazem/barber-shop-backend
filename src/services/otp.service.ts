@@ -1,16 +1,16 @@
 import bcrypt from 'bcrypt'
+import { randomInt } from 'crypto'
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
-import { sendSms } from '@/lib/sms'
+import { sendSms, normalisePhone } from '@/lib/sms'
 
-const OTP_TTL_MS = 5 * 60 * 1000    // 5 minutes
+const OTP_TTL_MS = 5 * 60 * 1000
 const OTP_MAX_ATTEMPTS = 5
 const BCRYPT_ROUNDS = 10
 
 function generateOtpCode(): string {
-  // Cryptographically random 6-digit code, zero-padded
-  const num = Math.floor(100000 + Math.random() * 900000)
-  return num.toString()
+  // crypto.randomInt is cryptographically secure unlike Math.random()
+  return randomInt(100000, 1000000).toString()
 }
 
 /**
@@ -18,21 +18,17 @@ function generateOtpCode(): string {
  * Any previous unused codes for this phone are deleted atomically.
  */
 export async function requestOtp(phone: string): Promise<void> {
+  const e164 = normalisePhone(phone)
   const plainCode = generateOtpCode()
   const hashedCode = await bcrypt.hash(plainCode, BCRYPT_ROUNDS)
   const expiresAt = new Date(Date.now() + OTP_TTL_MS)
 
   await prisma.$transaction([
-    // Remove all prior unused codes for this phone (one active code at a time)
-    prisma.otpCode.deleteMany({
-      where: { phone, usedAt: null },
-    }),
-    prisma.otpCode.create({
-      data: { phone, code: hashedCode, expiresAt },
-    }),
+    prisma.otpCode.deleteMany({ where: { phone: e164, usedAt: null } }),
+    prisma.otpCode.create({ data: { phone: e164, code: hashedCode, expiresAt } }),
   ])
 
-  await sendSms(phone, `رمز التحقق الخاص بك هو: ${plainCode}\nصالح لمدة 5 دقائق.`)
+  await sendSms(e164, `رمز التحقق الخاص بك هو: ${plainCode}\nصالح لمدة 5 دقائق.`)
 }
 
 /**
@@ -40,8 +36,9 @@ export async function requestOtp(phone: string): Promise<void> {
  * Throws AppError on any failure — callers must not catch and retry silently.
  */
 export async function verifyOtp(phone: string, plainCode: string): Promise<void> {
+  const e164 = normalisePhone(phone)
   const record = await prisma.otpCode.findFirst({
-    where: { phone, usedAt: null },
+    where: { phone: e164, usedAt: null },
     orderBy: { createdAt: 'desc' },
   })
 
