@@ -25,7 +25,7 @@ Content-Type: application/json
 
 ###
 
-### S2.4 — Register as Customer (first time)
+### S2.4a — Register as Customer (first time)
 # Run request-otp first, then paste the code you received
 POST {{baseUrl}}/auth/verify-otp
 Content-Type: application/json
@@ -39,7 +39,7 @@ Content-Type: application/json
 
 ###
 
-### S2.4 — Register as Shop Owner (first time)
+### S2.4b — Register as Shop Owner (first time)
 POST {{baseUrl}}/auth/verify-otp
 Content-Type: application/json
 
@@ -53,7 +53,7 @@ Content-Type: application/json
 
 ###
 
-### S2.4 — Login (existing user)
+### S2.4c — Login (existing user)
 POST {{baseUrl}}/auth/verify-otp
 Content-Type: application/json
 
