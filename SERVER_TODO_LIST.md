@@ -209,7 +209,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S2.8** OTP rate-limit lockout — after 5 failed `verifyOtp` attempts: set `OtpCode.locked = true`, return `429 { retryAfter: seconds }`. Frontend already handles this state.
 - [x] **S2.9** Barber invite — `POST /auth/invite/generate` (Owner JWT): create `InviteCode` (48h TTL, one-time). `GET /auth/invite?code=`: validate + return shop/barber names. `POST /auth/invite/accept`: verify code, run OTP flow, link `User` to `Barber` record, mark code used.
 - [x] **S2.10** Shop status endpoint — `GET /shop/status` (Owner JWT): returns `{ status, rejectionReason? }`. Frontend pending screen polls this every 30s.
-- [ ] **S2.11** Tests — `POST /auth/request-otp` happy path + rate limit. `POST /auth/verify-otp` valid + invalid + locked. `GET /auth/me` with valid/expired token.
+- [x] **S2.11** Tests — `POST /auth/request-otp` happy path + rate limit. `POST /auth/verify-otp` valid + invalid + locked. `GET /auth/me` with valid/expired token.
 
 ---
 

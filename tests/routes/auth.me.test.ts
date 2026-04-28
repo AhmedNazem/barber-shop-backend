@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
 import { createApp } from '@/app'
 import { prisma } from '@/config/prisma'
 import { signAccess } from '@/lib/jwt'
@@ -45,5 +46,20 @@ describe('GET /api/v1/auth/me', () => {
       .get('/api/v1/auth/me')
       .set('Authorization', 'Bearer not.a.real.token')
     expect(res.status).toBe(401)
+  })
+
+  it('returns 403 with an expired token', async () => {
+    const expiredToken = jwt.sign(
+      { id: 'fake-id', role: 'CUSTOMER' },
+      process.env['JWT_SECRET']!,
+      { expiresIn: -1 },
+    )
+
+    const res = await request(app)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${expiredToken}`)
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('token_expired')
   })
 })
