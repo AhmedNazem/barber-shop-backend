@@ -91,5 +91,34 @@ Authorization: Bearer {{accessToken}}
 
 ###
 
+### S2.9a — Generate barber invite (Owner JWT)
+POST {{baseUrl}}/auth/invite/generate
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nameEn": "Ahmed",
+  "nameAr": "أحمد"
+}
+
+###
+
+### S2.9b — Get invite info (public)
+GET {{baseUrl}}/auth/invite?code=PASTE_CODE_HERE
+
+###
+
+### S2.9c — Accept invite (public — barber completes OTP first)
+POST {{baseUrl}}/auth/invite/accept
+Content-Type: application/json
+
+{
+  "code": "PASTE_CODE_HERE",
+  "phone": "{{myPhone}}",
+  "otp": "PASTE_OTP_HERE"
+}
+
+###
+
 ### Health check
 GET http://localhost:4000/health
