@@ -106,7 +106,8 @@ async function sendTwilio(e164: string, message: string): Promise<void> {
       },
       body: new URLSearchParams({
         From: env.SMS_SENDER_ID,
-        To: e164,
+        // If SMS_SENDER_ID starts with "whatsapp:" we're in WhatsApp mode — To must match
+        To: env.SMS_SENDER_ID.startsWith('whatsapp:') ? `whatsapp:${e164}` : e164,
         Body: message,
       }),
     },
