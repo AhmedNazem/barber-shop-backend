@@ -1,0 +1,95 @@
+# BarberOS API — REST Client requests
+# Install "REST Client" extension by Huachao Mao in VS Code
+# Click "Send Request" above any request to run it
+# Change @phone and @myPhone to your real number
+
+@baseUrl = http://localhost:4000/api/v1
+@myPhone = +9647802431955
+
+### Variables (fill these in after login)
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NzczODQ5MDIsImV4cCI6MTc3NzM4NTgwMn0.FhhRtXM2DMggwqZLSQuzlxjSvA4NUw5ypclW7aIZ4M0
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NzczODQ3NzQsImV4cCI  6MTc3Nzk4OTU3NH0.GkXVvuRS4LY0OotbhBddY2BLIasXyeoKNzchZ36nsr0
+
+
+# ════════════════════════════════════════════════
+#  S2 — Auth
+# ════════════════════════════════════════════════
+
+### S2.3 — Request OTP (sends WhatsApp message)
+POST {{baseUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "phone": "{{myPhone}}"
+}
+
+###
+
+### S2.4 — Register as Customer (first time)
+# Run request-otp first, then paste the code you received
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "phone": "{{myPhone}}",
+  "otp": "952897",
+  "name": "Ahmed",
+  "isRegister": true
+}
+
+###
+
+### S2.4 — Register as Shop Owner (first time)
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "phone": "{{myPhone}}",
+  "otp": "PASTE_OTP_HERE",
+  "name": "Ahmed",
+  "shopName": "My Barbershop",
+  "isRegister": true
+}
+
+###
+
+### S2.4 — Login (existing user)
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "phone": "{{myPhone}}",
+  "otp": "PASTE_OTP_HERE"
+}
+
+###
+
+### S2.5 — Refresh access token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+### S2.6 — Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+### S2.7 — Get current user (coming soon)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Health check
+GET http://localhost:4000/health
