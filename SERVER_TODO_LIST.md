@@ -107,7 +107,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### IMPORTANT INCONSISTENCIES (fix when entering the relevant phase)
 
-- [ ] **S0.5-F** `/auth/me` missing `plan` and `isVip` in BLUEPRINT §1 — **fix before S2.7**
+- [x] **S0.5-F** `/auth/me` missing `plan` and `isVip` in BLUEPRINT §1 — **fix before S2.7**
   - BLUEPRINT §1 shows: `{ id, phone, name, role, shopStatus? }`
   - Correct shape (from AGENTS.md frontend contract): `{ id, phone, name, role, shopId?, shopStatus?, plan?, isVip? }`
   - Missing `plan` and `isVip` breaks Next.js plan gates and VIP features silently.
@@ -205,7 +205,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S2.4** `POST /auth/verify-otp` — public. Zod: `{ phone, otp, name?, shopName?, isRegister? }`. Creates or finds `User`. Issues access + refresh tokens. Sets `refreshToken` as httpOnly cookie. Returns `{ accessToken, role }`.
 - [x] **S2.5** `POST /auth/refresh` — reads refresh token from cookie or body. Validates against `RefreshToken` table. Issues new access token. Returns `{ accessToken }`.
 - [x] **S2.6** `POST /auth/logout` — auth required. Deletes `RefreshToken` record. Clears cookie. Returns `{ ok: true }`.
-- [ ] **S2.7** `GET /auth/me` — auth required. Returns `{ id, phone, name, role, shopId, shopStatus?, plan, isVip }`. `plan` and `isVip` are read by the frontend `getSession()` to gate features. Never compute these client-side.
+- [x] **S2.7** `GET /auth/me` — auth required. Returns `{ id, phone, name, role, shopId, shopStatus?, plan, isVip }`. `plan` and `isVip` are read by the frontend `getSession()` to gate features. Never compute these client-side.
 - [ ] **S2.8** OTP rate-limit lockout — after 5 failed `verifyOtp` attempts: set `OtpCode.locked = true`, return `429 { retryAfter: seconds }`. Frontend already handles this state.
 - [ ] **S2.9** Barber invite — `POST /auth/invite/generate` (Owner JWT): create `InviteCode` (48h TTL, one-time). `GET /auth/invite?code=`: validate + return shop/barber names. `POST /auth/invite/accept`: verify code, run OTP flow, link `User` to `Barber` record, mark code used.
 - [ ] **S2.10** Shop status endpoint — `GET /shop/status` (Owner JWT): returns `{ status, rejectionReason? }`. Frontend pending screen polls this every 30s.

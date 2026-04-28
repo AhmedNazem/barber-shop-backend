@@ -85,7 +85,7 @@ Content-Type: application/json
 
 ###
 
-### S2.7 — Get current user (coming soon)
+### S2.7 — Get current user
 GET {{baseUrl}}/auth/me
 Authorization: Bearer {{accessToken}}
 
