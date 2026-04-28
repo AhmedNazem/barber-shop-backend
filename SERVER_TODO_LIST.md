@@ -31,27 +31,27 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 
 ## Status Overview
 
-| Phase | Name                                 | Status       |
-|-------|--------------------------------------|--------------|
-| S0.5  | Blueprint Gaps & Pre-Build Fixes     | ⏳ Pending   |
-| S1    | Project Scaffold                     | ✅ Complete  |
-| S2    | Auth — OTP + JWT + Invites           | ⏳ Pending   |
-| S3    | Shops & Discovery                    | ⏳ Pending   |
-| S4    | Shop Detail + Barbers + Services     | ⏳ Pending   |
-| S5    | Booking Wizard + Availability        | ⏳ Pending   |
-| S6    | Checkout + Payments                  | ⏳ Pending   |
-| S7    | Queue Management                     | ⏳ Pending   |
-| S8    | Booking History + Reviews            | ⏳ Pending   |
-| S9    | Dashboard Analytics                  | ⏳ Pending   |
-| S10   | Notifications                        | ⏳ Pending   |
-| S11   | Onboarding Wizard                    | ⏳ Pending   |
-| S12   | Platform Settings + Admin            | ⏳ Pending   |
-| S13   | Subscription Plans + Feature Gating  | ⏳ Pending   |
-| S14   | Loyalty + Reliability + VIP          | ⏳ Pending   |
-| S15   | Discount System                      | ⏳ Pending   |
-| S16   | Hair Analysis (BullMQ Job)           | ⏳ Pending   |
-| S17   | Contact Form + Saved Shops           | ⏳ Pending   |
-| S18   | Testing & Hardening                  | ⏳ Last      |
+| Phase | Name                                | Status      |
+| ----- | ----------------------------------- | ----------- |
+| S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending  |
+| S1    | Project Scaffold                    | ✅ Complete |
+| S2    | Auth — OTP + JWT + Invites          | ⏳ Pending  |
+| S3    | Shops & Discovery                   | ⏳ Pending  |
+| S4    | Shop Detail + Barbers + Services    | ⏳ Pending  |
+| S5    | Booking Wizard + Availability       | ⏳ Pending  |
+| S6    | Checkout + Payments                 | ⏳ Pending  |
+| S7    | Queue Management                    | ⏳ Pending  |
+| S8    | Booking History + Reviews           | ⏳ Pending  |
+| S9    | Dashboard Analytics                 | ⏳ Pending  |
+| S10   | Notifications                       | ⏳ Pending  |
+| S11   | Onboarding Wizard                   | ⏳ Pending  |
+| S12   | Platform Settings + Admin           | ⏳ Pending  |
+| S13   | Subscription Plans + Feature Gating | ⏳ Pending  |
+| S14   | Loyalty + Reliability + VIP         | ⏳ Pending  |
+| S15   | Discount System                     | ⏳ Pending  |
+| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending  |
+| S17   | Contact Form + Saved Shops          | ⏳ Pending  |
+| S18   | Testing & Hardening                 | ⏳ Last     |
 
 ---
 
@@ -199,10 +199,10 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 > Blueprint: §1. This phase unlocks real sessions. Frontend can drop `dev_session` fallback once this is live.
 
-- [ ] **S2.1** OTP service (`src/services/otp.service.ts`) — `requestOtp(phone)`: generate 6-digit code, bcrypt-hash, save to `OtpCode` table (5-min TTL), send via WhatsApp (Unifonic/Twilio). `verifyOtp(phone, code)`: find latest unused code, check attempts ≤ 5, compare hash, mark used.
+- [x] **S2.1** OTP service (`src/services/otp.service.ts`) — `requestOtp(phone)`: generate 6-digit code, bcrypt-hash, save to `OtpCode` table (5-min TTL), send via WhatsApp (Unifonic/Twilio). `verifyOtp(phone, code)`: find latest unused code, check attempts ≤ 5, compare hash, mark used.
 - [x] **S2.2** JWT lib (`src/lib/jwt.ts`) — `signAccess(payload)` (15min), `signRefresh(payload)` (7d), `verifyAccess(token)`, `verifyRefresh(token)`.
-- [ ] **S2.3** `POST /auth/request-otp` — public. Zod: `{ phone }`. Rate-limit: 3 req/min per IP. Returns `{ ok: true }`.
-- [ ] **S2.4** `POST /auth/verify-otp` — public. Zod: `{ phone, otp, name?, shopName?, isRegister? }`. Creates or finds `User`. Issues access + refresh tokens. Sets `refreshToken` as httpOnly cookie. Returns `{ accessToken, role }`.
+- [x] **S2.3** `POST /auth/request-otp` — public. Zod: `{ phone }`. Rate-limit: 3 req/min per IP. Returns `{ ok: true }`.
+- [x] **S2.4** `POST /auth/verify-otp` — public. Zod: `{ phone, otp, name?, shopName?, isRegister? }`. Creates or finds `User`. Issues access + refresh tokens. Sets `refreshToken` as httpOnly cookie. Returns `{ accessToken, role }`.
 - [ ] **S2.5** `POST /auth/refresh` — reads refresh token from cookie or body. Validates against `RefreshToken` table. Issues new access token. Returns `{ accessToken }`.
 - [ ] **S2.6** `POST /auth/logout` — auth required. Deletes `RefreshToken` record. Clears cookie. Returns `{ ok: true }`.
 - [ ] **S2.7** `GET /auth/me` — auth required. Returns `{ id, phone, name, role, shopId, shopStatus?, plan, isVip }`. `plan` and `isVip` are read by the frontend `getSession()` to gate features. Never compute these client-side.

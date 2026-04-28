@@ -24,7 +24,8 @@ export function normalisePhone(phone: string): string {
 export async function sendSms(phone: string, message: string): Promise<void> {
   const e164 = normalisePhone(phone);
 
-  if (env.NODE_ENV !== "production" || !env.SMS_API_KEY) {
+  // If no API key is provided, fallback to console logging (useful for local dev without Twilio)
+  if (!env.SMS_API_KEY) {
     logger.info(`[SMS DEV] To: ${e164} | ${message}`);
     return;
   }
