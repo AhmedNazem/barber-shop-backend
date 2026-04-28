@@ -3,6 +3,7 @@ import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import { requestId } from "@/middleware/request-id";
 import { errorHandler } from "@/middleware/error-handler";
 import { router } from "@/routes";
@@ -27,6 +28,7 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
   }
 
   app.use(express.json({ limit: "10kb" }));
+  app.use(cookieParser());
 
   if (config.NODE_ENV !== "test") {
     app.use(

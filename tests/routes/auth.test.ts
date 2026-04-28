@@ -3,6 +3,7 @@ import request from 'supertest'
 import bcrypt from 'bcrypt'
 import { createApp } from '@/app'
 import { prisma } from '@/config/prisma'
+import { signRefresh, signAccess } from '@/lib/jwt'
 
 vi.mock('@/lib/sms', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/sms')>()
@@ -181,5 +182,107 @@ describe('POST /api/v1/auth/verify-otp', () => {
     const cookieStr = Array.isArray(cookies) ? cookies.join(';') : cookies
     expect(cookieStr).toContain('refreshToken')
     expect(cookieStr).toContain('HttpOnly')
+  })
+})
+
+// ─── POST /auth/refresh ───────────────────────────────────────────────────────
+
+describe('POST /api/v1/auth/refresh', () => {
+  async function seedUserAndToken() {
+    const user = await prisma.user.create({
+      data: { phone: E164, name: 'Ahmed', role: 'CUSTOMER' },
+    })
+    const refreshToken = signRefresh({ id: user.id, role: user.role })
+    await prisma.refreshToken.create({
+      data: { userId: user.id, token: refreshToken, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+    })
+    return { user, refreshToken }
+  }
+
+  it('returns a new accessToken when given a valid refresh token in the body', async () => {
+    const { refreshToken } = await seedUserAndToken()
+
+    const res = await request(app)
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken })
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.accessToken).toBeTruthy()
+  })
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request(app).post('/api/v1/auth/refresh').send({})
+
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 401 for a token not in the DB (already revoked)', async () => {
+    // Create user but store NO refresh token — any signed token will be missing from DB
+    const user = await prisma.user.create({
+      data: { phone: E164, name: 'Ahmed', role: 'CUSTOMER' },
+    })
+    const rogueToken = signRefresh({ id: user.id, role: 'CUSTOMER' })
+
+    const res = await request(app)
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: rogueToken })
+
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 401 for a tampered/invalid JWT', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: 'not.a.valid.token' })
+
+    expect(res.status).toBe(401)
+  })
+})
+
+// ─── POST /auth/logout ────────────────────────────────────────────────────────
+
+describe('POST /api/v1/auth/logout', () => {
+  async function seedUserAndTokens() {
+    const user = await prisma.user.create({
+      data: { phone: E164, name: 'Ahmed', role: 'CUSTOMER' },
+    })
+    const accessToken = signAccess({ id: user.id, role: user.role })
+    const refreshToken = signRefresh({ id: user.id, role: user.role })
+    await prisma.refreshToken.create({
+      data: { userId: user.id, token: refreshToken, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+    })
+    return { user, accessToken, refreshToken }
+  }
+
+  it('returns 200 and deletes the refresh token from DB', async () => {
+    const { accessToken, refreshToken } = await seedUserAndTokens()
+
+    const res = await request(app)
+      .post('/api/v1/auth/logout')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ refreshToken })
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.ok).toBe(true)
+
+    const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } })
+    expect(stored).toBeNull()
+  })
+
+  it('returns 401 without an access token', async () => {
+    const res = await request(app).post('/api/v1/auth/logout').send({})
+
+    expect(res.status).toBe(401)
+  })
+
+  it('still returns 200 when no refresh token is provided (cookie/body empty)', async () => {
+    const { accessToken } = await seedUserAndTokens()
+
+    const res = await request(app)
+      .post('/api/v1/auth/logout')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({})
+
+    expect(res.status).toBe(200)
   })
 })

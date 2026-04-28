@@ -6,9 +6,10 @@ import { requestOtp, verifyOtp } from '@/services/otp.service'
 import { ok } from '@/lib/response'
 import { env } from '@/config/env'
 import { prisma } from '@/config/prisma'
-import { signAccess, signRefresh } from '@/lib/jwt'
+import { signAccess, signRefresh, verifyRefresh } from '@/lib/jwt'
 import { AppError } from '@/lib/errors'
 import { normalisePhone } from '@/lib/sms'
+import { authenticate } from '@/middleware/auth'
 
 export const authRouter = Router()
 
@@ -107,6 +108,69 @@ authRouter.post(
       })
 
       ok(res, { accessToken, refreshToken, role: user.role })
+    } catch (err) {
+      next(err)
+    }
+  },
+)
+
+// ─── S2.5 POST /auth/refresh ──────────────────────────────────────────────────
+
+authRouter.post(
+  '/refresh',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Accept token from httpOnly cookie (browser) or request body (mobile / BFF)
+      const token: string | undefined = req.cookies?.refreshToken ?? req.body?.refreshToken
+
+      if (!token) throw new AppError('unauthorized', 401)
+
+      // 1. Verify JWT signature — throws if tampered or expired
+      let payload: ReturnType<typeof verifyRefresh>
+      try {
+        payload = verifyRefresh(token)
+      } catch {
+        throw new AppError('unauthorized', 401)
+      }
+
+      // 2. Check the token exists in DB (proves it hasn't been revoked via logout)
+      const stored = await prisma.refreshToken.findUnique({ where: { token } })
+      if (!stored || stored.expiresAt < new Date()) {
+        throw new AppError('unauthorized', 401)
+      }
+
+      // 3. Issue a fresh access token — refresh token itself is NOT rotated here
+      const accessToken = signAccess({
+        id: payload.id,
+        role: payload.role,
+        shopId: payload.shopId,
+      })
+
+      ok(res, { accessToken })
+    } catch (err) {
+      next(err)
+    }
+  },
+)
+
+// ─── S2.6 POST /auth/logout ───────────────────────────────────────────────────
+
+authRouter.post(
+  '/logout',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token: string | undefined = req.cookies?.refreshToken ?? req.body?.refreshToken
+
+      if (token) {
+        // Delete the specific refresh token — other devices stay logged in
+        await prisma.refreshToken.deleteMany({ where: { token } })
+      }
+
+      // Clear the httpOnly cookie regardless
+      res.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' })
+
+      ok(res, { ok: true })
     } catch (err) {
       next(err)
     }
