@@ -31,8 +31,9 @@ const schema = z.object({
 
   // SMS (optional — configured via admin panel after launch)
   SMS_PROVIDER: z.enum(["unifonic", "twilio"]).optional(),
-  SMS_API_KEY: z.string().optional(),
-  SMS_SENDER_ID: z.string().optional(),
+  SMS_API_KEY: z.string().optional(),    // Unifonic: AppSid | Twilio: AccountSid
+  SMS_API_SECRET: z.string().optional(), // Twilio only: AuthToken
+  SMS_SENDER_ID: z.string().optional(),  // Unifonic: SenderID | Twilio: from-number
 
   // Payment gateways (optional — configured per environment)
   ZAINCASH_MERCHANT_ID: z.string().optional(),
