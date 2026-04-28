@@ -89,7 +89,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
     ```
   - Action: add model to `schema.prisma`, run migration, add to BLUEPRINT.md §19, add `GET /loyalty/rewards` endpoint to S14.
 
-- [ ] **S0.5-C** `neighborhood`/`neighborhoodAr` missing from Shop model — **blocks S3 migration**
+- [x] **S0.5-C** `neighborhood`/`neighborhoodAr` missing from Shop model — **blocks S3 migration**
   - Frontend DiscoveryShop expects `{ neighborhood: string; neighborhoodAr: string; }` on every shop card and map pin.
   - DB model has `address` and `city` only — neighborhood is missing entirely.
   - Action: add `neighborhood String` and `neighborhoodAr String` to `Shop` in `schema.prisma`. Run migration before S3. Update BLUEPRINT.md §2 DB model.
