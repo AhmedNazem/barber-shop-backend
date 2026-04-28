@@ -30,6 +30,8 @@ beforeEach(async () => {
       nameAr: 'محل تجريبي',
       address: 'Baghdad',
       city: 'Baghdad',
+      neighborhood: 'Karrada',
+      neighborhoodAr: 'الكرادة',
       phone: '+9640000000001',
       lat: 33.3,
       lng: 44.4,

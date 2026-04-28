@@ -178,6 +178,8 @@ model Shop {
   nameAr            String
   address           String
   city              String
+  neighborhood      String
+  neighborhoodAr    String
   phone             String
   lat               Float
   lng               Float

@@ -31,6 +31,8 @@ async function seedOwnerWithShop(status = 'PENDING', rejectionReason?: string) {
       nameAr: 'محل تجريبي',
       address: 'Baghdad',
       city: 'Baghdad',
+      neighborhood: 'Karrada',
+      neighborhoodAr: 'الكرادة',
       phone: '+9640000000002',
       lat: 33.3,
       lng: 44.4,
