@@ -31,27 +31,27 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 
 ## Status Overview
 
-| Phase | Name                                | Status      |
-| ----- | ----------------------------------- | ----------- |
-| S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending  |
-| S1    | Project Scaffold                    | ✅ Complete |
-| S2    | Auth — OTP + JWT + Invites          | ✅ Complete |
+| Phase | Name                                | Status         |
+| ----- | ----------------------------------- | -------------- |
+| S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending     |
+| S1    | Project Scaffold                    | ✅ Complete    |
+| S2    | Auth — OTP + JWT + Invites          | ✅ Complete    |
 | S3    | Shops & Discovery                   | 🔄 In Progress |
-| S4    | Shop Detail + Barbers + Services    | ⏳ Pending  |
-| S5    | Booking Wizard + Availability       | ⏳ Pending  |
-| S6    | Checkout + Payments                 | ⏳ Pending  |
-| S7    | Queue Management                    | ⏳ Pending  |
-| S8    | Booking History + Reviews           | ⏳ Pending  |
-| S9    | Dashboard Analytics                 | ⏳ Pending  |
-| S10   | Notifications                       | ⏳ Pending  |
-| S11   | Onboarding Wizard                   | ⏳ Pending  |
-| S12   | Platform Settings + Admin           | ⏳ Pending  |
-| S13   | Subscription Plans + Feature Gating | ⏳ Pending  |
-| S14   | Loyalty + Reliability + VIP         | ⏳ Pending  |
-| S15   | Discount System                     | ⏳ Pending  |
-| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending  |
-| S17   | Contact Form + Saved Shops          | ⏳ Pending  |
-| S18   | Testing & Hardening                 | ⏳ Last     |
+| S4    | Shop Detail + Barbers + Services    | ⏳ Pending     |
+| S5    | Booking Wizard + Availability       | ⏳ Pending     |
+| S6    | Checkout + Payments                 | ⏳ Pending     |
+| S7    | Queue Management                    | ⏳ Pending     |
+| S8    | Booking History + Reviews           | ⏳ Pending     |
+| S9    | Dashboard Analytics                 | ⏳ Pending     |
+| S10   | Notifications                       | ⏳ Pending     |
+| S11   | Onboarding Wizard                   | ⏳ Pending     |
+| S12   | Platform Settings + Admin           | ⏳ Pending     |
+| S13   | Subscription Plans + Feature Gating | ⏳ Pending     |
+| S14   | Loyalty + Reliability + VIP         | ⏳ Pending     |
+| S15   | Discount System                     | ⏳ Pending     |
+| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending     |
+| S17   | Contact Form + Saved Shops          | ⏳ Pending     |
+| S18   | Testing & Hardening                 | ⏳ Last        |
 
 ---
 
@@ -219,7 +219,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 - [x] **S3.1** Shop service (`src/services/shop.service.ts`) — `listShops(filters)`: query with search/service/rating/price filters. Compute `load` per shop from live queue counts (see §23). Include `discount` if active. Return paginated list.
 - [x] **S3.2** `GET /shops` — public. Query params: `search`, `service`, `minRating`, `priceRange`, `load`, `city`, `limit` (default 20), `offset`. Returns `{ shops[], total, limit, offset }`.
-- [ ] **S3.3** `GET /shops/:id` — public. Returns full shop + services[] + barbers[] + `discount` + `load`. This replaces the `shop-detail.constants.ts` mock.
+- [x] **S3.3** `GET /shops/:id` — public. Returns full shop + services[] + barbers[] + `discount` + `load`. This replaces the `shop-detail.constants.ts` mock.
 - [ ] **S3.4** `POST /shops` — Owner JWT. Creates shop (status=PENDING). Used after onboarding wizard step 1. Returns created `Shop`.
 - [ ] **S3.5** `PATCH /shops/:id` — Owner JWT + ownership check. Updates shop fields. Returns updated `Shop`.
 - [ ] **S3.6** Cover + logo upload — `POST /shops/:id/cover` and `POST /shops/:id/logo`. Multipart via `multer`. Validate MIME (JPEG/PNG/WebP). Upload to S3. Returns `{ url }`.
