@@ -36,7 +36,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending     |
 | S1    | Project Scaffold                    | ✅ Complete    |
 | S2    | Auth — OTP + JWT + Invites          | ✅ Complete    |
-| S3    | Shops & Discovery                   | 🔄 In Progress |
+| S3    | Shops & Discovery                   | ✅ Complete    |
 | S4    | Shop Detail + Barbers + Services    | ⏳ Pending     |
 | S5    | Booking Wizard + Availability       | ⏳ Pending     |
 | S6    | Checkout + Payments                 | ⏳ Pending     |
@@ -225,7 +225,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S3.6** Cover + logo upload — `POST /shops/:id/cover` and `POST /shops/:id/logo`. Multipart via `multer`. Validate MIME (JPEG/PNG/WebP). Upload to S3. Returns `{ url }`.
 - [x] **S3.7** Shop load computation — helper `computeLoad(shopId)`: count `QueueEntry` rows with `status IN (WAITING, IN_CHAIR)`, divide by barber count, return `'low'|'medium'|'high'`. Cache result in Redis 60s TTL.
 - [x] **S3.8** `GET /shop/status` — Owner JWT. Returns `{ status, rejectionReason? }`.
-- [ ] **S3.9** Tests — list with filters, load computation, pagination, ownership guard on PATCH.
+- [x] **S3.9** Tests — list with filters, load computation, pagination, ownership guard on PATCH.
 
 ---
 
