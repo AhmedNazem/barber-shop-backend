@@ -6,6 +6,7 @@ import { servicesRouter } from '@/routes/services'
 import { photosRouter } from '@/routes/photos'
 import { barbersRouter } from '@/routes/barbers'
 import { barberPublicRouter } from '@/routes/barber-public'
+import { reviewsRouter } from '@/routes/reviews'
 
 export const router = Router()
 
@@ -16,3 +17,4 @@ router.use('/shops/:shopId/services', servicesRouter)
 router.use('/photos', photosRouter)
 router.use('/shops/:shopId/barbers', barbersRouter)
 router.use('/barbers', barberPublicRouter)
+router.use('/reviews', reviewsRouter)

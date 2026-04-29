@@ -360,3 +360,45 @@ GET {{baseUrl}}/barbers/PASTE_BARBER_ID_HERE/portfolio
 GET {{baseUrl}}/barbers/PASTE_BARBER_ID_HERE/reviews?page=1&limit=10
 
 ###
+
+### S4.8a — List shop reviews (public)
+GET {{baseUrl}}/shops/{{shopId}}/reviews?page=1&limit=10
+
+###
+
+### S4.8b — Create review (Customer JWT) — paste a real bookingId
+POST {{baseUrl}}/reviews
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "bookingId": "PASTE_BOOKING_ID_HERE",
+  "rating": 5,
+  "comment": "Great haircut, very professional!",
+  "barberId": "PASTE_BARBER_ID_HERE"
+}
+
+###
+
+### S4.8c — Flag a review (Owner JWT)
+POST {{baseUrl}}/reviews/PASTE_REVIEW_ID_HERE/flag
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "reason": "SPAM"
+}
+
+###
+
+### S4.8d — Resolve flag (Admin JWT)
+PATCH {{baseUrl}}/reviews/PASTE_REVIEW_ID_HERE/flag
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "action": "remove",
+  "removalReason": "Confirmed spam content"
+}
+
+###
