@@ -1,8 +1,17 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok, paginated } from '@/lib/response'
-import { getShopStatus, getShop } from '@/services/shop.service'
+import { createShop, getShopStatus, getShop } from '@/services/shop.service'
 import { listShops } from '@/services/shop.list.service'
 import { PriceRange } from '@prisma/client'
+
+export async function createShopHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await createShop(req.user!.id, req.body)
+    res.status(201).json({ data: result })
+  } catch (err) {
+    next(err)
+  }
+}
 
 export async function getShopStatusHandler(req: Request, res: Response, next: NextFunction) {
   try {

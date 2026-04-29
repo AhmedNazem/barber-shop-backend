@@ -7,7 +7,7 @@
 @myPhone = +9647802431955
 
 ### Variables (fill these in after login)
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiU0hPUF9PV05FUiIsImlhdCI6MTc3NzQ2MDAyMSwiZXhwIjoxNzc3NDYwOTIxfQ.0rk1z05Oly9C85oX6DsgAqmLcNakTiRN3_D2gOdcxh8
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiU0hPUF9PV05FUiIsImlhdCI6MTc3NzQ2NTY0NiwiZXhwIjoxNzc3NDY5MjQ2fQ.QJuVBqdm7ve-Wq9hHVgPSCVbPbS2uMU4WPgW72AfsSE
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiU0hPUF9PV05FUiIsImlhdCI6MTc3NzQ1OTM0MCwiZXhwIjoxNzc4MDY0MTQwfQ.4VigMHWQQu7w9uhy8Xx-7oqA_AXtZovyjuoFVsBcOZ0
 
 
@@ -94,6 +94,25 @@ Authorization: Bearer {{accessToken}}
 # ════════════════════════════════════════════════
 #  S3 — Shops & Discovery
 # ════════════════════════════════════════════════
+
+### S3.4 — Create shop (Owner JWT)
+POST {{baseUrl}}/shops
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nameEn": "My Barbershop",
+  "nameAr": "حلاقتي",
+  "address": "Test St",
+  "city": "Baghdad",
+  "neighborhood": "Karrada",
+  "neighborhoodAr": "الكرادة",
+  "phone": "+9647802431955",
+  "lat": 33.34,
+  "lng": 44.40
+}
+
+###
 
 ### S3.2 — List shops (public)
 GET {{baseUrl}}/shops

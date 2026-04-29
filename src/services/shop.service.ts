@@ -5,6 +5,20 @@ import { isShopOpen } from '@/lib/shop-hours'
 
 const RATING_TTL = 300
 
+export async function createShop(
+  ownerId: string,
+  data: {
+    nameEn: string; nameAr: string; address: string; city: string
+    neighborhood: string; neighborhoodAr: string; phone: string
+    lat: number; lng: number
+  },
+) {
+  const existing = await prisma.shop.findFirst({ where: { ownerId } })
+  if (existing) throw new AppError('conflict', 409)
+
+  return prisma.shop.create({ data: { ownerId, ...data, status: 'PENDING' } })
+}
+
 export async function getShopStatus(ownerId: string) {
   const shop = await prisma.shop.findFirst({ where: { ownerId } })
   if (!shop) throw new AppError('not_found', 404)
