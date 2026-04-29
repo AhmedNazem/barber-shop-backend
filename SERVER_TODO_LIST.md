@@ -234,8 +234,8 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 > Blueprint: §3, §4, §11a. Replaces `barbers.constants.ts`, `service-items.constants.ts`, `reviews.constants.ts`.
 
 - [x] **S4.1** Services CRUD — `GET /shops/:id/services` (public, `isActive=true` only), `POST /shops/:id/services`, `PATCH /shops/:id/services/:serviceId`, `DELETE /shops/:id/services/:serviceId` (block if upcoming bookings). All owner-JWT + ownership-checked.
-- [ ] **S4.2** Service active toggle — `PATCH /shops/:id/services/:serviceId` with `{ isActive }`. Customer-facing endpoints always filter `isActive: true`.
-- [ ] **S4.3** Service photo gallery — `POST /shops/:id/services/:serviceId/photos` (S3 upload), `DELETE /photos/:photoId`, `PATCH /shops/:id/services/:serviceId/photos/reorder`.
+- [x] **S4.2** Service active toggle — `PATCH /shops/:id/services/:serviceId` with `{ isActive }`. Customer-facing endpoints always filter `isActive: true`.
+- [x] **S4.3** Service photo gallery — `POST /shops/:id/services/:serviceId/photos` (S3 upload), `DELETE /photos/:photoId`, `PATCH /shops/:id/services/:serviceId/photos/reorder`.
 - [ ] **S4.4** Barbers CRUD — `GET /shops/:id/barbers` (public), `POST /shops/:id/barbers`, `PATCH /shops/:id/barbers/:barberId`, `DELETE /shops/:id/barbers/:barberId` (soft-deactivate). Owner JWT.
 - [ ] **S4.5** Barber schedule — `PATCH /shops/:id/barbers/:barberId/schedule` with weekly availability array.
 - [ ] **S4.6** Barber portfolio — `POST /barbers/:id/portfolio` (S3 upload), `DELETE /barbers/:id/portfolio/:photoId`, `PATCH /barbers/:id/portfolio/reorder`.
