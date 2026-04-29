@@ -114,6 +114,18 @@ Content-Type: application/json
 
 ###
 
+### S3.5 — Update shop (Owner JWT)
+PATCH {{baseUrl}}/shops/cmojy02aa000084w9i2lkeii1
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nameEn": "My Barbershop Updated",
+  "city": "Baghdad"
+}
+
+###
+
 ### S3.2 — List shops (public)
 GET {{baseUrl}}/shops
 

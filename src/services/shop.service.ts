@@ -19,6 +19,22 @@ export async function createShop(
   return prisma.shop.create({ data: { ownerId, ...data, status: 'PENDING' } })
 }
 
+export async function updateShop(
+  shopId: string,
+  ownerId: string,
+  data: Partial<{
+    nameEn: string; nameAr: string; address: string; city: string
+    neighborhood: string; neighborhoodAr: string; phone: string
+    lat: number; lng: number
+  }>,
+) {
+  const shop = await prisma.shop.findUnique({ where: { id: shopId } })
+  if (!shop) throw new AppError('not_found', 404)
+  if (shop.ownerId !== ownerId) throw new AppError('forbidden', 403)
+
+  return prisma.shop.update({ where: { id: shopId }, data })
+}
+
 export async function getShopStatus(ownerId: string) {
   const shop = await prisma.shop.findFirst({ where: { ownerId } })
   if (!shop) throw new AppError('not_found', 404)

@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { validate } from '@/middleware/validate'
 import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
-import { createShopHandler, listShopsHandler, getShopHandler } from '@/controllers/shop.controller'
+import { createShopHandler, updateShopHandler, listShopsHandler, getShopHandler } from '@/controllers/shop.controller'
 
 const createShopSchema = z.object({
   nameEn:        z.string().min(2),
@@ -17,8 +17,11 @@ const createShopSchema = z.object({
   lng:           z.number(),
 })
 
+const updateShopSchema = createShopSchema.partial()
+
 export const shopsRouter = Router()
 
 shopsRouter.post('/', authenticate, requireRole('SHOP_OWNER'), validate(createShopSchema), createShopHandler)
 shopsRouter.get('/', listShopsHandler)
 shopsRouter.get('/:id', getShopHandler)
+shopsRouter.patch('/:id', authenticate, requireRole('SHOP_OWNER'), validate(updateShopSchema), updateShopHandler)
