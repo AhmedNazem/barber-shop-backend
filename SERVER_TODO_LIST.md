@@ -244,7 +244,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 - [x] **S4.7** Barber public profile — `GET /barbers/:id` returns full profile shape (see §4 in BLUEPRINT.md). `GET /barbers/:id/reviews`, `GET /barbers/:id/availability`, `GET /barbers/:id/portfolio`.
 - [x] **S4.8** Reviews — `GET /shops/:id/reviews` (paginated, `isVisible=true` for public, all for owner dashboard), `POST /reviews` (customer JWT, FormData + photo upload), `POST /reviews/:id/flag` (owner), `PATCH /reviews/:id/flag` (admin — approve/remove).
-- [ ] **S4.9** Tests — service toggle propagation, review one-per-booking guard (409), flag lifecycle.
+- [x] **S4.9** Tests — service toggle propagation, review one-per-booking guard (409), flag lifecycle.
 
 ---
 
