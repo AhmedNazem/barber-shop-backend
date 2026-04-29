@@ -111,7 +111,7 @@ GET {{baseUrl}}/shops?lat=33.34&lng=44.40
 ###
 
 ### S3.3 — Get shop detail (public)
-GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE
+GET {{baseUrl}}/shops/cmojy02aa000084w9i2lkeii1
 
 ###
 
