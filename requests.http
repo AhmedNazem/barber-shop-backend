@@ -340,3 +340,23 @@ Content-Type: application/json
 }
 
 ###
+
+### S4.7a — Barber public profile
+GET {{baseUrl}}/barbers/PASTE_BARBER_ID_HERE
+
+###
+
+### S4.7b — Barber availability
+GET {{baseUrl}}/barbers/PASTE_BARBER_ID_HERE/availability
+
+###
+
+### S4.7c — Barber portfolio (public)
+GET {{baseUrl}}/barbers/PASTE_BARBER_ID_HERE/portfolio
+
+###
+
+### S4.7d — Barber reviews (paginated)
+GET {{baseUrl}}/barbers/PASTE_BARBER_ID_HERE/reviews?page=1&limit=10
+
+###
