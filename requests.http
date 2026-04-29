@@ -91,6 +91,25 @@ Authorization: Bearer {{accessToken}}
 
 ###
 
+# ════════════════════════════════════════════════
+#  S3 — Shops & Discovery
+# ════════════════════════════════════════════════
+
+### S3.2 — List shops (public)
+GET {{baseUrl}}/shops
+
+###
+
+### S3.2 — List shops with filters
+GET {{baseUrl}}/shops?search=barber&city=Baghdad&priceRange=MID&limit=20&offset=0
+
+###
+
+### S3.2 — List shops with distance (provide your GPS coords)
+GET {{baseUrl}}/shops?lat=33.34&lng=44.40
+
+###
+
 ### S2.10 — Get shop approval status (Owner JWT)
 GET {{baseUrl}}/shop/status
 Authorization: Bearer {{accessToken}}

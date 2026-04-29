@@ -35,8 +35,8 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | ----- | ----------------------------------- | ----------- |
 | S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending  |
 | S1    | Project Scaffold                    | ✅ Complete |
-| S2    | Auth — OTP + JWT + Invites          | ⏳ Pending  |
-| S3    | Shops & Discovery                   | ⏳ Pending  |
+| S2    | Auth — OTP + JWT + Invites          | ✅ Complete |
+| S3    | Shops & Discovery                   | 🔄 In Progress |
 | S4    | Shop Detail + Barbers + Services    | ⏳ Pending  |
 | S5    | Booking Wizard + Availability       | ⏳ Pending  |
 | S6    | Checkout + Payments                 | ⏳ Pending  |
@@ -132,13 +132,13 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### NOTABLE GAPS (decision required before the phase)
 
-- [ ] **S0.5-J** `isOpen` computation not specified — **decide before S3**
+- [x] **S0.5-J** `isOpen` computation not specified — **decide before S3**
   - Every shop in `GET /shops` needs `isOpen: boolean`.
   - Requires: check today's `BusinessHours` for day-of-week, compare server time (Iraq = GMT+3) against `openTime`/`closeTime`.
   - Decision: server always computes in GMT+3 (`Asia/Baghdad` timezone). Helper: `isShopOpen(hours[], now)`.
   - Action: document in BLUEPRINT.md §2. Build helper in `src/lib/shop-hours.ts` during S3.
 
-- [ ] **S0.5-K** `avgRating`/`reviewCount` — computation strategy not specified — **decide before S3**
+- [x] **S0.5-K** `avgRating`/`reviewCount` — computation strategy not specified — **decide before S3**
   - `GET /shops` returns `rating` and `reviewCount` per shop but no column stores these.
   - Decision: compute live with Prisma `_avg` + `_count` on Review (acceptable until ~5k reviews per shop). Cache per-shop result in Redis with 5-min TTL, invalidated on new review POST.
   - Action: document in BLUEPRINT.md §2. Wire cache invalidation in S4 when review POST is built.
@@ -153,7 +153,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Fix: add `isVip Boolean @default(false)` to `QueueEntry`. Walk-in form passes this flag; booking-linked entries copy it from `User.isVip` at insert time.
   - Action: add field to schema, run migration, update BLUEPRINT.md §7 DB model.
 
-- [ ] **S0.5-N** `distance` field — format and who computes it — **decide before S3**
+- [x] **S0.5-N** `distance` field — format and who computes it — **decide before S3**
   - Frontend DiscoveryShop expects a `distance` field (currently `"1.2 km"` in mock).
   - AGENTS.md rule: never return pre-formatted strings.
   - Decision: `GET /shops` accepts optional `?lat&lng` query params. Backend computes Haversine distance in meters, returns raw `distanceMeters: number | null` (null if no coords sent). Frontend formats via its own `fmtDistance()` util.
@@ -217,14 +217,14 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 > Blueprint: §2. Replaces `DISCOVERY_SHOPS` mock. Frontend filter bar wires to real `?search&service&minRating&priceRange&load` params.
 
-- [ ] **S3.1** Shop service (`src/services/shop.service.ts`) — `listShops(filters)`: query with search/service/rating/price filters. Compute `load` per shop from live queue counts (see §23). Include `discount` if active. Return paginated list.
-- [ ] **S3.2** `GET /shops` — public. Query params: `search`, `service`, `minRating`, `priceRange`, `load`, `city`, `limit` (default 20), `offset`. Returns `{ shops[], total, limit, offset }`.
+- [x] **S3.1** Shop service (`src/services/shop.service.ts`) — `listShops(filters)`: query with search/service/rating/price filters. Compute `load` per shop from live queue counts (see §23). Include `discount` if active. Return paginated list.
+- [x] **S3.2** `GET /shops` — public. Query params: `search`, `service`, `minRating`, `priceRange`, `load`, `city`, `limit` (default 20), `offset`. Returns `{ shops[], total, limit, offset }`.
 - [ ] **S3.3** `GET /shops/:id` — public. Returns full shop + services[] + barbers[] + `discount` + `load`. This replaces the `shop-detail.constants.ts` mock.
 - [ ] **S3.4** `POST /shops` — Owner JWT. Creates shop (status=PENDING). Used after onboarding wizard step 1. Returns created `Shop`.
 - [ ] **S3.5** `PATCH /shops/:id` — Owner JWT + ownership check. Updates shop fields. Returns updated `Shop`.
 - [ ] **S3.6** Cover + logo upload — `POST /shops/:id/cover` and `POST /shops/:id/logo`. Multipart via `multer`. Validate MIME (JPEG/PNG/WebP). Upload to S3. Returns `{ url }`.
 - [ ] **S3.7** Shop load computation — helper `computeLoad(shopId)`: count `QueueEntry` rows with `status IN (WAITING, IN_CHAIR)`, divide by barber count, return `'low'|'medium'|'high'`. Cache result in Redis 60s TTL.
-- [ ] **S3.8** `GET /shop/status` — Owner JWT. Returns `{ status, rejectionReason? }`.
+- [x] **S3.8** `GET /shop/status` — Owner JWT. Returns `{ status, rejectionReason? }`.
 - [ ] **S3.9** Tests — list with filters, load computation, pagination, ownership guard on PATCH.
 
 ---
