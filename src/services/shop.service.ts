@@ -2,6 +2,7 @@ import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { redisClient } from '@/lib/redis'
 import { isShopOpen } from '@/lib/shop-hours'
+import { computeLoad } from '@/lib/shop-load'
 
 const RATING_TTL = 300
 
@@ -70,7 +71,6 @@ export async function getShop(shopId: string) {
         orderBy: { nameEn: 'asc' },
       },
       barbers: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
-      _count: { select: { barbers: { where: { isActive: true } } } },
     },
   })
 
@@ -98,12 +98,7 @@ export async function getShop(shopId: string) {
     await redisClient.setex(cacheKey, RATING_TTL, JSON.stringify({ avgRating, reviewCount }))
   }
 
-  // Load
-  const queueCount = await prisma.queueEntry.count({
-    where: { shopId: shop.id, status: { in: ['WAITING', 'IN_CHAIR'] } },
-  })
-  const ratio = shop._count.barbers > 0 ? queueCount / shop._count.barbers : 0
-  const load: 'low' | 'medium' | 'high' = ratio < 0.5 ? 'low' : ratio < 1.5 ? 'medium' : 'high'
+  const load = await computeLoad(shop.id)
 
   const discount =
     shop.discount && shop.discount.expiresAt > now && shop.discount.slotsClaimed < shop.discount.maxUsers
