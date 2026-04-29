@@ -7,8 +7,8 @@
 @myPhone = +9647802431955
 
 ### Variables (fill these in after login)
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NzczODQ5MDIsImV4cCI6MTc3NzM4NTgwMn0.FhhRtXM2DMggwqZLSQuzlxjSvA4NUw5ypclW7aIZ4M0
-@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NzczODQ3NzQsImV4cCI  6MTc3Nzk4OTU3NH0.GkXVvuRS4LY0OotbhBddY2BLIasXyeoKNzchZ36nsr0
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiU0hPUF9PV05FUiIsImlhdCI6MTc3NzQ2MDAyMSwiZXhwIjoxNzc3NDYwOTIxfQ.0rk1z05Oly9C85oX6DsgAqmLcNakTiRN3_D2gOdcxh8
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiU0hPUF9PV05FUiIsImlhdCI6MTc3NzQ1OTM0MCwiZXhwIjoxNzc4MDY0MTQwfQ.4VigMHWQQu7w9uhy8Xx-7oqA_AXtZovyjuoFVsBcOZ0
 
 
 # ════════════════════════════════════════════════
@@ -32,7 +32,7 @@ Content-Type: application/json
 
 {
   "phone": "{{myPhone}}",
-  "otp": "952897",
+  "otp": "44",
   "name": "Ahmed",
   "isRegister": true
 }
@@ -45,7 +45,7 @@ Content-Type: application/json
 
 {
   "phone": "{{myPhone}}",
-  "otp": "PASTE_OTP_HERE",
+  "otp": "775757",
   "name": "Ahmed",
   "shopName": "My Barbershop",
   "isRegister": true
@@ -59,7 +59,7 @@ Content-Type: application/json
 
 {
   "phone": "{{myPhone}}",
-  "otp": "PASTE_OTP_HERE"
+  "otp": "449324"
 }
 
 ###
@@ -107,6 +107,11 @@ GET {{baseUrl}}/shops?search=barber&city=Baghdad&priceRange=MID&limit=20&offset=
 
 ### S3.2 — List shops with distance (provide your GPS coords)
 GET {{baseUrl}}/shops?lat=33.34&lng=44.40
+
+###
+
+### S3.3 — Get shop detail (public)
+GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE
 
 ###
 

@@ -12,16 +12,15 @@ export async function createOrFindUser(
   let user = await prisma.user.findUnique({ where: { phone: e164 } })
 
   if (opts.isRegister) {
-    if (!user) {
-      if (!opts.name) throw new AppError('name_required', 400)
-      user = await prisma.user.create({
-        data: {
-          phone: e164,
-          name: opts.name,
-          role: opts.shopName ? UserRole.SHOP_OWNER : UserRole.CUSTOMER,
-        },
-      })
-    }
+    if (user) throw new AppError('already_registered', 409)
+    if (!opts.name) throw new AppError('name_required', 400)
+    user = await prisma.user.create({
+      data: {
+        phone: e164,
+        name: opts.name,
+        role: opts.shopName ? UserRole.SHOP_OWNER : UserRole.CUSTOMER,
+      },
+    })
   } else {
     if (!user) throw new AppError('user_not_found', 404)
   }

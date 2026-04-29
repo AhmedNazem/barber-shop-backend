@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok, paginated } from '@/lib/response'
-import { getShopStatus, listShops } from '@/services/shop.service'
+import { getShopStatus, getShop } from '@/services/shop.service'
+import { listShops } from '@/services/shop.list.service'
 import { PriceRange } from '@prisma/client'
 
 export async function getShopStatusHandler(req: Request, res: Response, next: NextFunction) {
@@ -27,6 +28,15 @@ export async function listShopsHandler(req: Request, res: Response, next: NextFu
       offset: q['offset'] ? Number(q['offset']) : 0,
     })
     paginated(res, result.shops, { total: result.total, limit: result.limit, offset: result.offset })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getShopHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await getShop(req.params['id']!)
+    ok(res, result)
   } catch (err) {
     next(err)
   }

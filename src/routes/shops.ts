@@ -1,6 +1,7 @@
 import { Router } from 'express'
-import { listShopsHandler } from '@/controllers/shop.controller'
+import { listShopsHandler, getShopHandler } from '@/controllers/shop.controller'
 
 export const shopsRouter = Router()
 
 shopsRouter.get('/', listShopsHandler)
+shopsRouter.get('/:id', getShopHandler)
