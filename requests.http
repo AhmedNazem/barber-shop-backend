@@ -309,3 +309,34 @@ Content-Type: application/json
 ]
 
 ###
+
+### S4.6a — Upload portfolio photo (multipart/form-data)
+POST {{baseUrl}}/shops/{{shopId}}/barbers/PASTE_BARBER_ID_HERE/portfolio
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="photo"; filename="test.png"
+Content-Type: image/png
+
+< ./test.png
+------Boundary--
+
+###
+
+### S4.6b — Delete portfolio photo
+DELETE {{baseUrl}}/shops/{{shopId}}/barbers/PASTE_BARBER_ID_HERE/portfolio/PASTE_PHOTO_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+###
+
+### S4.6c — Reorder portfolio photos
+PATCH {{baseUrl}}/shops/{{shopId}}/barbers/PASTE_BARBER_ID_HERE/portfolio/reorder
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "photoIds": ["PHOTO_ID_1", "PHOTO_ID_2"]
+}
+
+###

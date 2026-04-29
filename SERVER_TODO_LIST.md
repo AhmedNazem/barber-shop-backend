@@ -238,7 +238,10 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S4.3** Service photo gallery — `POST /shops/:id/services/:serviceId/photos` (S3 upload), `DELETE /photos/:photoId`, `PATCH /shops/:id/services/:serviceId/photos/reorder`.
 - [x] **S4.4** Barbers CRUD — `GET /shops/:id/barbers` (public), `POST /shops/:id/barbers`, `PATCH /shops/:id/barbers/:barberId`, `DELETE /shops/:id/barbers/:barberId` (soft-deactivate). Owner JWT.
 - [x] **S4.5** Barber schedule — `PATCH /shops/:id/barbers/:barberId/schedule` with weekly availability array.
-- [ ] **S4.6** Barber portfolio — `POST /barbers/:id/portfolio` (S3 upload), `DELETE /barbers/:id/portfolio/:photoId`, `PATCH /barbers/:id/portfolio/reorder`.
+- [x] **S4.6** Barber portfolio — `POST /barbers/:id/portfolio` (S3 upload), `DELETE /barbers/:id/portfolio/:photoId`, `PATCH /barbers/:id/portfolio/reorder
+
+`.
+
 - [ ] **S4.7** Barber public profile — `GET /barbers/:id` returns full profile shape (see §4 in BLUEPRINT.md). `GET /barbers/:id/reviews`, `GET /barbers/:id/availability`, `GET /barbers/:id/portfolio`.
 - [ ] **S4.8** Reviews — `GET /shops/:id/reviews` (paginated, `isVisible=true` for public, all for owner dashboard), `POST /reviews` (customer JWT, FormData + photo upload), `POST /reviews/:id/flag` (owner), `PATCH /reviews/:id/flag` (admin — approve/remove).
 - [ ] **S4.9** Tests — service toggle propagation, review one-per-booking guard (409), flag lifecycle.
