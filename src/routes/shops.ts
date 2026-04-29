@@ -3,7 +3,8 @@ import { z } from 'zod'
 import { validate } from '@/middleware/validate'
 import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
-import { createShopHandler, updateShopHandler, listShopsHandler, getShopHandler } from '@/controllers/shop.controller'
+import { createShopHandler, updateShopHandler, uploadImageHandler, listShopsHandler, getShopHandler } from '@/controllers/shop.controller'
+import { singleImage } from '@/lib/upload'
 
 const createShopSchema = z.object({
   nameEn:        z.string().min(2),
@@ -25,3 +26,5 @@ shopsRouter.post('/', authenticate, requireRole('SHOP_OWNER'), validate(createSh
 shopsRouter.get('/', listShopsHandler)
 shopsRouter.get('/:id', getShopHandler)
 shopsRouter.patch('/:id', authenticate, requireRole('SHOP_OWNER'), validate(updateShopSchema), updateShopHandler)
+shopsRouter.post('/:id/cover', authenticate, requireRole('SHOP_OWNER'), singleImage('file'), uploadImageHandler('coverUrl'))
+shopsRouter.post('/:id/logo', authenticate, requireRole('SHOP_OWNER'), singleImage('file'), uploadImageHandler('logoUrl'))

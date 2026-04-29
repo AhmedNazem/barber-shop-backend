@@ -31,5 +31,8 @@ export const ERROR_MESSAGES: Record<string, { en: string; ar: string }> = {
   name_required:        { en: 'Name is required for registration', ar: 'الاسم مطلوب للتسجيل' },
   user_not_found:       { en: 'No account found for this phone', ar: 'لا يوجد حساب لهذا الرقم' },
   already_registered:   { en: 'An account already exists for this phone', ar: 'يوجد حساب مسبق لهذا الرقم' },
+  file_too_large:       { en: 'File exceeds maximum size (5 MB)', ar: 'حجم الملف يتجاوز الحد المسموح (5 ميغابايت)' },
+  invalid_mime:         { en: 'Only JPEG, PNG and WebP images are allowed', ar: 'يُسمح فقط بصور JPEG وPNG وWebP' },
+  file_required:        { en: 'No file was uploaded',            ar: 'لم يتم رفع أي ملف' },
   internal_error:       { en: 'Something went wrong',          ar: 'حدث خطأ ما' },
 }

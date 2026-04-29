@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok, paginated } from '@/lib/response'
-import { createShop, updateShop, getShopStatus, getShop } from '@/services/shop.service'
+import { createShop, updateShop, setShopImage, getShopStatus, getShop } from '@/services/shop.service'
 import { listShops } from '@/services/shop.list.service'
+import { uploadToS3 } from '@/lib/s3'
 import { PriceRange } from '@prisma/client'
 
 export async function createShopHandler(req: Request, res: Response, next: NextFunction) {
@@ -19,6 +20,21 @@ export async function updateShopHandler(req: Request, res: Response, next: NextF
     ok(res, result)
   } catch (err) {
     next(err)
+  }
+}
+
+export function uploadImageHandler(field: 'coverUrl' | 'logoUrl') {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const shopId = req.params['id']!
+      const file = req.file!
+      const ext = field === 'coverUrl' ? 'cover' : 'logo'
+      const url = await uploadToS3(`shops/${shopId}/${ext}`, file.buffer, file.mimetype)
+      const result = await setShopImage(shopId, req.user!.id, field, url)
+      ok(res, { url: result[field] })
+    } catch (err) {
+      next(err)
+    }
   }
 }
 

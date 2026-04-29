@@ -35,6 +35,19 @@ export async function updateShop(
   return prisma.shop.update({ where: { id: shopId }, data })
 }
 
+export async function setShopImage(
+  shopId: string,
+  ownerId: string,
+  field: 'coverUrl' | 'logoUrl',
+  url: string,
+) {
+  const shop = await prisma.shop.findUnique({ where: { id: shopId } })
+  if (!shop) throw new AppError('not_found', 404)
+  if (shop.ownerId !== ownerId) throw new AppError('forbidden', 403)
+
+  return prisma.shop.update({ where: { id: shopId }, data: { [field]: url } })
+}
+
 export async function getShopStatus(ownerId: string) {
   const shop = await prisma.shop.findFirst({ where: { ownerId } })
   if (!shop) throw new AppError('not_found', 404)

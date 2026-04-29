@@ -126,6 +126,35 @@ Content-Type: application/json
 
 ###
 
+### S3.6a — Upload cover (Owner JWT)
+# Put any JPEG/PNG/WebP image at the path below (e.g. save one as test.jpg next to this file)
+POST {{baseUrl}}/shops/cmojy02aa000084w9i2lkeii1/cover
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="file"; filename="test.png"
+Content-Type: image/png
+
+< ./test.png
+------Boundary--
+
+###
+
+### S3.6b — Upload logo (Owner JWT)
+POST {{baseUrl}}/shops/cmojy02aa000084w9i2lkeii1/logo
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="file"; filename="test.png"
+Content-Type: image/png
+
+< ./test.png
+------Boundary--
+
+###
+
 ### S3.2 — List shops (public)
 GET {{baseUrl}}/shops
 
