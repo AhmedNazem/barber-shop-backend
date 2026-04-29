@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { listBarbers, createBarber, updateBarber, deactivateBarber } from '@/services/barber.service'
+import { listBarbers, createBarber, updateBarber, deactivateBarber, setBarberSchedule } from '@/services/barber.service'
 
 export async function listBarbersHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -24,5 +24,11 @@ export async function updateBarberHandler(req: Request, res: Response, next: Nex
 export async function deactivateBarberHandler(req: Request, res: Response, next: NextFunction) {
   try {
     ok(res, await deactivateBarber(req.params['shopId']!, req.params['barberId']!, req.user!.id))
+  } catch (err) { next(err) }
+}
+
+export async function setScheduleHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await setBarberSchedule(req.params['shopId']!, req.params['barberId']!, req.user!.id, req.body))
   } catch (err) { next(err) }
 }

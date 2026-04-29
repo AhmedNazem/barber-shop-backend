@@ -41,3 +41,15 @@ export async function deactivateBarber(shopId: string, barberId: string, ownerId
   if (!barber) throw new AppError('not_found', 404)
   return prisma.barber.update({ where: { id: barberId }, data: { isActive: false } })
 }
+
+type ScheduleEntry = { dayOfWeek: number; startTime: string; endTime: string; isAvailable: boolean }
+
+export async function setBarberSchedule(shopId: string, barberId: string, ownerId: string, entries: ScheduleEntry[]) {
+  await assertOwnership(shopId, ownerId)
+  const barber = await prisma.barber.findFirst({ where: { id: barberId, shopId } })
+  if (!barber) throw new AppError('not_found', 404)
+  return prisma.$transaction([
+    prisma.barberSchedule.deleteMany({ where: { barberId } }),
+    prisma.barberSchedule.createMany({ data: entries.map(e => ({ ...e, barberId })) }),
+  ])
+}

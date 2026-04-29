@@ -31,27 +31,27 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 
 ## Status Overview
 
-| Phase | Name                                | Status         |
-| ----- | ----------------------------------- | -------------- |
-| S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending     |
-| S1    | Project Scaffold                    | ✅ Complete    |
-| S2    | Auth — OTP + JWT + Invites          | ✅ Complete    |
-| S3    | Shops & Discovery                   | ✅ Complete    |
-| S4    | Shop Detail + Barbers + Services    | ⏳ Pending     |
-| S5    | Booking Wizard + Availability       | ⏳ Pending     |
-| S6    | Checkout + Payments                 | ⏳ Pending     |
-| S7    | Queue Management                    | ⏳ Pending     |
-| S8    | Booking History + Reviews           | ⏳ Pending     |
-| S9    | Dashboard Analytics                 | ⏳ Pending     |
-| S10   | Notifications                       | ⏳ Pending     |
-| S11   | Onboarding Wizard                   | ⏳ Pending     |
-| S12   | Platform Settings + Admin           | ⏳ Pending     |
-| S13   | Subscription Plans + Feature Gating | ⏳ Pending     |
-| S14   | Loyalty + Reliability + VIP         | ⏳ Pending     |
-| S15   | Discount System                     | ⏳ Pending     |
-| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending     |
-| S17   | Contact Form + Saved Shops          | ⏳ Pending     |
-| S18   | Testing & Hardening                 | ⏳ Last        |
+| Phase | Name                                | Status      |
+| ----- | ----------------------------------- | ----------- |
+| S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending  |
+| S1    | Project Scaffold                    | ✅ Complete |
+| S2    | Auth — OTP + JWT + Invites          | ✅ Complete |
+| S3    | Shops & Discovery                   | ✅ Complete |
+| S4    | Shop Detail + Barbers + Services    | ⏳ Pending  |
+| S5    | Booking Wizard + Availability       | ⏳ Pending  |
+| S6    | Checkout + Payments                 | ⏳ Pending  |
+| S7    | Queue Management                    | ⏳ Pending  |
+| S8    | Booking History + Reviews           | ⏳ Pending  |
+| S9    | Dashboard Analytics                 | ⏳ Pending  |
+| S10   | Notifications                       | ⏳ Pending  |
+| S11   | Onboarding Wizard                   | ⏳ Pending  |
+| S12   | Platform Settings + Admin           | ⏳ Pending  |
+| S13   | Subscription Plans + Feature Gating | ⏳ Pending  |
+| S14   | Loyalty + Reliability + VIP         | ⏳ Pending  |
+| S15   | Discount System                     | ⏳ Pending  |
+| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending  |
+| S17   | Contact Form + Saved Shops          | ⏳ Pending  |
+| S18   | Testing & Hardening                 | ⏳ Last     |
 
 ---
 
@@ -237,7 +237,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S4.2** Service active toggle — `PATCH /shops/:id/services/:serviceId` with `{ isActive }`. Customer-facing endpoints always filter `isActive: true`.
 - [x] **S4.3** Service photo gallery — `POST /shops/:id/services/:serviceId/photos` (S3 upload), `DELETE /photos/:photoId`, `PATCH /shops/:id/services/:serviceId/photos/reorder`.
 - [x] **S4.4** Barbers CRUD — `GET /shops/:id/barbers` (public), `POST /shops/:id/barbers`, `PATCH /shops/:id/barbers/:barberId`, `DELETE /shops/:id/barbers/:barberId` (soft-deactivate). Owner JWT.
-- [ ] **S4.5** Barber schedule — `PATCH /shops/:id/barbers/:barberId/schedule` with weekly availability array.
+- [x] **S4.5** Barber schedule — `PATCH /shops/:id/barbers/:barberId/schedule` with weekly availability array.
 - [ ] **S4.6** Barber portfolio — `POST /barbers/:id/portfolio` (S3 upload), `DELETE /barbers/:id/portfolio/:photoId`, `PATCH /barbers/:id/portfolio/reorder`.
 - [ ] **S4.7** Barber public profile — `GET /barbers/:id` returns full profile shape (see §4 in BLUEPRINT.md). `GET /barbers/:id/reviews`, `GET /barbers/:id/availability`, `GET /barbers/:id/portfolio`.
 - [ ] **S4.8** Reviews — `GET /shops/:id/reviews` (paginated, `isVisible=true` for public, all for owner dashboard), `POST /reviews` (customer JWT, FormData + photo upload), `POST /reviews/:id/flag` (owner), `PATCH /reviews/:id/flag` (admin — approve/remove).

@@ -256,3 +256,56 @@ DELETE {{baseUrl}}/shops/{{shopId}}/services/PASTE_SERVICE_ID_HERE
 Authorization: Bearer {{accessToken}}
 
 ###
+
+### S4.4a — List barbers (public)
+GET {{baseUrl}}/shops/{{shopId}}/barbers
+
+###
+
+### S4.4b — Create barber (Owner JWT)
+POST {{baseUrl}}/shops/{{shopId}}/barbers
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nameEn": "Ahmed",
+  "nameAr": "أحمد",
+  "experienceYears": 5,
+  "specialties": ["fade", "beard"]
+}
+
+###
+
+### S4.4c — Update barber — paste barberId after creating
+PATCH {{baseUrl}}/shops/{{shopId}}/barbers/PASTE_BARBER_ID_HERE
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "experienceYears": 8
+}
+
+###
+
+### S4.4d — Deactivate barber
+DELETE {{baseUrl}}/shops/{{shopId}}/barbers/PASTE_BARBER_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+###
+
+### S4.5 — Set barber schedule (replaces entire schedule)
+PATCH {{baseUrl}}/shops/{{shopId}}/barbers/cmokeuby1000113aidfuhg04n/schedule
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+[
+  { "dayOfWeek": 0, "startTime": "09:10", "endTime": "17:00", "isAvailable": true },
+  { "dayOfWeek": 1, "startTime": "09:00", "endTime": "17:00", "isAvailable": true },
+  { "dayOfWeek": 2, "startTime": "09:00", "endTime": "17:00", "isAvailable": true },
+  { "dayOfWeek": 3, "startTime": "09:00", "endTime": "17:00", "isAvailable": true },
+  { "dayOfWeek": 4, "startTime": "09:00", "endTime": "17:00", "isAvailable": true },
+  { "dayOfWeek": 5, "startTime": "10:00", "endTime": "14:00", "isAvailable": true },
+  { "dayOfWeek": 6, "startTime": "00:00", "endTime": "00:00", "isAvailable": false }
+]
+
+###
