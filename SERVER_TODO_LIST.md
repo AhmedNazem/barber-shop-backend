@@ -31,33 +31,33 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 
 ## Status Overview
 
-| Phase | Name                                | Status      |
-| ----- | ----------------------------------- | ----------- |
-| S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending  |
-| S1    | Project Scaffold                    | ✅ Complete |
-| S2    | Auth — OTP + JWT + Invites          | ✅ Complete |
-| S3    | Shops & Discovery                   | ✅ Complete |
-| S4    | Shop Detail + Barbers + Services    | ⏳ Pending  |
-| S5    | Booking Wizard + Availability       | ⏳ Pending  |
-| S6    | Checkout + Payments                 | ⏳ Pending  |
-| S7    | Queue Management                    | ⏳ Pending  |
-| S8    | Booking History + Reviews           | ⏳ Pending  |
-| S9    | Dashboard Analytics                 | ⏳ Pending  |
-| S10   | Notifications                       | ⏳ Pending  |
-| S11   | Onboarding Wizard                   | ⏳ Pending  |
-| S12   | Platform Settings + Admin           | ⏳ Pending  |
-| S13   | Subscription Plans + Feature Gating | ⏳ Pending  |
-| S14   | Loyalty + Reliability + VIP         | ⏳ Pending  |
-| S15   | Discount System                     | ⏳ Pending  |
-| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending  |
-| S17   | Contact Form + Saved Shops          | ⏳ Pending  |
-| S18   | Testing & Hardening                 | ⏳ Last     |
+| Phase | Name                                | Status                    |
+| ----- | ----------------------------------- | ------------------------- |
+| S0.5  | Blueprint Gaps & Pre-Build Fixes    | ⏳ Pending                |
+| S1    | Project Scaffold                    | ✅ Complete               |
+| S2    | Auth — OTP + JWT + Invites          | ✅ Complete               |
+| S3    | Shops & Discovery                   | ✅ Complete               |
+| S4    | Shop Detail + Barbers + Services    | ✅ Complete               |
+| S5    | Booking Wizard + Availability       | ✅ Complete               |
+| S6    | Checkout + Payments                 | ⏸ Postponed — Post-Launch |
+| S7    | Queue Management                    | ⏳ Pending                |
+| S8    | Booking History + Reviews           | ⏳ Pending                |
+| S9    | Dashboard Analytics                 | ⏳ Pending                |
+| S10   | Notifications                       | ⏳ Pending                |
+| S11   | Onboarding Wizard                   | ⏳ Pending                |
+| S12   | Platform Settings + Admin           | ⏳ Pending                |
+| S13   | Subscription Plans + Feature Gating | ⏳ Pending                |
+| S14   | Loyalty + Reliability + VIP         | ⏳ Pending                |
+| S15   | Discount System                     | ⏳ Pending                |
+| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending                |
+| S17   | Contact Form + Saved Shops          | ⏳ Pending                |
+| S18   | Testing & Hardening                 | ⏳ Last                   |
 
 ---
 
 ## Build Order Rationale
 
-Each phase unblocks the next. S1–S3 must be done before any frontend wiring can begin. S6 (payments) requires S5 (booking). S14 (loyalty/VIP) requires S6 (booking creation is the earn trigger).
+Each phase unblocks the next. S1–S3 must be done before any frontend wiring can begin. S6 is postponed to post-launch — it is NOT a blocker for S7 or beyond. S14 loyalty earn is triggered by booking COMPLETION (queue done event), not by payment.
 
 ---
 
@@ -254,26 +254,43 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 - [x] **S5.1** Availability service (`src/services/availability.service.ts`) — given `shopId`, `date`, `barberId?`: get barber schedule for that day, subtract confirmed bookings, return free 30-min slots as ISO time strings. Respect `REGULAR_DAYS_AHEAD=3` / `VIP_DAYS_AHEAD=7` window.
 - [x] **S5.2** `GET /shops/:id/availability` — public with optional auth. Query: `?date&barberId`. Returns `{ slots: string[] }`. VIP check: if authenticated and `user.isVip`, allow up to 7 days ahead; else 3 days.
-- [x] **S5.3** Booking creation service (`src/services/booking.service.ts`) — `createBooking(customerId, data)`: (1) check `ReliabilityRecord` → block if score=0 or noShowCount≥3. (2) Check slot conflict (no overlapping confirmed bookings for barber). (3) Fetch discount, compute `totalPrice` + `deposit` using authoritative formula. (4) Snapshot `barberName`, `discountPct`, service names+prices into `BookingService`. (5) All in one Prisma transaction.
-- [x] **S5.4** `POST /bookings` — Customer JWT. Zod: `{ shopId, serviceIds[], barberId?, slot, paymentMethod }`. Returns `{ bookingId, depositAmount, paymentReference }`.
-- [x] **S5.5** Deposit formula enforcement — `Math.round((discountedSubtotal * depositRate) / 250) * 250`. `depositRate` comes from `ReliabilityRecord.score` (see §20). Never trust client-sent amount.
+- [x] **S5.3** Booking creation service (`src/services/booking.service.ts`) — `createBooking(customerId, data)`: (1) check `ReliabilityRecord` → block if score < 50. (2) Check slot conflict (no overlapping confirmed bookings for barber). (3) Fetch discount, compute `totalPrice`. (4) Snapshot `barberName`, `discountPct`, service names+prices into `BookingService`. (5) All in one Prisma transaction. **No deposit collected — `depositPaid = 0` always for MVP.**
+- [x] **S5.4** `POST /bookings` — Customer JWT. Zod: `{ shopId, serviceIds[], barberId?, slot, paymentMethod }`. `paymentMethod` defaults to `CASH`. Booking confirmed immediately. Returns `{ data: booking }`.
+- [ ] **S5.5** ~~Deposit formula enforcement~~ — **DEFERRED to post-launch.** No deposits for MVP. Customers pay full amount in cash at the shop. `depositPaid` is always `0` until S6 is built post-launch.
 - [x] **S5.6** Tests — slot conflict guard, VIP window enforcement, blocked customer returns 403, discount claim atomicity.
 
 ---
 
-## Phase S6 — Checkout + Payments ⏳
+## Phase S6 — Checkout + Payments ⏸ POSTPONED — POST-LAUNCH
 
-> Blueprint: §6. Iraqi payment gateways. Start with ZainCash (most common), add FIB + PayTabs after.
-
-- [ ] **S6.1** Payment service (`src/services/payment.service.ts`) — `initiate(bookingId, method)`: fetch booking, call gateway API, return `{ gatewayUrl }` (ZainCash redirect) or `{ reference }` (FIB). `handleCallback(payload, signature)`: verify webhook signature, update `Booking.paymentStatus`, trigger post-payment jobs.
-- [ ] **S6.2** `POST /payments/initiate` — Customer JWT. Zod: `{ bookingId, method }`. Returns gateway redirect or reference.
-- [ ] **S6.3** `POST /payments/callback` — public webhook. Verify signature per gateway docs. Update `BookingPaymentStatus → PAID`. Queue: credit loyalty points job, send confirmation notification job.
-- [ ] **S6.4** `GET /payments/:bookingId/status` — Customer JWT. Returns `{ status: PaymentStatus }`. Frontend polls this after redirect.
-- [ ] **S6.5** ZainCash integration — sandbox + prod endpoints. HMAC signature generation + verification.
-- [ ] **S6.6** FIB integration — sandbox + prod. FIB OAuth token flow + payment creation.
-- [ ] **S6.7** PayTabs Iraq integration — card payment session creation + IPN verification.
-- [ ] **S6.8** Post-payment BullMQ jobs — `credit-loyalty-points` (§19 earn formula), `send-booking-confirmation` (WhatsApp + in-app notification).
-- [ ] **S6.9** Tests — signature verification, double-payment guard (idempotent callback), loyalty earn triggered exactly once per booking.
+> **Decision (2026-05-01): S6 is not needed for MVP launch.**
+>
+> ### MVP Reality
+>
+> - Customers pay **cash at the shop**. No gateway. No deposit. Booking is confirmed immediately.
+> - `paymentMethod = CASH`, `depositPaid = 0`, `paymentStatus = PENDING` (means "to be paid at shop").
+> - Revenue is tracked via booking `totalPrice` when status moves to `COMPLETED`.
+>
+> ### Two Post-Launch Payment Phases
+>
+> **Phase S6-A — Shop owner pays Ahmed (SaaS subscription via Paddle)**
+> Ahmed collects monthly subscription fees from shop owners using **Paddle** (merchant of record — no Iraqi company needed). Paddle accepts Mastercard/Visa globally and pays out to Ahmed via Payoneer.
+>
+> - [ ] Paddle account setup + webhook secret in `.env` (`PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`)
+> - [ ] `POST /paddle/webhook` — public. Verifies Paddle signature. On `subscription.activated` or `transaction.completed` → upgrades shop plan. On `subscription.canceled` → downgrades to FREE.
+> - [ ] `GET /shops/:id/subscription` — Owner JWT. Returns current plan + next billing date from Paddle.
+> - [ ] Tests — plan upgrade on Paddle webhook, plan downgrade on cancellation, signature forgery rejected.
+>
+> **Phase S6-B — Customer pays shop digitally (Model B — ZainCash / FIB)**
+> Only needed when shop owners request it. Customer pays deposit directly to the shop's own ZainCash wallet or FIB account. Ahmed is not the merchant.
+>
+> - [ ] Add `zaincashNumber String?`, `fibClientId String?`, `fibClientSecret String?` (encrypted) to `Shop` model
+> - [ ] Gateway interface + CASH / ZainCash / FIB implementations (see architecture notes in memory)
+> - [ ] `POST /payments/initiate`, `POST /payments/confirm` (manual ZainCash), `POST /payments/fib/callback`
+> - [ ] Deposit formula: `Math.round((subtotal × depositPercent / 100) / 250) × 250` — round to nearest 250 IQD
+> - [ ] Tests — manual confirm by correct owner only, FIB webhook idempotency, wrong owner blocked
+>
+> **Do not build S6 until post-launch. Jump directly to S7.**
 
 ---
 
@@ -311,14 +328,17 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 ## Phase S9 — Dashboard Analytics ⏳
 
 > Blueprint: §11. Owner sees shop-wide data. Barber sees only their own rows.
+>
+> **Revenue source (no payment gateway):** Revenue = sum of `Booking.totalPrice` where `status = COMPLETED`. This works for both online bookings and walk-in sales recorded via the dashboard. Never use `paymentStatus` for revenue — it will always be `PENDING` until S6-B is built.
 
-- [ ] **S9.1** `GET /dashboard/stats` — Owner/Barber JWT. Returns `{ todayBookings, todayRevenue, queueLength, avgWaitMin }`. Scoped by role.
+- [ ] **S9.1** `GET /dashboard/stats` — Owner/Barber JWT. Returns `{ todayBookings, todayRevenue, queueLength, avgWaitMin }`. `todayRevenue` = sum of `totalPrice` for COMPLETED bookings today. Scoped by role.
 - [ ] **S9.2** `GET /dashboard/activity` — Owner JWT. Last 10 events from `Notification` table for this shop.
-- [ ] **S9.3** `GET /dashboard/analytics` — Owner/Barber JWT. Query: `?range=today|week|month|custom&start&end`. Scoped by role (see §11 backend scoping rules).
+- [ ] **S9.3** `GET /dashboard/analytics` — Owner/Barber JWT. Query: `?range=today|week|month|custom&start&end`. Scoped by role (see §11 backend scoping rules). Revenue = COMPLETED bookings totalPrice sum.
 - [ ] **S9.4** `GET /dashboard/analytics/barbers` — Owner JWT only. Per-barber revenue/bookings/avgRating. Returns 403 for barber role.
 - [ ] **S9.5** `GET /dashboard/analytics/top-services` — Owner/Barber JWT. Top services by booking count + revenue. Scoped by role.
 - [ ] **S9.6** `GET /dashboard/analytics/peak-hours` — Owner/Barber JWT. Returns `{ cells[], shopHours }`. `shopHours` comes from `BusinessHours` table. Scoped by role.
-- [ ] **S9.7** Tests — barber forbidden from `/analytics/barbers`, revenue scoping correctness, empty range returns zeroed arrays not null.
+- [ ] **S9.8** `POST /dashboard/walk-in-sale` — Owner/Barber JWT. Records a cash sale that happened without an online booking. Zod: `{ serviceIds[], barberId?, totalPrice, note? }`. Creates a `Booking` record with `status = COMPLETED`, `paymentMethod = CASH`, `slot = now`. This feeds directly into revenue calculations. Returns created booking.
+- [ ] **S9.9** Tests — barber forbidden from `/analytics/barbers`, revenue scoping correctness, walk-in sale appears in revenue, empty range returns zeroed arrays not null.
 
 ---
 
@@ -343,7 +363,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [ ] **S11.2** `POST /onboarding/branding` — Owner JWT. Multipart: cover + logo → S3.
 - [ ] **S11.3** `POST /onboarding/services` — Owner JWT. Creates `Service[]` records for the shop.
 - [ ] **S11.4** `POST /onboarding/hours` — Owner JWT. Creates `BusinessHours[]` records.
-- [ ] **S11.5** `POST /onboarding/payment` — Owner JWT. Saves encrypted payment credentials. Sets `shop.status = PENDING`. Notifies admins via in-app notification.
+- [ ] **S11.5** `POST /onboarding/submit` — Owner JWT. Sets `shop.status = PENDING`. Notifies admins via in-app notification. **No payment credentials collected at onboarding for MVP** — payment setup (ZainCash number / FIB credentials) is optional and done later in dashboard settings (S6-B post-launch).
 - [ ] **S11.6** Resubmit rule — if shop already exists with `status=REJECTED`, step 1 upserts and resets status to `PENDING`.
 - [ ] **S11.7** Admin approval — `PATCH /admin/shops/:id/approve` (sets APPROVED, notifies owner), `PATCH /admin/shops/:id/reject` (sets REJECTED + reason, notifies owner), `PATCH /admin/shops/:id/suspend` (full suspension transaction from §1 in BLUEPRINT.md).
 - [ ] **S11.8** Tests — resubmit after rejection, suspension transaction atomicity (all pending bookings cancelled, deposits flagged).
@@ -386,10 +406,10 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [ ] **S14.1** Loyalty service — `earnPoints(userId, bookingId)`: `Math.floor(totalPrice / 1000)` pts. Atomic upsert `LoyaltyAccount`. Create `LoyaltyTransaction`. Auto-promote tier. If points ≥ 500 and not already VIP, set `User.isVip = true, vipGrantedBy = 'auto'`.
 - [ ] **S14.2** `GET /user/loyalty` — Customer JWT. Returns `{ points, tier, pendingReward }`.
 - [ ] **S14.3** `POST /user/loyalty/redeem` — Customer JWT. Verify `points >= reward.pointsCost` in DB. Deduct in same transaction as booking. Return 403 if insufficient.
-- [ ] **S14.4** Reliability service — `applyEvent(userId, event)`: NO_SHOW−20, LATE_CANCEL−10, COMPLETION+15, ON_TIME+20. Clamp 0–100. `getDepositRate(score)`: <40→0.5, <60→0.3, else 0.2.
-- [ ] **S14.5** `GET /user/reliability` — Customer JWT. Returns `{ score, noShowCount, depositRate, isBlocked }`.
-- [ ] **S14.6** Reliability events wired — `PATCH /queue/:entryId/no-show` → `applyEvent('NO_SHOW')`. `PATCH /queue/:entryId/done` → `applyEvent('COMPLETION')`. `PATCH /bookings/:id/cancel` (late) → `applyEvent('LATE_CANCEL')`. Booking creation with deposit → `applyEvent('ON_TIME')`.
-- [ ] **S14.7** Block enforcement — `createBooking` checks `isBlocked` before proceeding.
+- [ ] **S14.4** Reliability service — `applyEvent(userId, event)`: NO_SHOW−20, LATE_CANCEL−10, COMPLETION+15, ON_TIME+5. Clamp 0–100. **`getDepositRate()` removed — no deposits for MVP.** Block threshold: score < 50.
+- [ ] **S14.5** `GET /user/reliability` — Customer JWT. Returns `{ score, noShowCount, isBlocked }`. `depositRate` field removed — no deposits for MVP.
+- [ ] **S14.6** Reliability events wired — `PATCH /queue/:entryId/no-show` → `applyEvent('NO_SHOW')`. `PATCH /queue/:entryId/done` → `applyEvent('COMPLETION')`. `PATCH /bookings/:id/cancel` (late) → `applyEvent('LATE_CANCEL')`. `POST /bookings` success → `applyEvent('ON_TIME')` (replaces the deposit-based trigger).
+- [ ] **S14.7** Block enforcement — `createBooking` checks `score < 50` before proceeding (already implemented in S5.3).
 - [ ] **S14.8** `POST /admin/users/:id/unblock` — Admin/Owner JWT. Resets `score=60, noShowCount=0`.
 - [ ] **S14.9** VIP endpoints — `GET /user/vip`, `POST /admin/users/:id/vip`.
 - [ ] **S14.10** Tests — loyalty earn idempotency (no double-credit), reliability clamp at 0/100, block enforcement, VIP auto-grant at 500pts.
@@ -447,7 +467,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 - [ ] OWASP Top 10 checklist — injection, broken auth, sensitive data, XXE, broken access control, security misconfiguration, XSS, insecure deserialisation, known vulnerabilities, insufficient logging.
 - [ ] Rate limits verified — auth endpoints capped at 3–10 req/min per IP.
-- [ ] All payment callback endpoints verify gateway signatures — never trust unsigned webhooks.
+- [ ] All payment callback endpoints verify gateway signatures — never trust unsigned webhooks. _(Applies to S6-A Paddle webhook and S6-B FIB webhook — post-launch only)_
 - [ ] All file upload endpoints validate MIME type server-side, not just file extension.
 - [ ] No secrets in logs — Winston transport configured to redact `Authorization`, `password`, `apiKey` fields.
 - [ ] `requireOwnership` applied on every mutating shop/barber/service route — verify with a test that attempts cross-shop access (expect 403).
@@ -455,9 +475,9 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### Integration Tests
 
-- [ ] Full booking flow — create account → book → pay → loyalty earned → queue position → complete → review.
-- [ ] No-show flow — booking → no-show → reliability deducted → score check.
-- [ ] Suspension flow — admin suspends shop → pending bookings cancelled → deposits flagged → notifications sent.
+- [ ] Full booking flow — create account → book (CASH, no deposit) → queue position → mark complete → loyalty earned → review.
+- [ ] No-show flow — booking → no-show → reliability score deducted → third strike → customer blocked from booking.
+- [ ] Suspension flow — admin suspends shop → UPCOMING bookings cancelled → notifications sent to affected customers.
 - [ ] Discount race condition test — 10 concurrent requests, only `maxUsers` succeed.
 
 ### Performance
