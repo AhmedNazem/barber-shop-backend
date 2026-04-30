@@ -254,10 +254,10 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 - [x] **S5.1** Availability service (`src/services/availability.service.ts`) — given `shopId`, `date`, `barberId?`: get barber schedule for that day, subtract confirmed bookings, return free 30-min slots as ISO time strings. Respect `REGULAR_DAYS_AHEAD=3` / `VIP_DAYS_AHEAD=7` window.
 - [x] **S5.2** `GET /shops/:id/availability` — public with optional auth. Query: `?date&barberId`. Returns `{ slots: string[] }`. VIP check: if authenticated and `user.isVip`, allow up to 7 days ahead; else 3 days.
-- [ ] **S5.3** Booking creation service (`src/services/booking.service.ts`) — `createBooking(customerId, data)`: (1) check `ReliabilityRecord` → block if score=0 or noShowCount≥3. (2) Check slot conflict (no overlapping confirmed bookings for barber). (3) Fetch discount, compute `totalPrice` + `deposit` using authoritative formula. (4) Snapshot `barberName`, `discountPct`, service names+prices into `BookingService`. (5) All in one Prisma transaction.
-- [ ] **S5.4** `POST /bookings` — Customer JWT. Zod: `{ shopId, serviceIds[], barberId?, slot, paymentMethod }`. Returns `{ bookingId, depositAmount, paymentReference }`.
-- [ ] **S5.5** Deposit formula enforcement — `Math.round((discountedSubtotal * depositRate) / 250) * 250`. `depositRate` comes from `ReliabilityRecord.score` (see §20). Never trust client-sent amount.
-- [ ] **S5.6** Tests — slot conflict guard, VIP window enforcement, blocked customer returns 403, discount claim atomicity.
+- [x] **S5.3** Booking creation service (`src/services/booking.service.ts`) — `createBooking(customerId, data)`: (1) check `ReliabilityRecord` → block if score=0 or noShowCount≥3. (2) Check slot conflict (no overlapping confirmed bookings for barber). (3) Fetch discount, compute `totalPrice` + `deposit` using authoritative formula. (4) Snapshot `barberName`, `discountPct`, service names+prices into `BookingService`. (5) All in one Prisma transaction.
+- [x] **S5.4** `POST /bookings` — Customer JWT. Zod: `{ shopId, serviceIds[], barberId?, slot, paymentMethod }`. Returns `{ bookingId, depositAmount, paymentReference }`.
+- [x] **S5.5** Deposit formula enforcement — `Math.round((discountedSubtotal * depositRate) / 250) * 250`. `depositRate` comes from `ReliabilityRecord.score` (see §20). Never trust client-sent amount.
+- [x] **S5.6** Tests — slot conflict guard, VIP window enforcement, blocked customer returns 403, discount claim atomicity.
 
 ---
 
@@ -480,10 +480,12 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 > **Goal:** Populate the DB with real barbershop data from Anbar Governorate (Iraq) using the Google Maps Places API, then keep the list fresh with a BullMQ monthly job.
 
 ### Prerequisites
+
 - Google Maps Places API key (add `GOOGLE_MAPS_API_KEY` to `.env`)
 - Shops must be created with `status: PENDING` so the admin can review before approving
 
 ### S19.1 — One-time seed script
+
 - [ ] `scripts/seed-anbar-shops.ts` — standalone script (run with `npx tsx scripts/seed-anbar-shops.ts`)
   - Calls Google Maps Places API `nearbySearch` with `location=Anbar` + `type=hair_care|barber_shop` + `radius=50000`
   - Handles pagination (`next_page_token`) to get full result list
@@ -493,6 +495,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Logs: how many found, how many inserted, how many skipped (already exist)
 
 ### S19.2 — BullMQ monthly sync job
+
 - [ ] `src/jobs/sync-anbar-shops.job.ts` — BullMQ repeatable job
   - Queue name: `shop-sync`
   - Repeat: every 1st of the month (cron: `0 3 1 * *`)
@@ -502,9 +505,11 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [ ] Register the repeatable job in `src/server.ts` on startup (alongside existing cleanup jobs)
 
 ### S19.3 — Admin review endpoint
+
 - [ ] `GET /admin/shops/pending` — Admin JWT. Lists all shops with `status: PENDING` so admin can approve/reject imported shops.
 
 ### Notes
+
 - All imported shops start as `status: PENDING` — never auto-approve
 - `ownerId` for imported shops: create a system user `phone: +9640000000000, role: SHOP_OWNER, name: 'System Import'` and use its ID
 - Rate limit: Google Places API allows 60 req/s — add 200ms delay between paginated calls
