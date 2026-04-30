@@ -8,6 +8,7 @@ import { barbersRouter } from '@/routes/barbers'
 import { barberPublicRouter } from '@/routes/barber-public'
 import { reviewsRouter } from '@/routes/reviews'
 import { bookingsRouter } from '@/routes/bookings'
+import { queueShopRouter, queueRouter } from '@/routes/queue'
 
 export const router = Router()
 
@@ -20,3 +21,5 @@ router.use('/shops/:shopId/barbers', barbersRouter)
 router.use('/barbers', barberPublicRouter)
 router.use('/reviews', reviewsRouter)
 router.use('/bookings', bookingsRouter)
+router.use('/shops/:shopId/queue', queueShopRouter)
+router.use('/queue', queueRouter)

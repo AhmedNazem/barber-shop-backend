@@ -433,3 +433,53 @@ Content-Type: application/json
   "paymentMethod": "ZAINCASH"
 }
 ###
+
+### ─── S7 — Queue Management ─────────────────────────────────────────────────
+
+### S7.1 — Get shop queue (Owner/Barber JWT)
+GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/queue
+Authorization: Bearer {{accessToken}}
+###
+
+### S7.2 — Add walk-in to queue (Owner/Barber JWT)
+POST {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/queue/walk-in
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "customerName": "Ahmed Walk-In",
+  "serviceIds": ["PASTE_SERVICE_ID_HERE"],
+  "barberId": "PASTE_BARBER_ID_HERE",
+  "isVip": false
+}
+###
+
+### S7.3 — Customer: check own queue position (Customer JWT, paste bookingId)
+GET {{baseUrl}}/queue/PASTE_BOOKING_ID_HERE
+Authorization: Bearer {{accessToken}}
+###
+
+### S7.4 — Start service / seat customer (Owner/Barber JWT)
+PATCH {{baseUrl}}/queue/PASTE_ENTRY_ID_HERE/start
+Authorization: Bearer {{accessToken}}
+###
+
+### S7.5 — Mark done (Owner/Barber JWT)
+PATCH {{baseUrl}}/queue/PASTE_ENTRY_ID_HERE/done
+Authorization: Bearer {{accessToken}}
+###
+
+### S7.6 — Mark no-show (Owner/Barber JWT)
+PATCH {{baseUrl}}/queue/PASTE_ENTRY_ID_HERE/no-show
+Authorization: Bearer {{accessToken}}
+###
+
+### S7.7 — Reorder queue entry (Owner JWT)
+PATCH {{baseUrl}}/queue/PASTE_ENTRY_ID_HERE/reorder
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "position": 2
+}
+###

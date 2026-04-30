@@ -40,7 +40,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S4    | Shop Detail + Barbers + Services    | ✅ Complete               |
 | S5    | Booking Wizard + Availability       | ✅ Complete               |
 | S6    | Checkout + Payments                 | ⏸ Postponed — Post-Launch |
-| S7    | Queue Management                    | ⏳ Pending                |
+| S7    | Queue Management                    | ✅ Complete               |
 | S8    | Booking History + Reviews           | ⏳ Pending                |
 | S9    | Dashboard Analytics                 | ⏳ Pending                |
 | S10   | Notifications                       | ⏳ Pending                |
@@ -67,7 +67,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### CRITICAL BLOCKERS (must fix before the phase they block)
 
-- [ ] **S0.5-A** `QueueStatus` enum vs frontend contract mismatch — **blocks S7**
+- [x] **S0.5-A** `QueueStatus` enum vs frontend contract mismatch — **blocks S7**
   - DB enum: `WAITING | IN_CHAIR | DONE | NO_SHOW`
   - Frontend contract (AGENTS.md): `'waiting' | 'next' | 'in_chair' | 'completed' | 'no_show'`
   - Decision needed: (1) `DONE` must map to `'completed'` in all API responses (never expose the raw enum string). (2) `'next'` is a **derived** state — position=1 in the WAITING list — not stored in the DB. The queue service must compute it: if `entry.position === 1 && entry.status === 'WAITING'` → return `status: 'next'`. Document this in BLUEPRINT.md §7.
@@ -148,7 +148,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - DB model in BLUEPRINT §12 only has `message` and `messageAr`.
   - Action: add `title String` and `titleAr String` to `Notification` model in `schema.prisma`. Run migration before S10. Update BLUEPRINT.md §12.
 
-- [ ] **S0.5-M** VIP sort in queue impossible for walk-ins — **fix before S7**
+- [x] **S0.5-M** VIP sort in queue impossible for walk-ins — **fix before S7**
   - `QueueEntry` has no `isVip` field. Walk-in entries have no customer ID — can't look up VIP status.
   - Fix: add `isVip Boolean @default(false)` to `QueueEntry`. Walk-in form passes this flag; booking-linked entries copy it from `User.isVip` at insert time.
   - Action: add field to schema, run migration, update BLUEPRINT.md §7 DB model.
@@ -294,20 +294,20 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S7 — Queue Management ⏳
+## Phase S7 — Queue Management ✅
 
 > Blueprint: §7. Powers the dashboard queue page and customer queue-tracking page.
 
-- [ ] **S7.1** Queue service (`src/services/queue.service.ts`) — `getQueue(shopId)`, `addWalkIn(shopId, data)`, `updateStatus(entryId, status)`, `reorder(entryId, newPosition)`. Recalculates `estimatedWait` on every mutation.
-- [ ] **S7.2** `GET /shops/:id/queue` — Owner/Barber JWT. Returns sorted `QueueEntry[]` with `estimatedWait` per entry.
-- [ ] **S7.3** `GET /queue/:bookingId` — Customer JWT. Returns `QueueEntry` for that booking (position, wait, status).
-- [ ] **S7.4** `POST /shops/:id/queue/walk-in` — Owner/Barber JWT. Inserts at end. Returns new entry.
-- [ ] **S7.5** `PATCH /queue/:entryId/start` — Barber JWT. Status → `IN_CHAIR`.
-- [ ] **S7.6** `PATCH /queue/:entryId/done` — Barber JWT. Status → `DONE`. Triggers reliability `+15` job for customer.
-- [ ] **S7.7** `PATCH /queue/:entryId/no-show` — Barber JWT + confirm. Status → `NO_SHOW`. Triggers reliability `−20` job.
-- [ ] **S7.8** `PATCH /queue/:entryId/reorder` — Owner JWT. Validates new position, updates all affected positions atomically.
-- [ ] **S7.9** VIP sort — if `Shop.vipLaneEnabled`, sort VIP customers to front of WAITING entries before returning list.
-- [ ] **S7.10** Tests — wait time calculation, VIP sort, reorder atomicity, no-show reliability deduction.
+- [x] **S7.1** Queue service (`src/services/queue.service.ts`) — `getQueue(shopId)`, `addWalkIn(shopId, data)`, `updateStatus(entryId, status)`, `reorder(entryId, newPosition)`. Recalculates `estimatedWait` on every mutation.
+- [x] **S7.2** `GET /shops/:id/queue` — Owner/Barber JWT. Returns sorted `QueueEntry[]` with `estimatedWait` per entry.
+- [x] **S7.3** `GET /queue/:bookingId` — Customer JWT. Returns `QueueEntry` for that booking (position, wait, status).
+- [x] **S7.4** `POST /shops/:id/queue/walk-in` — Owner/Barber JWT. Inserts at end. Returns new entry.
+- [x] **S7.5** `PATCH /queue/:entryId/start` — Barber JWT. Status → `IN_CHAIR`.
+- [x] **S7.6** `PATCH /queue/:entryId/done` — Barber JWT. Status → `DONE`. Triggers reliability `+15` job for customer.
+- [x] **S7.7** `PATCH /queue/:entryId/no-show` — Barber JWT + confirm. Status → `NO_SHOW`. Triggers reliability `−20` job.
+- [x] **S7.8** `PATCH /queue/:entryId/reorder` — Owner JWT. Validates new position, updates all affected positions atomically.
+- [x] **S7.9** VIP sort — if `Shop.vipLaneEnabled`, sort VIP customers to front of WAITING entries before returning list.
+- [x] **S7.10** Tests — wait time calculation, VIP sort, reorder atomicity, no-show reliability deduction.
 
 ---
 

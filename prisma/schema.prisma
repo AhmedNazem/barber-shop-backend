@@ -361,6 +361,7 @@ model QueueEntry {
   serviceIds    String[]
   barberId      String?
   position      Int
+  isVip         Boolean     @default(false)
   status        QueueStatus @default(WAITING)
   estimatedWait Int         @default(0)
   createdAt     DateTime    @default(now())
