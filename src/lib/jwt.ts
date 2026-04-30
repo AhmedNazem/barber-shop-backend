@@ -4,6 +4,7 @@ export type JwtPayload = {
   id: string
   role: string
   shopId?: string
+  isVip?: boolean
 }
 
 function accessSecret(): string {

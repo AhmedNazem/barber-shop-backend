@@ -402,3 +402,18 @@ Content-Type: application/json
 }
 
 ###
+
+### ─── S5.1 — Availability ────────────────────────────────────────────────────
+
+### S5.1a — Get shop availability (no auth, regular window = 3 days)
+GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/availability?date=2025-06-15
+###
+
+### S5.1b — Get shop availability for a specific barber
+GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/availability?date=2025-06-15&barberId=PASTE_BARBER_ID_HERE
+###
+
+### S5.1c — Get availability as VIP (7-day window)
+GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/availability?date=2025-06-20
+Authorization: Bearer {{accessToken}}
+###

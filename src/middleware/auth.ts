@@ -2,6 +2,14 @@ import { Request, Response, NextFunction } from 'express'
 import { TokenExpiredError } from 'jsonwebtoken'
 import { verifyAccess } from '@/lib/jwt'
 
+export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+  const header = req.headers['authorization']
+  if (header?.startsWith('Bearer ')) {
+    try { req.user = verifyAccess(header.slice(7)) } catch { /* ignore */ }
+  }
+  next()
+}
+
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
   const header = req.headers['authorization']
 

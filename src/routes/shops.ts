@@ -5,6 +5,8 @@ import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
 import { createShopHandler, updateShopHandler, uploadImageHandler, listShopsHandler, getShopHandler } from '@/controllers/shop.controller'
 import { listShopReviewsHandler } from '@/controllers/review.controller'
+import { getShopAvailabilityHandler } from '@/controllers/availability.controller'
+import { optionalAuth } from '@/middleware/auth'
 import { singleImage } from '@/lib/upload'
 
 const createShopSchema = z.object({
@@ -30,3 +32,4 @@ shopsRouter.patch('/:id', authenticate, requireRole('SHOP_OWNER'), validate(upda
 shopsRouter.post('/:id/cover', authenticate, requireRole('SHOP_OWNER'), singleImage('file'), uploadImageHandler('coverUrl'))
 shopsRouter.post('/:id/logo', authenticate, requireRole('SHOP_OWNER'), singleImage('file'), uploadImageHandler('logoUrl'))
 shopsRouter.get('/:id/reviews', listShopReviewsHandler)
+shopsRouter.get('/:id/availability', optionalAuth, getShopAvailabilityHandler)
