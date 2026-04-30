@@ -35,4 +35,7 @@ export const ERROR_MESSAGES: Record<string, { en: string; ar: string }> = {
   invalid_mime:         { en: 'Only JPEG, PNG and WebP images are allowed', ar: 'يُسمح فقط بصور JPEG وPNG وWebP' },
   file_required:        { en: 'No file was uploaded',            ar: 'لم يتم رفع أي ملف' },
   internal_error:       { en: 'Something went wrong',          ar: 'حدث خطأ ما' },
+  low_reliability:      { en: 'Booking blocked due to past no-shows', ar: 'الحجز محظور بسبب الغيابات السابقة' },
+  slot_taken:           { en: 'This time slot is no longer available', ar: 'هذا الوقت لم يعد متاحاً' },
+  invalid_date:         { en: 'Invalid date format',            ar: 'صيغة التاريخ غير صحيحة' },
 }

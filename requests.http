@@ -417,3 +417,19 @@ GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/availability?date=2025-06-15&barberId=P
 GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/availability?date=2025-06-20
 Authorization: Bearer {{accessToken}}
 ###
+
+### ─── S5.3-5 — Create Booking ────────────────────────────────────────────────
+
+### S5.3a — Create booking (Customer JWT)
+POST {{baseUrl}}/bookings
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "shopId": "PASTE_SHOP_ID_HERE",
+  "barberId": "PASTE_BARBER_ID_HERE",
+  "serviceIds": ["PASTE_SERVICE_ID_HERE"],
+  "slot": "2025-12-15T10:00:00.000Z",
+  "paymentMethod": "ZAINCASH"
+}
+###
