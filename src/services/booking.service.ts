@@ -28,6 +28,14 @@ function hasOverlap(
   })
 }
 
+export async function getBookings(customerId: string) {
+  return prisma.booking.findMany({
+    where:   { customerId },
+    orderBy: { slot: 'desc' },
+    include: { services: true },
+  })
+}
+
 export async function createBooking(customerId: string, input: CreateBookingInput) {
   // 1. Reliability guard
   const reliability = await prisma.reliabilityRecord.findUnique({ where: { userId: customerId } })

@@ -483,3 +483,10 @@ Content-Type: application/json
   "position": 2
 }
 ###
+
+### ─── S8 — Booking History + Reviews ───────────────────────────────────────
+
+### S8.1 — List my bookings (Customer JWT)
+GET {{baseUrl}}/bookings
+Authorization: Bearer {{accessToken}}
+###

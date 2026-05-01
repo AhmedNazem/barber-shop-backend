@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { validate } from '@/middleware/validate'
 import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
-import { createBookingHandler } from '@/controllers/booking.controller'
+import { getBookingsHandler, createBookingHandler } from '@/controllers/booking.controller'
 
 const createBookingSchema = z.object({
   shopId:        z.string().cuid(),
@@ -15,4 +15,5 @@ const createBookingSchema = z.object({
 
 export const bookingsRouter = Router()
 
-bookingsRouter.post('/', authenticate, requireRole('CUSTOMER'), validate(createBookingSchema), createBookingHandler)
+bookingsRouter.get('/',   authenticate, requireRole('CUSTOMER'), getBookingsHandler)
+bookingsRouter.post('/',  authenticate, requireRole('CUSTOMER'), validate(createBookingSchema), createBookingHandler)
