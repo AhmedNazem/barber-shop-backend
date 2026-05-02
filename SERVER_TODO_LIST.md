@@ -317,7 +317,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 - [x] **S8.1** `GET /bookings` — Customer JWT. Returns booking list (full shape from §8). Sorted by slot desc.
 - [x] **S8.2** `GET /bookings/:id` — Customer JWT. Single booking receipt shape.
-- [ ] **S8.3** `PATCH /bookings/:id/cancel` — Customer JWT. Block if `slot < now + 2h` (422). If late cancel: queue reliability `−10` job. Update status → `CANCELLED`. Trigger refund job if deposit paid.
+- [x] **S8.3** `PATCH /bookings/:id/cancel` — Customer JWT. Block if `slot < now + 2h` (422). If late cancel: queue reliability `−10` job. Update status → `CANCELLED`. Trigger refund job if deposit paid.
 - [ ] **S8.4** `POST /reviews` — Customer JWT. FormData. Guard: `Booking.hasReview` must be false (409 if true). Upload photos to S3. Set `Booking.hasReview = true`.
 - [ ] **S8.5** `POST /reviews/:id/flag` — Owner JWT. Only owner of that shop may flag. Sets `flagStatus = PENDING`.
 - [ ] **S8.6** `PATCH /reviews/:id/flag` — Admin JWT. Actions: `approve` (keep visible) or `remove` (isVisible=false, notify owner).
