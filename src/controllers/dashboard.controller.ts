@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { getDashboardStats } from '@/services/dashboard.service'
+import { getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+
+export async function getDashboardActivityHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await getDashboardActivity(req.user!.id))
+  } catch (err) { next(err) }
+}
 
 export async function getDashboardStatsHandler(req: Request, res: Response, next: NextFunction) {
   try {

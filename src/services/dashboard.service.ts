@@ -14,6 +14,14 @@ async function resolveBarberScope(userId: string, shopId: string): Promise<strin
   return barber?.id
 }
 
+export async function getDashboardActivity(userId: string) {
+  return prisma.notification.findMany({
+    where:   { userId },
+    orderBy: { createdAt: 'desc' },
+    take:    10,
+  })
+}
+
 export async function getDashboardStats(userId: string, role: string, shopId: string | undefined) {
   if (!shopId) throw new AppError('not_found', 404)
 

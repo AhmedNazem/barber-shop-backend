@@ -527,3 +527,8 @@ Great service!
 GET {{baseUrl}}/dashboard/stats
 Authorization: Bearer {{accessToken}}
 ###
+
+### S9.2 — Dashboard activity feed (Owner JWT)
+GET {{baseUrl}}/dashboard/activity
+Authorization: Bearer {{accessToken}}
+###
