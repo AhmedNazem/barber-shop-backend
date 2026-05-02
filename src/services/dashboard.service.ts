@@ -35,6 +35,43 @@ async function resolveBarberScope(userId: string, shopId: string): Promise<strin
   return barber?.id
 }
 
+export async function getPeakHours(userId: string, role: string, shopId: string | undefined) {
+  if (!shopId) throw new AppError('not_found', 404)
+
+  const barberId = role === 'BARBER' ? await resolveBarberScope(userId, shopId) : undefined
+
+  const [bookings, shopHours] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        shopId,
+        status: { in: ['UPCOMING', 'CONFIRMED', 'COMPLETED'] },
+        ...(barberId ? { barberId } : {}),
+      },
+      select: { slot: true },
+    }),
+    prisma.businessHours.findMany({
+      where:   { shopId },
+      orderBy: { dayOfWeek: 'asc' },
+    }),
+  ])
+
+  // Build 7×24 count grid, keyed "day-hour"
+  const countMap = new Map<string, number>()
+  for (const b of bookings) {
+    const day  = b.slot.getUTCDay()
+    const hour = b.slot.getUTCHours()
+    const key  = `${day}-${hour}`
+    countMap.set(key, (countMap.get(key) ?? 0) + 1)
+  }
+
+  const cells = Array.from(countMap.entries()).map(([key, count]) => {
+    const [day, hour] = key.split('-').map(Number)
+    return { day, hour, count }
+  })
+
+  return { cells, shopHours }
+}
+
 export async function getTopServices(userId: string, role: string, shopId: string | undefined) {
   if (!shopId) throw new AppError('not_found', 404)
 

@@ -557,3 +557,8 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/dashboard/analytics/top-services
 Authorization: Bearer {{accessToken}}
 ###
+
+### S9.6 — Peak hours heatmap (Owner/Barber JWT)
+GET {{baseUrl}}/dashboard/analytics/peak-hours
+Authorization: Bearer {{accessToken}}
+###

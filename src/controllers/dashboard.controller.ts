@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+import { getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+
+export async function getPeakHoursHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await getPeakHours(req.user!.id, req.user!.role, req.user!.shopId))
+  } catch (err) { next(err) }
+}
 
 export async function getTopServicesHandler(req: Request, res: Response, next: NextFunction) {
   try {
