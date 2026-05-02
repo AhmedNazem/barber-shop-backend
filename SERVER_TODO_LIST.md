@@ -331,7 +331,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 >
 > **Revenue source (no payment gateway):** Revenue = sum of `Booking.totalPrice` where `status = COMPLETED`. This works for both online bookings and walk-in sales recorded via the dashboard. Never use `paymentStatus` for revenue — it will always be `PENDING` until S6-B is built.
 
-- [ ] **S9.1** `GET /dashboard/stats` — Owner/Barber JWT. Returns `{ todayBookings, todayRevenue, queueLength, avgWaitMin }`. `todayRevenue` = sum of `totalPrice` for COMPLETED bookings today. Scoped by role.
+- [x] **S9.1** `GET /dashboard/stats` — Owner/Barber JWT. Returns `{ todayBookings, todayRevenue, queueLength, avgWaitMin }`. `todayRevenue` = sum of `totalPrice` for COMPLETED bookings today. Scoped by role.
 - [ ] **S9.2** `GET /dashboard/activity` — Owner JWT. Last 10 events from `Notification` table for this shop.
 - [ ] **S9.3** `GET /dashboard/analytics` — Owner/Barber JWT. Query: `?range=today|week|month|custom&start&end`. Scoped by role (see §11 backend scoping rules). Revenue = COMPLETED bookings totalPrice sum.
 - [ ] **S9.4** `GET /dashboard/analytics/barbers` — Owner JWT only. Per-barber revenue/bookings/avgRating. Returns 403 for barber role.

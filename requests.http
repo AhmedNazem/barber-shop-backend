@@ -520,3 +520,10 @@ Content-Disposition: form-data; name="comment"
 Great service!
 ------Boundary--
 ###
+
+### ─── S9 — Dashboard Analytics ─────────────────────────────────────────────
+
+### S9.1 — Dashboard stats (Owner/Barber JWT)
+GET {{baseUrl}}/dashboard/stats
+Authorization: Bearer {{accessToken}}
+###

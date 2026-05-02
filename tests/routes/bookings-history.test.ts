@@ -69,7 +69,7 @@ afterEach(async () => {
   await cleanupPhone(E164_OTHER)
 })
 
-async function makeBooking(slot: Date, status = 'UPCOMING' as const) {
+async function makeBooking(slot: Date, status: 'UPCOMING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' = 'UPCOMING') {
   return prisma.booking.create({
     data: {
       customerId, shopId, slot,
