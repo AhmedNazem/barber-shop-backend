@@ -53,6 +53,7 @@ enum PaymentMethod {
   ZAINCASH
   FIB
   PAYTABS
+  CASH
 }
 
 enum PaymentStatus {

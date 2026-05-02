@@ -191,6 +191,48 @@ export async function getDashboardActivity(userId: string) {
   })
 }
 
+export async function recordWalkInSale(
+  userId: string,
+  shopId: string | undefined,
+  data: { serviceIds: string[]; barberId?: string; totalPrice: number; note?: string },
+) {
+  if (!shopId) throw new AppError('not_found', 404)
+
+  const services = await prisma.service.findMany({
+    where: { id: { in: data.serviceIds }, shopId },
+  })
+  if (services.length !== data.serviceIds.length) throw new AppError('not_found', 404)
+
+  const barber = data.barberId
+    ? await prisma.barber.findFirst({ where: { id: data.barberId, shopId } })
+    : null
+
+  return prisma.booking.create({
+    data: {
+      customerId:    userId,
+      shopId,
+      barberId:      barber?.id,
+      barberName:    barber?.nameEn,
+      slot:          new Date(),
+      status:        'COMPLETED',
+      totalPrice:    data.totalPrice,
+      depositPaid:   0,
+      paymentMethod: 'CASH',
+      cancellationReason: data.note,
+      services: {
+        create: services.map(sv => ({
+          serviceId:   sv.id,
+          nameEn:      sv.nameEn,
+          nameAr:      sv.nameAr,
+          price:       sv.price,
+          durationMin: sv.durationMin,
+        })),
+      },
+    },
+    include: { services: true },
+  })
+}
+
 export async function getDashboardStats(userId: string, role: string, shopId: string | undefined) {
   if (!shopId) throw new AppError('not_found', 404)
 

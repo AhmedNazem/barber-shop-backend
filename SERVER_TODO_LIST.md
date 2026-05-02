@@ -337,7 +337,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S9.4** `GET /dashboard/analytics/barbers` — Owner JWT only. Per-barber revenue/bookings/avgRating. Returns 403 for barber role.
 - [x] **S9.5** `GET /dashboard/analytics/top-services` — Owner/Barber JWT. Top services by booking count + revenue. Scoped by role.
 - [x] **S9.6** `GET /dashboard/analytics/peak-hours` — Owner/Barber JWT. Returns `{ cells[], shopHours }`. `shopHours` comes from `BusinessHours` table. Scoped by role.
-- [ ] **S9.8** `POST /dashboard/walk-in-sale` — Owner/Barber JWT. Records a cash sale that happened without an online booking. Zod: `{ serviceIds[], barberId?, totalPrice, note? }`. Creates a `Booking` record with `status = COMPLETED`, `paymentMethod = CASH`, `slot = now`. This feeds directly into revenue calculations. Returns created booking.
+- [x] **S9.8** `POST /dashboard/walk-in-sale` — Owner/Barber JWT. Records a cash sale that happened without an online booking. Zod: `{ serviceIds[], barberId?, totalPrice, note? }`. Creates a `Booking` record with `status = COMPLETED`, `paymentMethod = CASH`, `slot = now`. This feeds directly into revenue calculations. Returns created booking.
 - [ ] **S9.9** Tests — barber forbidden from `/analytics/barbers`, revenue scoping correctness, walk-in sale appears in revenue, empty range returns zeroed arrays not null.
 
 ---

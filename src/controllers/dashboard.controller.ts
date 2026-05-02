@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+import { recordWalkInSale, getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+
+export async function recordWalkInSaleHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const booking = await recordWalkInSale(req.user!.id, req.user!.shopId, req.body)
+    res.status(201).json({ data: booking })
+  } catch (err) { next(err) }
+}
 
 export async function getPeakHoursHandler(req: Request, res: Response, next: NextFunction) {
   try {

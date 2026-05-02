@@ -562,3 +562,16 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/dashboard/analytics/peak-hours
 Authorization: Bearer {{accessToken}}
 ###
+
+### S9.8 — Record walk-in cash sale (Owner/Barber JWT)
+POST {{baseUrl}}/dashboard/walk-in-sale
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "serviceIds": ["PASTE_SERVICE_ID_HERE"],
+  "barberId": "PASTE_BARBER_ID_HERE",
+  "totalPrice": 5000,
+  "note": "Cash paid at counter"
+}
+###
