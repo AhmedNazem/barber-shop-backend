@@ -42,7 +42,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S6    | Checkout + Payments                 | ⏸ Postponed — Post-Launch |
 | S7    | Queue Management                    | ✅ Complete               |
 | S8    | Booking History + Reviews           | ✅ Complete               |
-| S9    | Dashboard Analytics                 | ⏳ Pending                |
+| S9    | Dashboard Analytics                 | ✅ Complete               |
 | S10   | Notifications                       | ⏳ Pending                |
 | S11   | Onboarding Wizard                   | ⏳ Pending                |
 | S12   | Platform Settings + Admin           | ⏳ Pending                |
@@ -325,7 +325,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S9 — Dashboard Analytics ⏳
+## Phase S9 — Dashboard Analytics ✅
 
 > Blueprint: §11. Owner sees shop-wide data. Barber sees only their own rows.
 >
@@ -338,7 +338,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S9.5** `GET /dashboard/analytics/top-services` — Owner/Barber JWT. Top services by booking count + revenue. Scoped by role.
 - [x] **S9.6** `GET /dashboard/analytics/peak-hours` — Owner/Barber JWT. Returns `{ cells[], shopHours }`. `shopHours` comes from `BusinessHours` table. Scoped by role.
 - [x] **S9.8** `POST /dashboard/walk-in-sale` — Owner/Barber JWT. Records a cash sale that happened without an online booking. Zod: `{ serviceIds[], barberId?, totalPrice, note? }`. Creates a `Booking` record with `status = COMPLETED`, `paymentMethod = CASH`, `slot = now`. This feeds directly into revenue calculations. Returns created booking.
-- [ ] **S9.9** Tests — barber forbidden from `/analytics/barbers`, revenue scoping correctness, walk-in sale appears in revenue, empty range returns zeroed arrays not null.
+- [x] **S9.9** Tests — barber forbidden from `/analytics/barbers`, revenue scoping correctness, walk-in sale appears in revenue, empty range returns zeroed arrays not null.
 
 ---
 
