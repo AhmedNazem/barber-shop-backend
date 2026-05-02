@@ -490,3 +490,8 @@ Content-Type: application/json
 GET {{baseUrl}}/bookings
 Authorization: Bearer {{accessToken}}
 ###
+
+### S8.2 — Get single booking receipt (Customer JWT)
+GET {{baseUrl}}/bookings/PASTE_BOOKING_ID_HERE
+Authorization: Bearer {{accessToken}}
+###
