@@ -41,7 +41,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S5    | Booking Wizard + Availability       | ✅ Complete               |
 | S6    | Checkout + Payments                 | ⏸ Postponed — Post-Launch |
 | S7    | Queue Management                    | ✅ Complete               |
-| S8    | Booking History + Reviews           | ⏳ Pending                |
+| S8    | Booking History + Reviews           | ✅ Complete               |
 | S9    | Dashboard Analytics                 | ⏳ Pending                |
 | S10   | Notifications                       | ⏳ Pending                |
 | S11   | Onboarding Wizard                   | ⏳ Pending                |
@@ -311,7 +311,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S8 — Booking History + Reviews ⏳
+## Phase S8 — Booking History + Reviews ✅
 
 > Blueprint: §8. Replaces `useAppointmentsStore` localStorage reads with real API calls.
 
@@ -321,7 +321,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] **S8.4** `POST /reviews` — Customer JWT. FormData. Guard: `Booking.hasReview` must be false (409 if true). Upload photos to S3. Set `Booking.hasReview = true`.
 - [x] **S8.5** `POST /reviews/:id/flag` — Owner JWT. Only owner of that shop may flag. Sets `flagStatus = PENDING`.
 - [x] **S8.6** `PATCH /reviews/:id/flag` — Admin JWT. Actions: `approve` (keep visible) or `remove` (isVisible=false, notify owner).
-- [ ] **S8.7** Tests — cancel cutoff (2h guard), double-review guard (409), flag ownership check (403 wrong owner), flag lifecycle.
+- [x] **S8.7** Tests — cancel cutoff (2h guard), double-review guard (409), flag ownership check (403 wrong owner), flag lifecycle.
 
 ---
 
