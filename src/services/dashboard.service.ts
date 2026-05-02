@@ -35,6 +35,41 @@ async function resolveBarberScope(userId: string, shopId: string): Promise<strin
   return barber?.id
 }
 
+export async function getBarberAnalytics(shopId: string | undefined) {
+  if (!shopId) throw new AppError('not_found', 404)
+
+  const barbers = await prisma.barber.findMany({
+    where: { shopId, isActive: true },
+    select: { id: true, nameEn: true, nameAr: true },
+  })
+
+  const [bookingRows, reviewRows] = await Promise.all([
+    prisma.booking.groupBy({
+      by:     ['barberId'],
+      where:  { shopId, barberId: { not: null } },
+      _count: { id: true },
+      _sum:   { totalPrice: true },
+    }),
+    prisma.review.groupBy({
+      by:    ['barberId'],
+      where: { shopId, barberId: { not: null } },
+      _avg:  { rating: true },
+    }),
+  ])
+
+  const bookingMap = new Map(bookingRows.map(r => [r.barberId!, { count: r._count.id, revenue: r._sum.totalPrice ?? 0 }]))
+  const reviewMap  = new Map(reviewRows.map(r => [r.barberId!, r._avg.rating ?? 0]))
+
+  return barbers.map(b => ({
+    barberId:      b.id,
+    nameEn:        b.nameEn,
+    nameAr:        b.nameAr,
+    totalBookings: bookingMap.get(b.id)?.count   ?? 0,
+    totalRevenue:  bookingMap.get(b.id)?.revenue ?? 0,
+    avgRating:     Number((reviewMap.get(b.id) ?? 0).toFixed(1)),
+  }))
+}
+
 export async function getDashboardAnalytics(
   userId: string, role: string, shopId: string | undefined,
   range: string, startStr?: string, endStr?: string,

@@ -547,3 +547,8 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/dashboard/analytics?range=custom&start=2025-11-01&end=2025-11-30
 Authorization: Bearer {{accessToken}}
 ###
+
+### S9.4 — Per-barber analytics (Owner JWT only)
+GET {{baseUrl}}/dashboard/analytics/barbers
+Authorization: Bearer {{accessToken}}
+###
