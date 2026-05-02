@@ -495,3 +495,8 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/bookings/PASTE_BOOKING_ID_HERE
 Authorization: Bearer {{accessToken}}
 ###
+
+### S8.3 — Cancel booking (Customer JWT)
+PATCH {{baseUrl}}/bookings/PASTE_BOOKING_ID_HERE/cancel
+Authorization: Bearer {{accessToken}}
+###

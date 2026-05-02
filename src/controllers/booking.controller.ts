@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { getBookingById, getBookings, createBooking } from '@/services/booking.service'
+import { cancelBooking, getBookingById, getBookings, createBooking } from '@/services/booking.service'
+
+export async function cancelBookingHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    await cancelBooking(req.params['id']!, req.user!.id)
+    ok(res, { cancelled: true })
+  } catch (err) { next(err) }
+}
 
 export async function getBookingByIdHandler(req: Request, res: Response, next: NextFunction) {
   try {

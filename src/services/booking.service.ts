@@ -28,6 +28,31 @@ function hasOverlap(
   })
 }
 
+export async function cancelBooking(bookingId: string, customerId: string) {
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+  if (!booking) throw new AppError('not_found', 404)
+  if (booking.customerId !== customerId) throw new AppError('forbidden', 403)
+  if (!['UPCOMING', 'CONFIRMED'].includes(booking.status)) throw new AppError('already_resolved', 422)
+
+  const twoHoursFromNow = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  const isLateCancellation = booking.slot < twoHoursFromNow
+
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: { id: bookingId },
+      data:  { status: 'CANCELLED', cancelledBy: customerId },
+    })
+
+    if (isLateCancellation) {
+      await tx.reliabilityRecord.upsert({
+        where:  { userId: customerId },
+        update: { score: { decrement: 10 }, updatedAt: new Date() },
+        create: { userId: customerId, score: Math.max(0, 90) },
+      })
+    }
+  })
+}
+
 export async function getBookingById(bookingId: string, customerId: string) {
   const booking = await prisma.booking.findUnique({
     where:   { id: bookingId },
