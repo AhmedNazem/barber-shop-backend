@@ -38,7 +38,7 @@ export async function listShopReviews(shopId: string, asOwner: boolean, page: nu
 
 export async function createReview(
   customerId: string,
-  data: { bookingId: string; rating: number; comment: string; barberId?: string },
+  data: { bookingId: string; rating: number; comment: string; barberId?: string; photoUrls?: string[] },
 ) {
   const booking = await prisma.booking.findUnique({ where: { id: data.bookingId } })
   if (!booking) throw new AppError('not_found', 404)
@@ -54,7 +54,11 @@ export async function createReview(
         barberId:   data.barberId,
         rating:     data.rating,
         comment:    data.comment,
+        photos:     data.photoUrls?.length
+          ? { create: data.photoUrls.map(url => ({ url })) }
+          : undefined,
       },
+      include: { photos: true },
     })
     await tx.booking.update({ where: { id: data.bookingId }, data: { hasReview: true } })
     return review

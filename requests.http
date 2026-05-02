@@ -500,3 +500,23 @@ Authorization: Bearer {{accessToken}}
 PATCH {{baseUrl}}/bookings/PASTE_BOOKING_ID_HERE/cancel
 Authorization: Bearer {{accessToken}}
 ###
+
+### S8.4 — Create review with optional photos (Customer JWT, multipart/form-data)
+POST {{baseUrl}}/reviews
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="bookingId"
+
+PASTE_BOOKING_ID_HERE
+------Boundary
+Content-Disposition: form-data; name="rating"
+
+5
+------Boundary
+Content-Disposition: form-data; name="comment"
+
+Great service!
+------Boundary--
+###

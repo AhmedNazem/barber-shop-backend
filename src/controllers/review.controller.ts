@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
+import { randomUUID } from 'crypto'
 import { ok } from '@/lib/response'
+import { uploadToS3 } from '@/lib/s3'
 import { listShopReviews, createReview, flagReview, resolveFlag } from '@/services/review.service'
 
 export async function listShopReviewsHandler(req: Request, res: Response, next: NextFunction) {
@@ -14,7 +16,15 @@ export async function listShopReviewsHandler(req: Request, res: Response, next: 
 
 export async function createReviewHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await createReview(req.user!.id, req.body)
+    const files = (req.files ?? []) as Express.Multer.File[]
+    const photoUrls = await Promise.all(
+      files.map(f => {
+        const ext = f.mimetype.split('/')[1]
+        const key = `reviews/${randomUUID()}.${ext}`
+        return uploadToS3(key, f.buffer, f.mimetype)
+      }),
+    )
+    const result = await createReview(req.user!.id, { ...req.body, photoUrls })
     res.status(201).json({ data: result })
   } catch (err) { next(err) }
 }

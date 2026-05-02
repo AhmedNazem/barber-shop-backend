@@ -23,3 +23,13 @@ export function singleImage(field: string) {
     })
   }
 }
+
+export function multipleImages(field: string, maxCount = 5) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    _multer.array(field, maxCount)(req, res, (err) => {
+      if (err instanceof multer.MulterError) return next(new AppError('file_too_large', 413))
+      if (err) return next(new AppError('invalid_mime', 400))
+      next()
+    })
+  }
+}
