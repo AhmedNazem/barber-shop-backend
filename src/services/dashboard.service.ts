@@ -35,6 +35,40 @@ async function resolveBarberScope(userId: string, shopId: string): Promise<strin
   return barber?.id
 }
 
+export async function getTopServices(userId: string, role: string, shopId: string | undefined) {
+  if (!shopId) throw new AppError('not_found', 404)
+
+  const barberId = role === 'BARBER' ? await resolveBarberScope(userId, shopId) : undefined
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      shopId,
+      status: { in: ['UPCOMING', 'CONFIRMED', 'COMPLETED'] },
+      ...(barberId ? { barberId } : {}),
+    },
+    select: {
+      status: true,
+      services: { select: { serviceId: true, nameEn: true, nameAr: true, price: true } },
+    },
+  })
+
+  const map = new Map<string, { nameEn: string; nameAr: string; bookings: number; revenue: number }>()
+
+  for (const booking of bookings) {
+    for (const svc of booking.services) {
+      const cur = map.get(svc.serviceId) ?? { nameEn: svc.nameEn, nameAr: svc.nameAr, bookings: 0, revenue: 0 }
+      cur.bookings++
+      if (booking.status === 'COMPLETED') cur.revenue += svc.price
+      map.set(svc.serviceId, cur)
+    }
+  }
+
+  return Array.from(map.entries())
+    .map(([serviceId, d]) => ({ serviceId, ...d }))
+    .sort((a, b) => b.bookings - a.bookings)
+    .slice(0, 10)
+}
+
 export async function getBarberAnalytics(shopId: string | undefined) {
   if (!shopId) throw new AppError('not_found', 404)
 

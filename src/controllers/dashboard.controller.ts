@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+import { getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+
+export async function getTopServicesHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await getTopServices(req.user!.id, req.user!.role, req.user!.shopId))
+  } catch (err) { next(err) }
+}
 
 export async function getBarberAnalyticsHandler(req: Request, res: Response, next: NextFunction) {
   try {
