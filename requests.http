@@ -532,3 +532,18 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/dashboard/activity
 Authorization: Bearer {{accessToken}}
 ###
+
+### S9.3a — Analytics: this month (Owner/Barber JWT)
+GET {{baseUrl}}/dashboard/analytics?range=month
+Authorization: Bearer {{accessToken}}
+###
+
+### S9.3b — Analytics: today
+GET {{baseUrl}}/dashboard/analytics?range=today
+Authorization: Bearer {{accessToken}}
+###
+
+### S9.3c — Analytics: custom range
+GET {{baseUrl}}/dashboard/analytics?range=custom&start=2025-11-01&end=2025-11-30
+Authorization: Bearer {{accessToken}}
+###
