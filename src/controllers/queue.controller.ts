@@ -4,6 +4,7 @@ import {
   getQueue, addWalkIn, updateStatus,
   reorderEntry, getCustomerQueueEntry,
 } from '@/services/queue.service'
+import { createNotification } from '@/services/notification.service'
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 
@@ -64,6 +65,12 @@ export async function noShowHandler(req: Request, res: Response, next: NextFunct
           update: { score: { decrement: 20 }, noShowCount: { increment: 1 }, updatedAt: new Date() },
           create: { userId: booking.customerId, score: Math.max(0, 80), noShowCount: 1 },
         })
+        await createNotification(
+          booking.customerId, 'CANCELLATION',
+          'No-Show Recorded', 'تم تسجيل غياب',
+          'You were marked as a no-show for your appointment.', 'تم تسجيلك كغائب عن موعدك.',
+          { bookingId: booking.id },
+        )
       }
     }
     ok(res, entry)

@@ -575,3 +575,22 @@ Content-Type: application/json
   "note": "Cash paid at counter"
 }
 ###
+
+# ─────────────────────────────────────────────────────────
+# S10 — Notifications
+# ─────────────────────────────────────────────────────────
+
+### S10.2 — Get notifications + unread count (any JWT)
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{accessToken}}
+###
+
+### S10.3 — Mark single notification as read
+PATCH {{baseUrl}}/notifications/PASTE_NOTIFICATION_ID_HERE/read
+Authorization: Bearer {{accessToken}}
+###
+
+### S10.4 — Mark all notifications as read
+PATCH {{baseUrl}}/notifications/read-all
+Authorization: Bearer {{accessToken}}
+###

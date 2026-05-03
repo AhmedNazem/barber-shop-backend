@@ -10,6 +10,7 @@ import { reviewsRouter } from '@/routes/reviews'
 import { bookingsRouter } from '@/routes/bookings'
 import { queueShopRouter, queueRouter } from '@/routes/queue'
 import { dashboardRouter } from '@/routes/dashboard'
+import { notificationsRouter } from '@/routes/notifications'
 
 export const router = Router()
 
@@ -25,3 +26,4 @@ router.use('/bookings', bookingsRouter)
 router.use('/shops/:shopId/queue', queueShopRouter)
 router.use('/queue', queueRouter)
 router.use('/dashboard', dashboardRouter)
+router.use('/notifications', notificationsRouter)

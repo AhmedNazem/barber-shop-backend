@@ -43,7 +43,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S7    | Queue Management                    | ✅ Complete               |
 | S8    | Booking History + Reviews           | ✅ Complete               |
 | S9    | Dashboard Analytics                 | ✅ Complete               |
-| S10   | Notifications                       | ⏳ Pending                |
+| S10   | Notifications                       | ✅ Complete               |
 | S11   | Onboarding Wizard                   | ⏳ Pending                |
 | S12   | Platform Settings + Admin           | ⏳ Pending                |
 | S13   | Subscription Plans + Feature Gating | ⏳ Pending                |
@@ -143,7 +143,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Decision: compute live with Prisma `_avg` + `_count` on Review (acceptable until ~5k reviews per shop). Cache per-shop result in Redis with 5-min TTL, invalidated on new review POST.
   - Action: document in BLUEPRINT.md §2. Wire cache invalidation in S4 when review POST is built.
 
-- [ ] **S0.5-L** Notification model missing `title`/`titleAr` — **fix before S10**
+- [x] **S0.5-L** Notification model missing `title`/`titleAr` — **fix before S10**
   - Frontend `AccountNotification` type expects `{ title, titleAr, message, messageAr }`.
   - DB model in BLUEPRINT §12 only has `message` and `messageAr`.
   - Action: add `title String` and `titleAr String` to `Notification` model in `schema.prisma`. Run migration before S10. Update BLUEPRINT.md §12.
@@ -342,16 +342,16 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S10 — Notifications ⏳
+## Phase S10 — Notifications ✅
 
 > Blueprint: §12. In-app notification bell. Sent by server jobs, not directly by API callers.
 
-- [ ] **S10.1** Notification service (`src/services/notification.service.ts`) — `create(userId, type, message, messageAr, meta?)`. Called internally by BullMQ jobs — never directly from route handlers.
-- [ ] **S10.2** `GET /notifications` — Bearer JWT. Returns `{ notifications[], unreadCount }`.
-- [ ] **S10.3** `PATCH /notifications/:id/read` — Bearer JWT. Marks single notification read.
-- [ ] **S10.4** `PATCH /notifications/read-all` — Bearer JWT. Marks all read for user.
-- [ ] **S10.5** Wire notification creation to booking events — confirmed, cancelled, no-show, review-flagged-removed.
-- [ ] **S10.6** Tests — unread count accuracy, read-all clears all for correct user only.
+- [x] **S10.1** Notification service (`src/services/notification.service.ts`) — `create(userId, type, message, messageAr, meta?)`. Called internally by BullMQ jobs — never directly from route handlers.
+- [x] **S10.2** `GET /notifications` — Bearer JWT. Returns `{ notifications[], unreadCount }`.
+- [x] **S10.3** `PATCH /notifications/:id/read` — Bearer JWT. Marks single notification read.
+- [x] **S10.4** `PATCH /notifications/read-all` — Bearer JWT. Marks all read for user.
+- [x] **S10.5** Wire notification creation to booking events — confirmed, cancelled, no-show, review-flagged-removed.
+- [x] **S10.6** Tests — unread count accuracy, read-all clears all for correct user only.
 
 ---
 

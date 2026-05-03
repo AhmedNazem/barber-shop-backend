@@ -1,6 +1,7 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { FlagReason } from '@prisma/client'
+import { createNotification } from '@/services/notification.service'
 
 export async function listShopReviews(shopId: string, asOwner: boolean, page: number, limit: number) {
   const where = asOwner ? { shopId } : { shopId, isVisible: true }
@@ -87,7 +88,7 @@ export async function resolveFlag(
   if (!review) throw new AppError('not_found', 404)
   if (review.flagStatus !== 'PENDING') throw new AppError('not_found', 404)
 
-  return prisma.review.update({
+  const updated = await prisma.review.update({
     where: { id: reviewId },
     data: {
       flagStatus:    action === 'approve' ? 'APPROVED' : 'REMOVED',
@@ -96,4 +97,18 @@ export async function resolveFlag(
       resolvedAt:    new Date(),
     },
   })
+
+  if (action === 'remove') {
+    const shop = await prisma.shop.findUnique({ where: { id: review.shopId }, select: { ownerId: true } })
+    if (shop) {
+      await createNotification(
+        shop.ownerId, 'SYSTEM_ALERT',
+        'Review Removed', 'تم حذف التقييم',
+        'A flagged review on your shop has been removed.', 'تم حذف تقييم مُبلَّغ عنه في متجرك.',
+        { reviewId },
+      )
+    }
+  }
+
+  return updated
 }

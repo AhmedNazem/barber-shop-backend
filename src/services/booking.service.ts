@@ -1,6 +1,7 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { PaymentMethod } from '@prisma/client'
+import { createNotification } from '@/services/notification.service'
 
 type CreateBookingInput = {
   shopId:        string
@@ -51,6 +52,13 @@ export async function cancelBooking(bookingId: string, customerId: string) {
       })
     }
   })
+
+  await createNotification(
+    customerId, 'CANCELLATION',
+    'Booking Cancelled', 'تم إلغاء الحجز',
+    'Your booking has been cancelled.', 'تم إلغاء حجزك.',
+    { bookingId },
+  )
 }
 
 export async function getBookingById(bookingId: string, customerId: string) {
@@ -161,6 +169,14 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
       include: { services: true },
     })
 
+    return booking
+  }).then(async (booking) => {
+    await createNotification(
+      customerId, 'BOOKING_CONFIRMED',
+      'Booking Confirmed', 'تم تأكيد الحجز',
+      'Your booking has been confirmed.', 'تم تأكيد حجزك بنجاح.',
+      { bookingId: booking.id },
+    )
     return booking
   })
 }
