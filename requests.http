@@ -594,3 +594,90 @@ Authorization: Bearer {{accessToken}}
 PATCH {{baseUrl}}/notifications/read-all
 Authorization: Bearer {{accessToken}}
 ###
+
+# ─────────────────────────────────────────────────────────
+# S11 — Onboarding Wizard
+# ─────────────────────────────────────────────────────────
+
+### S11.1 — Step 1: Basics (Owner JWT)
+POST {{baseUrl}}/onboarding/basics
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nameEn": "My Barber Shop",
+  "nameAr": "محلي للحلاقة",
+  "address": "123 Main St",
+  "city": "Baghdad",
+  "neighborhood": "Karrada",
+  "neighborhoodAr": "الكرادة",
+  "phone": "+9647700000001",
+  "lat": 33.3152,
+  "lng": 44.3661
+}
+###
+
+### S11.2 — Step 2: Branding (Owner JWT — multipart/form-data with cover + logo)
+# Use a REST client that supports file upload, e.g. Postman
+# POST {{baseUrl}}/onboarding/branding with files: cover (image), logo (image)
+###
+
+### S11.3 — Step 3: Services (Owner JWT)
+POST {{baseUrl}}/onboarding/services
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "services": [
+    { "nameEn": "Haircut", "nameAr": "قص شعر", "category": "hair", "price": 5000, "durationMin": 30 },
+    { "nameEn": "Beard Trim", "nameAr": "تشذيب لحية", "category": "beard", "price": 3000, "durationMin": 20 }
+  ]
+}
+###
+
+### S11.4 — Step 4: Hours (Owner JWT)
+POST {{baseUrl}}/onboarding/hours
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "mon": { "closed": false, "open": "09:00", "close": "21:00" },
+  "tue": { "closed": false, "open": "09:00", "close": "21:00" },
+  "wed": { "closed": false, "open": "09:00", "close": "21:00" },
+  "thu": { "closed": false, "open": "09:00", "close": "21:00" },
+  "fri": { "closed": true,  "open": "00:00", "close": "00:00" },
+  "sat": { "closed": false, "open": "10:00", "close": "18:00" },
+  "sun": { "closed": false, "open": "10:00", "close": "18:00" }
+}
+###
+
+### S11.5 — Step 5: Submit (Owner JWT)
+POST {{baseUrl}}/onboarding/submit
+Authorization: Bearer {{accessToken}}
+###
+
+### S11.7a — Admin: Approve shop
+PATCH {{baseUrl}}/admin/shops/PASTE_SHOP_ID_HERE/approve
+Authorization: Bearer {{accessToken}}
+###
+
+### S11.7b — Admin: Reject shop
+PATCH {{baseUrl}}/admin/shops/PASTE_SHOP_ID_HERE/reject
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Incomplete documentation",
+  "reasonAr": "وثائق غير مكتملة"
+}
+###
+
+### S11.7c — Admin: Suspend shop
+PATCH {{baseUrl}}/admin/shops/PASTE_SHOP_ID_HERE/suspend
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Policy violation"
+}
+###

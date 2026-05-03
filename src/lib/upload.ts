@@ -33,3 +33,16 @@ export function multipleImages(field: string, maxCount = 5) {
     })
   }
 }
+
+export function brandingImages() {
+  return (req: Request, res: Response, next: NextFunction) => {
+    _multer.fields([
+      { name: 'cover', maxCount: 1 },
+      { name: 'logo',  maxCount: 1 },
+    ])(req, res, (err) => {
+      if (err instanceof multer.MulterError) return next(new AppError('file_too_large', 413))
+      if (err) return next(new AppError('invalid_mime', 400))
+      next()
+    })
+  }
+}

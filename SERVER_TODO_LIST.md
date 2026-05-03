@@ -44,7 +44,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S8    | Booking History + Reviews           | ✅ Complete               |
 | S9    | Dashboard Analytics                 | ✅ Complete               |
 | S10   | Notifications                       | ✅ Complete               |
-| S11   | Onboarding Wizard                   | ⏳ Pending                |
+| S11   | Onboarding Wizard                   | ✅ Complete               |
 | S12   | Platform Settings + Admin           | ⏳ Pending                |
 | S13   | Subscription Plans + Feature Gating | ⏳ Pending                |
 | S14   | Loyalty + Reliability + VIP         | ⏳ Pending                |
@@ -94,7 +94,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - DB model has `address` and `city` only — neighborhood is missing entirely.
   - Action: add `neighborhood String` and `neighborhoodAr String` to `Shop` in `schema.prisma`. Run migration before S3. Update BLUEPRINT.md §2 DB model.
 
-- [ ] **S0.5-D** Suspension logic references `status = PENDING` which doesn't exist — **blocks S11**
+- [x] **S0.5-D** Suspension logic references `status = PENDING` which doesn't exist — **blocks S11**
   - BLUEPRINT §1 step 3: "Pending bookings (`status = PENDING`) — set `status = CANCELLED`"
   - `BookingStatus` enum: `UPCOMING | CONFIRMED | COMPLETED | CANCELLED | NO_SHOW` — no `PENDING`.
   - The initial booking status is `UPCOMING`. Suspension should cancel `UPCOMING` bookings, not `PENDING` ones.
@@ -118,7 +118,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Correct (from actual frontend): `'general' | 'booking' | 'partnership' | 'technical' | 'complaint'`
   - Action: update BLUEPRINT.md §10 shape. Zod schema in S17.1 must use the correct list.
 
-- [ ] **S0.5-H** Onboarding hours format wrong in BLUEPRINT §13 — **fix before S11.4**
+- [x] **S0.5-H** Onboarding hours format wrong in BLUEPRINT §13 — **fix before S11.4**
   - BLUEPRINT §13 step 4 says: `{ hours: [{dayOfWeek: Int, openTime, closeTime, isClosed}] }`
   - Actual frontend sends: `{ mon: { closed, open, close }, tue: {...}, ... }` (3-letter day keys)
   - Backend must map `mon→1, tue→2, wed→3, thu→4, fri→5, sat→6, sun→0` when writing `BusinessHours`.
@@ -355,18 +355,18 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S11 — Onboarding Wizard ⏳
+## Phase S11 — Onboarding Wizard ✅
 
 > Blueprint: §13. 5-step wizard. Shop enters PENDING after step 5.
 
-- [ ] **S11.1** `POST /onboarding/basics` — Owner JWT. Upsert shop (create or update if rejected). Returns `{ shopId }`.
-- [ ] **S11.2** `POST /onboarding/branding` — Owner JWT. Multipart: cover + logo → S3.
-- [ ] **S11.3** `POST /onboarding/services` — Owner JWT. Creates `Service[]` records for the shop.
-- [ ] **S11.4** `POST /onboarding/hours` — Owner JWT. Creates `BusinessHours[]` records.
-- [ ] **S11.5** `POST /onboarding/submit` — Owner JWT. Sets `shop.status = PENDING`. Notifies admins via in-app notification. **No payment credentials collected at onboarding for MVP** — payment setup (ZainCash number / FIB credentials) is optional and done later in dashboard settings (S6-B post-launch).
-- [ ] **S11.6** Resubmit rule — if shop already exists with `status=REJECTED`, step 1 upserts and resets status to `PENDING`.
-- [ ] **S11.7** Admin approval — `PATCH /admin/shops/:id/approve` (sets APPROVED, notifies owner), `PATCH /admin/shops/:id/reject` (sets REJECTED + reason, notifies owner), `PATCH /admin/shops/:id/suspend` (full suspension transaction from §1 in BLUEPRINT.md).
-- [ ] **S11.8** Tests — resubmit after rejection, suspension transaction atomicity (all pending bookings cancelled, deposits flagged).
+- [x] **S11.1** `POST /onboarding/basics` — Owner JWT. Upsert shop (create or update if rejected). Returns `{ shopId }`.
+- [x] **S11.2** `POST /onboarding/branding` — Owner JWT. Multipart: cover + logo → S3.
+- [x] **S11.3** `POST /onboarding/services` — Owner JWT. Creates `Service[]` records for the shop.
+- [x] **S11.4** `POST /onboarding/hours` — Owner JWT. Creates `BusinessHours[]` records. S0.5-H: maps 3-letter day keys to dayOfWeek integers.
+- [x] **S11.5** `POST /onboarding/submit` — Owner JWT. Sets `shop.status = PENDING`. Notifies admins via in-app notification.
+- [x] **S11.6** Resubmit rule — if shop already exists with `status=REJECTED`, step 1 upserts and resets status to `PENDING`.
+- [x] **S11.7** Admin approval — `PATCH /admin/shops/:id/approve` (sets APPROVED, notifies owner), `PATCH /admin/shops/:id/reject` (sets REJECTED + reason, notifies owner), `PATCH /admin/shops/:id/suspend` (full suspension transaction — cancels UPCOMING bookings, notifies customers + owner).
+- [x] **S11.8** Tests — resubmit after rejection, suspension transaction atomicity (all UPCOMING bookings cancelled), S0.5-D + S0.5-H fixes verified.
 
 ---
 

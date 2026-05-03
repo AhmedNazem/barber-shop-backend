@@ -17,7 +17,7 @@ function getClient(): S3Client {
 
 export async function uploadToS3(key: string, buffer: Buffer, mimeType: string): Promise<string> {
   if (!env.AWS_BUCKET_NAME || !env.AWS_ACCESS_KEY_ID) {
-    return `https://fake-s3.local/${key}`
+    throw new Error('S3 credentials not configured (AWS_BUCKET_NAME, AWS_ACCESS_KEY_ID)')
   }
 
   await getClient().send(new PutObjectCommand({

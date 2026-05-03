@@ -11,6 +11,8 @@ import { bookingsRouter } from '@/routes/bookings'
 import { queueShopRouter, queueRouter } from '@/routes/queue'
 import { dashboardRouter } from '@/routes/dashboard'
 import { notificationsRouter } from '@/routes/notifications'
+import { onboardingRouter } from '@/routes/onboarding'
+import { adminRouter } from '@/routes/admin'
 
 export const router = Router()
 
@@ -27,3 +29,5 @@ router.use('/shops/:shopId/queue', queueShopRouter)
 router.use('/queue', queueRouter)
 router.use('/dashboard', dashboardRouter)
 router.use('/notifications', notificationsRouter)
+router.use('/onboarding',   onboardingRouter)
+router.use('/admin',        adminRouter)
