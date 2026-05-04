@@ -370,18 +370,18 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S12 — Platform Settings + Admin ⏳
+## Phase S12 — Platform Settings + Admin ✅
 
 > Blueprint: §15, §1b. Admin-only endpoints. Maintenance mode + platform config.
 
-- [ ] **S12.1** `GET /admin/platform-config` — Admin JWT. Returns config with `smsApiKeyMasked` (never raw key).
-- [ ] **S12.2** `PATCH /admin/platform-config` — Admin JWT. AES-256 encrypt `smsApiKey` before storing. Invalidate Redis cache on update.
-- [ ] **S12.3** `POST /admin/platform-config/test-sms` — Admin JWT. Sends real test SMS via configured provider.
-- [ ] **S12.4** Maintenance mode middleware — Redis-cached config check on every request. Skip for admin role.
-- [ ] **S12.5** Admin users — `GET /admin/users`, `GET /admin/users/:id`, `PATCH /admin/users/:id/role` (enforce role change constraints from §1b), `PATCH /admin/users/:id/suspend`, `DELETE /admin/users/:id` (soft delete — anonymise PII).
-- [ ] **S12.6** Session invalidation on role change — delete all `RefreshToken` records for user.
-- [ ] **S12.7** `GET /admin/shops/:id/suspend-preview` — returns `{ activeBookings, pendingBookings, pendingDepositsIQD }`.
-- [ ] **S12.8** Tests — role change constraint (customer→barber blocked), PII anonymisation on delete, maintenance mode Redis bypass.
+- [x] **S12.1** `GET /admin/platform-config` — Admin JWT. Returns config with `smsApiKeyMasked` (never raw key).
+- [x] **S12.2** `PATCH /admin/platform-config` — Admin JWT. AES-256 encrypt `smsApiKey` before storing. Invalidate Redis cache on update.
+- [x] **S12.3** `POST /admin/platform-config/test-sms` — Admin JWT. Sends real test SMS via configured provider.
+- [x] **S12.4** Maintenance mode middleware — Redis-cached config check on every request. Skip for admin role.
+- [x] **S12.5** Admin users — `GET /admin/users`, `GET /admin/users/:id`, `PATCH /admin/users/:id/role` (enforce role change constraints from §1b), `PATCH /admin/users/:id/suspend`, `DELETE /admin/users/:id` (soft delete — anonymise PII).
+- [x] **S12.6** Session invalidation on role change — delete all `RefreshToken` records for user.
+- [x] **S12.7** `GET /admin/shops/:id/suspend-preview` — returns `{ activeBookings, pendingDepositsIQD }`.
+- [x] **S12.8** Tests — role change constraint (customer→barber blocked), PII anonymisation on delete, maintenance mode Redis bypass.
 
 ---
 

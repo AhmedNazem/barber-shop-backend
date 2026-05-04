@@ -1,6 +1,15 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { createNotification } from '@/services/notification.service'
+import { UserRole } from '@prisma/client'
+
+// Role transitions blocked per §1b
+const BLOCKED_FROM: Partial<Record<UserRole, UserRole[]>> = {
+  CUSTOMER: [UserRole.BARBER, UserRole.SHOP_OWNER],
+  BARBER:   [UserRole.SHOP_OWNER],
+}
+
+// ─── Shop management ──────────────────────────────────────────────────────────
 
 export async function approveShop(shopId: string) {
   const shop = await prisma.shop.findUnique({ where: { id: shopId } })
@@ -81,4 +90,83 @@ export async function suspendShop(shopId: string, reason: string) {
       `تم تعليق محلك. السبب: ${reason}`,
     ),
   ])
+}
+
+// ─── User management ──────────────────────────────────────────────────────────
+
+export async function listUsers(opts: { role?: string; page: number; limit: number }) {
+  const where = {
+    deletedAt: null,
+    ...(opts.role ? { role: opts.role as UserRole } : {}),
+  }
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: { id: true, phone: true, name: true, role: true, shopId: true, suspended: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      skip:    (opts.page - 1) * opts.limit,
+      take:    opts.limit,
+    }),
+    prisma.user.count({ where }),
+  ])
+  return { users, total, page: opts.page, limit: opts.limit }
+}
+
+export async function getUser(userId: string) {
+  const user = await prisma.user.findFirst({
+    where:  { id: userId, deletedAt: null },
+    select: { id: true, phone: true, name: true, role: true, shopId: true, suspended: true, isVip: true, createdAt: true },
+  })
+  if (!user) throw new AppError('not_found', 404)
+  return user
+}
+
+export async function changeUserRole(userId: string, newRole: string) {
+  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } })
+  if (!user) throw new AppError('not_found', 404)
+
+  if (newRole === 'ADMIN') throw new AppError('role_change_not_allowed', 403)
+  const blocked = BLOCKED_FROM[user.role] ?? []
+  if (blocked.includes(newRole as UserRole)) throw new AppError('role_change_not_allowed', 403)
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: userId }, data: { role: newRole as UserRole } })
+    await tx.refreshToken.deleteMany({ where: { userId } })
+  })
+}
+
+export async function suspendUser(userId: string) {
+  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } })
+  if (!user) throw new AppError('not_found', 404)
+  await prisma.user.update({ where: { id: userId }, data: { suspended: true } })
+}
+
+export async function deleteUser(userId: string) {
+  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } })
+  if (!user) throw new AppError('not_found', 404)
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: userId },
+      data:  { deletedAt: new Date(), phone: `deleted_${userId}`, name: 'Deleted User' },
+    })
+    await tx.refreshToken.deleteMany({ where: { userId } })
+  })
+}
+
+// ─── Shop suspension preview ──────────────────────────────────────────────────
+
+export async function getSuspendPreview(shopId: string) {
+  const shop = await prisma.shop.findUnique({ where: { id: shopId } })
+  if (!shop) throw new AppError('not_found', 404)
+
+  const [bookings, agg] = await Promise.all([
+    prisma.booking.count({ where: { shopId, status: 'UPCOMING' } }),
+    prisma.booking.aggregate({
+      where: { shopId, status: 'UPCOMING' },
+      _sum:  { depositPaid: true },
+    }),
+  ])
+
+  return { activeBookings: bookings, pendingDepositsIQD: agg._sum.depositPaid ?? 0 }
 }

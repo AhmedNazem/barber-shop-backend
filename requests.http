@@ -681,3 +681,78 @@ Content-Type: application/json
   "reason": "Policy violation"
 }
 ###
+
+
+# ════════════════════════════════════════════════
+#  S12 — Platform Settings + Admin
+# ════════════════════════════════════════════════
+
+### S12.1 — Get platform config (Admin JWT)
+GET {{baseUrl}}/admin/platform-config
+Authorization: Bearer {{accessToken}}
+###
+
+### S12.2 — Update platform config (Admin JWT)
+PATCH {{baseUrl}}/admin/platform-config
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "maintenanceMode": false,
+  "defaultDepositPercent": 20,
+  "commissionPercent": 10,
+  "smsProvider": "unifonic",
+  "smsApiKey": "PASTE_UNIFONIC_APP_SID_HERE",
+  "smsSenderId": "BarberOS"
+}
+###
+
+### S12.3 — Test SMS with platform credentials (Admin JWT)
+POST {{baseUrl}}/admin/platform-config/test-sms
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "phone": "{{myPhone}}"
+}
+###
+
+### S12.5a — List users (Admin JWT)
+GET {{baseUrl}}/admin/users?page=1&limit=20
+Authorization: Bearer {{accessToken}}
+###
+
+### S12.5b — List users filtered by role
+GET {{baseUrl}}/admin/users?role=SHOP_OWNER&page=1&limit=20
+Authorization: Bearer {{accessToken}}
+###
+
+### S12.5c — Get single user (Admin JWT)
+GET {{baseUrl}}/admin/users/PASTE_USER_ID_HERE
+Authorization: Bearer {{accessToken}}
+###
+
+### S12.5d — Change user role (Admin JWT)
+PATCH {{baseUrl}}/admin/users/PASTE_USER_ID_HERE/role
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "role": "CUSTOMER"
+}
+###
+
+### S12.5e — Suspend user (Admin JWT)
+PATCH {{baseUrl}}/admin/users/PASTE_USER_ID_HERE/suspend
+Authorization: Bearer {{accessToken}}
+###
+
+### S12.5f — Soft-delete user / anonymise PII (Admin JWT)
+DELETE {{baseUrl}}/admin/users/PASTE_USER_ID_HERE
+Authorization: Bearer {{accessToken}}
+###
+
+### S12.7 — Suspend preview (Admin JWT)
+GET {{baseUrl}}/admin/shops/PASTE_SHOP_ID_HERE/suspend-preview
+Authorization: Bearer {{accessToken}}
+###

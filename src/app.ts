@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import { requestId } from "@/middleware/request-id";
 import { errorHandler } from "@/middleware/error-handler";
+import { maintenanceGuard } from "@/middleware/maintenance";
 import { router } from "@/routes";
 import { Env } from "@/config/env";
 
@@ -40,6 +41,10 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
         message: { error: "rate_limited", message: "Too many requests" },
       }),
     );
+  }
+
+  if (config.NODE_ENV !== "test") {
+    app.use(maintenanceGuard)
   }
 
   app.get("/health", (_req, res) => {
