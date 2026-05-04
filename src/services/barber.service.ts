@@ -1,5 +1,6 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
+import { PLAN_MAX_BARBERS } from '@/services/plan.service'
 
 async function assertOwnership(shopId: string, ownerId: string) {
   const shop = await prisma.shop.findUnique({ where: { id: shopId } })
@@ -19,7 +20,16 @@ export async function createBarber(
   ownerId: string,
   data: { nameEn: string; nameAr: string; bio?: string; bioAr?: string; specialties?: string[]; experienceYears?: number },
 ) {
-  await assertOwnership(shopId, ownerId)
+  const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { ownerId: true, plan: true } })
+  if (!shop) throw new AppError('not_found', 404)
+  if (shop.ownerId !== ownerId) throw new AppError('forbidden', 403)
+
+  const maxBarbers = PLAN_MAX_BARBERS[shop.plan]
+  if (maxBarbers !== null) {
+    const count = await prisma.barber.count({ where: { shopId, isActive: true } })
+    if (count >= maxBarbers) throw new AppError('plan_required', 403)
+  }
+
   return prisma.barber.create({ data: { shopId, ...data } })
 }
 

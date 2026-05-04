@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from 'express'
 import { ok, paginated } from '@/lib/response'
 import { createShop, updateShop, setShopImage, getShopStatus, getShop } from '@/services/shop.service'
 import { listShops } from '@/services/shop.list.service'
+import { getShopPlan, updateShopPlan, updateBookingMode } from '@/services/plan.service'
 import { uploadToS3 } from '@/lib/s3'
+import { ShopPlan, BookingMode } from '@prisma/client'
 import { PriceRange } from '@prisma/client'
 
 export async function createShopHandler(req: Request, res: Response, next: NextFunction) {
@@ -74,4 +76,24 @@ export async function getShopHandler(req: Request, res: Response, next: NextFunc
   } catch (err) {
     next(err)
   }
+}
+
+export async function getShopPlanHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await getShopPlan(req.params['id']!))
+  } catch (err) { next(err) }
+}
+
+export async function updateShopPlanHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    await updateShopPlan(req.params['id']!, req.body.plan as ShopPlan, req.body.expiresAt)
+    ok(res, { ok: true })
+  } catch (err) { next(err) }
+}
+
+export async function updateBookingModeHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    await updateBookingMode(req.params['id']!, req.user!.id, req.body.mode as BookingMode)
+    ok(res, { ok: true })
+  } catch (err) { next(err) }
 }

@@ -90,6 +90,7 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
     include: { discount: true },
   })
   if (!shop || !shop.isActive) throw new AppError('not_found', 404)
+  if (shop.plan === 'FREE') throw new AppError('plan_required', 403)
   if (shop.bookingMode === 'QUEUE_ONLY') throw new AppError('booking_disabled', 422)
 
   // 3. Validate services belong to this shop

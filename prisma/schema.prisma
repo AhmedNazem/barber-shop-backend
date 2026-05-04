@@ -441,6 +441,18 @@ model LoyaltyAccount {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model LoyaltyReward {
+  id          String   @id @default(cuid())
+  nameEn      String
+  nameAr      String
+  pointsCost  Int
+  discountIQD Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  transactions LoyaltyTransaction[]
+}
+
 model LoyaltyTransaction {
   id        String          @id @default(cuid())
   userId    String
@@ -450,7 +462,8 @@ model LoyaltyTransaction {
   rewardId  String?
   createdAt DateTime        @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward LoyaltyReward?  @relation(fields: [rewardId], references: [id])
 
   @@index([userId])
 }

@@ -10,7 +10,7 @@ const createBookingSchema = z.object({
   barberId:      z.string().cuid().optional(),
   serviceIds:    z.array(z.string().cuid()).min(1),
   slot:          z.string().datetime(),
-  paymentMethod: z.enum(['ZAINCASH', 'FIB', 'PAYTABS']),
+  paymentMethod: z.enum(['CASH', 'ZAINCASH', 'FIB', 'PAYTABS']),
 })
 
 export const bookingsRouter = Router()

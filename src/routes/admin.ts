@@ -8,9 +8,14 @@ import {
   getPlatformConfigHandler, updatePlatformConfigHandler, testSmsHandler,
   listUsersHandler, getUserHandler, changeRoleHandler, suspendUserHandler, deleteUserHandler,
 } from '@/controllers/admin.controller'
+import { updateShopPlanHandler } from '@/controllers/shop.controller'
 
 const rejectSchema  = z.object({ reason: z.string().min(2), reasonAr: z.string().min(2) })
 const suspendSchema = z.object({ reason: z.string().min(2) })
+const planSchema    = z.object({
+  plan:      z.enum(['FREE', 'STARTER', 'PRO']),
+  expiresAt: z.string().datetime().optional(),
+})
 const roleSchema    = z.object({ role: z.enum(['CUSTOMER', 'BARBER', 'SHOP_OWNER']) })
 const testSmsSchema = z.object({ phone: z.string().min(1) })
 
@@ -32,6 +37,7 @@ adminRouter.patch('/shops/:id/approve',          ...guard,                      
 adminRouter.patch('/shops/:id/reject',           ...guard, validate(rejectSchema),  rejectShopHandler)
 adminRouter.patch('/shops/:id/suspend',          ...guard, validate(suspendSchema), suspendShopHandler)
 adminRouter.get(  '/shops/:id/suspend-preview',  ...guard,                          suspendPreviewHandler)
+adminRouter.patch('/shops/:id/plan',             ...guard, validate(planSchema),     updateShopPlanHandler)
 
 // ─── Platform config ──────────────────────────────────────────────────────────
 adminRouter.get(  '/platform-config',            ...guard,                                    getPlatformConfigHandler)

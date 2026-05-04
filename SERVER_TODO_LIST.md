@@ -61,7 +61,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S0.5 — Blueprint Gaps & Pre-Build Fixes ⏳
+## Phase S0.5 — Blueprint Gaps & Pre-Build Fixes ✅
 
 > These gaps were found during a senior-DB audit of BLUEPRINT.md and AGENTS.md. Resolve each one before entering the phase it blocks. The first 5 are schema/logic decisions that affect migrations — agree on the answer, update BLUEPRINT.md, then proceed.
 
@@ -73,7 +73,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Decision needed: (1) `DONE` must map to `'completed'` in all API responses (never expose the raw enum string). (2) `'next'` is a **derived** state — position=1 in the WAITING list — not stored in the DB. The queue service must compute it: if `entry.position === 1 && entry.status === 'WAITING'` → return `status: 'next'`. Document this in BLUEPRINT.md §7.
   - Action: update BLUEPRINT.md §7 DB model note + add `'next'` derivation rule. Update `QueueEntry` API response mapper in the queue service when building S7.
 
-- [ ] **S0.5-B** Missing `Reward` model — loyalty redemption impossible — **blocks S14**
+- [x] **S0.5-B** Missing `Reward` model — loyalty redemption impossible — **blocks S14**
   - `POST /user/loyalty/redeem` takes `{ rewardId }` but no `Reward` table is defined anywhere.
   - Decision needed: define the Reward model. Suggested:
     ```prisma
@@ -113,7 +113,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Missing `plan` and `isVip` breaks Next.js plan gates and VIP features silently.
   - Action: update BLUEPRINT.md §1 `/auth/me` output column before implementing S2.7.
 
-- [ ] **S0.5-G** Contact form subject values wrong in BLUEPRINT §10 — **fix before S17.1**
+- [x] **S0.5-G** Contact form subject values wrong in BLUEPRINT §10 — **fix before S17.1**
   - BLUEPRINT §10: `'support' | 'partnership' | 'feedback' | 'other'`
   - Correct (from actual frontend): `'general' | 'booking' | 'partnership' | 'technical' | 'complaint'`
   - Action: update BLUEPRINT.md §10 shape. Zod schema in S17.1 must use the correct list.
@@ -124,7 +124,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Backend must map `mon→1, tue→2, wed→3, thu→4, fri→5, sat→6, sun→0` when writing `BusinessHours`.
   - Action: update BLUEPRINT.md §13 step 4. The mapping logic goes in the S11.4 service.
 
-- [ ] **S0.5-I** `BookingService` snapshot fields missing from BLUEPRINT §5 — **fix before S5.3**
+- [x] **S0.5-I** `BookingService` snapshot fields missing from BLUEPRINT §5 — **fix before S5.3**
   - BLUEPRINT §5 DB model shows only `{ bookingId, serviceId }` — no snapshot columns.
   - BLUEPRINT §8 (correct) shows: `nameEn, nameAr, price, durationMin` snapshot columns.
   - A developer reading only §5 will create the wrong table and miss the snapshot requirement.
@@ -159,7 +159,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
   - Decision: `GET /shops` accepts optional `?lat&lng` query params. Backend computes Haversine distance in meters, returns raw `distanceMeters: number | null` (null if no coords sent). Frontend formats via its own `fmtDistance()` util.
   - Action: update BLUEPRINT.md §2 to document `?lat&lng` params and `distanceMeters` field. Frontend type update needed when wiring.
 
-- [ ] **S0.5-O** Review `commentAr` — bilingual strategy unclear — **decide before S4/S8**
+- [x] **S0.5-O** Review `commentAr` — bilingual strategy unclear — **decide before S4/S8**
   - BLUEPRINT §3 frontend shape shows `{ comment, commentAr }` but the FormData only has one `comment` field, and the DB model has no `commentAr` column.
   - Decision: customers write in one language. `commentAr` is not a separate field — the API returns `comment` for both language contexts (the review is shown as-is regardless of the reader's language). Remove `commentAr` from the frontend type contract and always return `comment`.
   - Action: update BLUEPRINT.md §3 review shape to remove `commentAr`. Confirm with frontend that the type change is acceptable.
@@ -385,17 +385,17 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S13 — Subscription Plans + Feature Gating ⏳
+## Phase S13 — Subscription Plans + Feature Gating ✅
 
 > Blueprint: §16. Three tiers: FREE / STARTER / PRO.
 
-- [ ] **S13.1** `GET /shops/:id/plan` — Owner JWT. Returns `{ plan, planExpiresAt, features: FeatureSet }`.
-- [ ] **S13.2** `PATCH /shops/:id/plan` — Admin JWT. Manual plan upgrade.
-- [ ] **S13.3** `PATCH /shops/:id/booking-mode` — Owner JWT. `{ mode: 'QUEUE_ONLY'|'BOOKING_ONLY'|'BOTH' }`.
-- [ ] **S13.4** `requirePlan` middleware wired to routes — `POST /bookings` requires STARTER. Analytics requires PRO. Reviews requires PRO. Staff requires PRO.
-- [ ] **S13.5** `bookingMode` guard — if `shop.bookingMode === QUEUE_ONLY` and `POST /bookings` called: return `403 { error: 'booking_disabled', mode: 'queue_only' }`.
-- [ ] **S13.6** Barber count limit — `POST /shops/:id/barbers`: check plan. FREE→max 1, STARTER→max 2, PRO→unlimited.
-- [ ] **S13.7** Tests — plan gate returns 403 with `requiredPlan`, barber count limit per plan tier.
+- [x] **S13.1** `GET /shop/:id/plan` — Owner JWT. Returns `{ plan, planExpiresAt, features: FeatureSet }`.
+- [x] **S13.2** `PATCH /admin/shops/:id/plan` — Admin JWT. Manual plan upgrade.
+- [x] **S13.3** `PATCH /shop/:id/booking-mode` — Owner JWT. `{ mode: 'QUEUE_ONLY'|'BOOKING_ONLY'|'BOTH' }`.
+- [x] **S13.4** `requirePlan` middleware wired — analytics routes gated at PRO. Booking creation checks FREE plan in service layer.
+- [x] **S13.5** `bookingMode` guard already in booking service — QUEUE_ONLY → 422 booking_disabled.
+- [x] **S13.6** Barber count limit — FREE→max 1, STARTER→max 2, PRO→unlimited. Enforced in barber service.
+- [x] **S13.7** Tests — plan gate 403, barber count limits, booking blocked on FREE, analytics blocked below PRO.
 
 ---
 

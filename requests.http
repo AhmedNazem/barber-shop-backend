@@ -756,3 +756,34 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/admin/shops/PASTE_SHOP_ID_HERE/suspend-preview
 Authorization: Bearer {{accessToken}}
 ###
+
+
+# ════════════════════════════════════════════════
+#  S13 — Subscription Plans + Feature Gating
+# ════════════════════════════════════════════════
+
+### S13.1 — Get shop plan + features (Owner JWT)
+GET {{baseUrl}}/shop/PASTE_SHOP_ID_HERE/plan
+Authorization: Bearer {{accessToken}}
+###
+
+### S13.2 — Admin upgrades shop plan
+PATCH {{baseUrl}}/admin/shops/PASTE_SHOP_ID_HERE/plan
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "plan": "STARTER",
+  "expiresAt": "2027-01-01T00:00:00.000Z"
+}
+###
+
+### S13.3 — Owner changes booking mode
+PATCH {{baseUrl}}/shop/PASTE_SHOP_ID_HERE/booking-mode
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "mode": "BOTH"
+}
+###
