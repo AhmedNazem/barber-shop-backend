@@ -399,23 +399,23 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S14 — Loyalty + Reliability + VIP ⏳
+## Phase S14 — Loyalty + Reliability + VIP ✅
 
 > Blueprint: §19, §20, §21. All three systems are security-critical — frontend localStorage is display-only.
 
-- [ ] **S14.1** Loyalty service — `earnPoints(userId, bookingId)`: `Math.floor(totalPrice / 1000)` pts. Atomic upsert `LoyaltyAccount`. Create `LoyaltyTransaction`. Auto-promote tier. If points ≥ 500 and not already VIP, set `User.isVip = true, vipGrantedBy = 'auto'`.
-- [ ] **S14.2** `GET /user/loyalty` — Customer JWT. Returns `{ points, tier, pendingReward }`.
-- [ ] **S14.3** `POST /user/loyalty/redeem` — Customer JWT. Verify `points >= reward.pointsCost` in DB. Deduct in same transaction as booking. Return 403 if insufficient.
-- [ ] **S14.4** Reliability service — `applyEvent(userId, event)`: NO_SHOW−20, LATE_CANCEL−10, COMPLETION+15, ON_TIME+5. Clamp 0–100. **`getDepositRate()` removed — no deposits for MVP.** Block threshold: score < 50.
-- [ ] **S14.5** `GET /user/reliability` — Customer JWT. Returns `{ score, noShowCount, isBlocked }`. `depositRate` field removed — no deposits for MVP.
-- [ ] **S14.6** Reliability events wired — `PATCH /queue/:entryId/no-show` → `applyEvent('NO_SHOW')`. `PATCH /queue/:entryId/done` → `applyEvent('COMPLETION')`. `PATCH /bookings/:id/cancel` (late) → `applyEvent('LATE_CANCEL')`. `POST /bookings` success → `applyEvent('ON_TIME')` (replaces the deposit-based trigger).
-- [ ] **S14.7** Block enforcement — `createBooking` checks `score < 50` before proceeding (already implemented in S5.3).
-- [ ] **S14.8** `POST /admin/users/:id/unblock` — Admin/Owner JWT. Resets `score=60, noShowCount=0`.
-- [ ] **S14.9** VIP endpoints — `GET /user/vip`, `POST /admin/users/:id/vip`.
-- [ ] **S14.10** Tests — loyalty earn idempotency (no double-credit), reliability clamp at 0/100, block enforcement, VIP auto-grant at 500pts.
-- [ ] **S14.11** `GET /user/hair-profile` — Customer JWT. Returns `HairProfile` for the authenticated user. Shape: `{ dryness, damage, scalpCondition, lastTreatmentDate, cutFrequencyWeeks }`. Returns `404` if not yet set.
-- [ ] **S14.12** `PUT /user/hair-profile` — Customer JWT. Zod: `{ dryness: z.number().int().min(1).max(5), damage: z.number().int().min(1).max(5), scalpCondition: z.enum(['normal','dry','oily','sensitive']), lastTreatmentDate: z.string().optional(), cutFrequencyWeeks: z.number().int().positive() }`. Upsert `HairProfile`. Returns the saved profile.
-- [ ] **S14.13** `GET /user/hair-history` — Customer JWT. Returns the last N `HairAnalysisHistory` rows for this user (newest first). Shape per entry: `{ id, date, hairType, conditionScore, dryness, damage, scalpCondition }`. Sourced from the `HairAnalysisHistory` table (snapshot per analysis), NOT `HairAnalysis` (job tracking).
+- [x] **S14.1** Loyalty service — `earnPoints(userId, bookingId)`: `Math.floor(totalPrice / 1000)` pts. Atomic upsert `LoyaltyAccount`. Create `LoyaltyTransaction`. Auto-promote tier. If points ≥ 500 and not already VIP, set `User.isVip = true, vipGrantedBy = 'auto'`.
+- [x] **S14.2** `GET /user/loyalty` — Customer JWT. Returns `{ points, tier, pendingReward }`.
+- [x] **S14.3** `POST /user/loyalty/redeem` — Customer JWT. Verify `points >= reward.pointsCost` in DB. Deduct in same transaction as booking. Return 422 if insufficient.
+- [x] **S14.4** Reliability service — `applyEvent(userId, event)`: NO_SHOW−20, LATE_CANCEL−10, COMPLETION+15, ON_TIME+5. Clamp 0–100. Block threshold: score < 50.
+- [x] **S14.5** `GET /user/reliability` — Customer JWT. Returns `{ score, noShowCount, isBlocked }`.
+- [x] **S14.6** Reliability events wired — queue NO_SHOW → `applyEvent('NO_SHOW')`. queue DONE → `applyEvent('COMPLETION')` + `earnPoints`. late cancel → `applyEvent('LATE_CANCEL')`. `POST /bookings` success → `applyEvent('ON_TIME')`.
+- [x] **S14.7** Block enforcement — `createBooking` checks `score < 50` before proceeding (already in S5.3).
+- [x] **S14.8** `POST /admin/users/:id/unblock` — Admin JWT. Resets `score=60, noShowCount=0`.
+- [x] **S14.9** VIP endpoints — `GET /user/vip`, `POST /admin/users/:id/vip`.
+- [x] **S14.10** Tests — loyalty earn idempotency, reliability clamp at 0/100, VIP auto-grant at 500pts. 21 tests passing.
+- [x] **S14.11** `GET /user/hair-profile` — Customer JWT. Returns `HairProfile`. Returns `404` if not set.
+- [x] **S14.12** `PUT /user/hair-profile` — Customer JWT. Zod validated. Upsert `HairProfile`. Returns saved profile.
+- [x] **S14.13** `GET /user/hair-history` — Customer JWT. Returns last N `HairAnalysisHistory` rows (newest first).
 
 ---
 
