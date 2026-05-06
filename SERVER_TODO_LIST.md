@@ -49,7 +49,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S13   | Subscription Plans + Feature Gating | ✅ Complete               |
 | S14   | Loyalty + Reliability + VIP         | ✅ Complete               |
 | S15   | Discount System                     | ✅ Complete               |
-| S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending                |
+| S16   | Hair Analysis (BullMQ Job)          | ✅ Complete               |
 | S17   | Contact Form + Saved Shops          | ⏳ Pending                |
 | S18   | Testing & Hardening                 | ⏳ Last                   |
 
@@ -432,14 +432,14 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S16 — Hair Analysis (BullMQ Job) ⏳
+## Phase S16 — Hair Analysis (BullMQ Job) ✅
 
-> Blueprint: §9. Heavy ML work runs in a BullMQ worker, not in the request handler.
+> Blueprint: §9. Heavy ML work runs in a BullMQ worker, not in the request handler. ML: Gemini 1.5 Flash via Google AI Studio.
 
-- [ ] **S16.1** `POST /hair-analysis` — Bearer JWT (optional). Multipart image upload → S3. Enqueue `hair-analysis` BullMQ job. Returns `{ jobId }` immediately (202).
-- [ ] **S16.2** `GET /hair-analysis/:jobId` — Returns `{ status: 'processing'|'done'|'error', result? }`. Result is the `AnalysisResult` shape from BLUEPRINT §9.
-- [ ] **S16.3** BullMQ worker (`src/jobs/hair-analysis.worker.ts`) — fetches image from S3, calls ML service (or mock in dev), writes result to Redis key `hair-analysis:{jobId}`, TTL 1h.
-- [ ] **S16.4** Tests — job enqueued on upload, status transitions processing→done, expired job returns 404.
+- [x] **S16.1** `POST /hair-analysis` — Customer JWT. Multipart image → S3 → BullMQ job. Returns `{ jobId }` (202). Auto-upserts HairProfile if not set.
+- [x] **S16.2** `GET /hair-analysis/:jobId` — Public. Reads Redis key `hair-analysis:{jobId}`. Returns `{ status, result? }`. 404 if expired or unknown.
+- [x] **S16.3** BullMQ worker (`src/jobs/hair-analysis.worker.ts`) — downloads from S3, calls Gemini 1.5 Flash with structured prompt, writes result to Redis (TTL 1h), updates HairAnalysis DB, creates HairAnalysisHistory row.
+- [x] **S16.4** Tests — POST 202 + jobId, DB record created, HairProfile auto-created, missing image 400, unauthenticated 401, GET processing/done from Redis, GET 404, worker end-to-end (Gemini + S3 mocked).
 
 ---
 

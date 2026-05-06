@@ -14,6 +14,7 @@ import { notificationsRouter } from '@/routes/notifications'
 import { onboardingRouter } from '@/routes/onboarding'
 import { adminRouter } from '@/routes/admin'
 import { userRouter } from '@/routes/user'
+import { hairAnalysisRouter } from '@/routes/hair-analysis'
 
 export const router = Router()
 
@@ -32,4 +33,5 @@ router.use('/dashboard', dashboardRouter)
 router.use('/notifications', notificationsRouter)
 router.use('/onboarding',   onboardingRouter)
 router.use('/admin',        adminRouter)
-router.use('/user',         userRouter)
+router.use('/user',          userRouter)
+router.use('/hair-analysis', hairAnalysisRouter)

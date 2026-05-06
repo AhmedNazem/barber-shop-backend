@@ -33,3 +33,6 @@ coverage/
 
 # Misc
 *.tsbuildinfo
+
+# Local dev uploads (S3 fallback)
+tmp/

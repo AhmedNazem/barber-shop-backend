@@ -7,8 +7,8 @@
 @myPhone = +9647802431955
 
 ### Variables (fill these in after login)
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiU0hPUF9PV05FUiIsImlhdCI6MTc3NzQ3OTE0NywiZXhwIjoxNzc3NTA3OTQ3fQ.oiDzrBuGTskVmCVCBBQWOCNugypwyR0xiRTLNACKD9U
-@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiU0hPUF9PV05FUiIsImlhdCI6MTc3NzQ1OTM0MCwiZXhwIjoxNzc4MDY0MTQwfQ.4VigMHWQQu7w9uhy8Xx-7oqA_AXtZovyjuoFVsBcOZ0
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NzgwODk4MzQsImV4cCI6MTc3ODA5MDczNH0.xKd3SxR2I_6yZT3LGylZ0ns-1KQzrn4UeelTXjseh-M
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtb2lwMDRwOTAwMDNjcDR1OXphc3VndTEiLCJyb2xlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NzgwODk4MzQsImV4cCI6MTc3ODY5NDYzNH0._86LgdAK9WbhZqG4hjqz30vJI-ditB6QMygXNv28vH0
 
 
 # ════════════════════════════════════════════════
@@ -32,7 +32,7 @@ Content-Type: application/json
 
 {
   "phone": "{{myPhone}}",
-  "otp": "44",
+  "otp": "931545",
   "name": "Ahmed",
   "isRegister": true
 }
@@ -59,7 +59,7 @@ Content-Type: application/json
 
 {
   "phone": "{{myPhone}}",
-  "otp": "449324"
+  "otp": "801620"
 }
 
 ###
@@ -786,4 +786,120 @@ Content-Type: application/json
 {
   "mode": "BOTH"
 }
+###
+
+
+# ════════════════════════════════════════════════
+#  S14 — Loyalty + Reliability + VIP
+# ════════════════════════════════════════════════
+
+### S14.1 — Get loyalty account (Customer JWT)
+GET {{baseUrl}}/user/loyalty
+Authorization: Bearer {{accessToken}}
+###
+
+### S14.2 — Redeem loyalty reward (Customer JWT)
+POST {{baseUrl}}/user/loyalty/redeem
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "rewardId": "PASTE_REWARD_ID_HERE"
+}
+###
+
+### S14.3 — Get reliability score (Customer JWT)
+GET {{baseUrl}}/user/reliability
+Authorization: Bearer {{accessToken}}
+###
+
+### S14.4 — Get VIP status (Customer JWT)
+GET {{baseUrl}}/user/vip
+Authorization: Bearer {{accessToken}}
+###
+
+### S14.5 — Admin: unblock customer
+POST {{baseUrl}}/admin/users/PASTE_USER_ID_HERE/unblock
+Authorization: Bearer {{accessToken}}
+###
+
+### S14.6 — Admin: grant VIP to customer
+POST {{baseUrl}}/admin/users/PASTE_USER_ID_HERE/vip
+Authorization: Bearer {{accessToken}}
+###
+
+### S14.7 — Get hair profile (Customer JWT)
+GET {{baseUrl}}/user/hair-profile
+Authorization: Bearer {{accessToken}}
+###
+
+### S14.8 — Set hair profile (Customer JWT)
+PUT {{baseUrl}}/user/hair-profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "dryness": 3,
+  "damage": 2,
+  "scalpCondition": "normal",
+  "cutFrequencyWeeks": 4,
+  "lastTreatmentDate": "2026-01-15"
+}
+###
+
+### S14.9 — Get hair analysis history (Customer JWT)
+GET {{baseUrl}}/user/hair-history
+Authorization: Bearer {{accessToken}}
+###
+
+
+# ════════════════════════════════════════════════
+#  S15 — Discount System
+# ════════════════════════════════════════════════
+
+### S15.1 — Get active discount for shop (public)
+GET {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/discount
+###
+
+### S15.2 — Owner creates flash discount
+POST {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/discount
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "pct": 20,
+  "maxUsers": 50,
+  "expiresAt": "2027-01-01T00:00:00.000Z"
+}
+###
+
+### S15.3 — Owner removes discount
+DELETE {{baseUrl}}/shops/PASTE_SHOP_ID_HERE/discount
+Authorization: Bearer {{accessToken}}
+###
+
+
+# ════════════════════════════════════════════════
+#  S16 — Hair Analysis (Gemini AI)
+# ════════════════════════════════════════════════
+
+# NOTE: multipart upload — replace the file path below with a real image on your machine
+# VS Code REST Client reads the file using "< filepath" syntax
+
+### S16.1 — Submit hair photo for analysis (Customer JWT)
+# @name hairAnalysis
+POST {{baseUrl}}/hair-analysis
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----Boundary7MA4YWxk
+
+------Boundary7MA4YWxk
+Content-Disposition: form-data; name="image"; filename="hair.jpeg"
+Content-Type: image/jpeg
+
+< C:/Users/SherdllStore/Desktop/hair.jpeg
+------Boundary7MA4YWxk--
+###
+
+### S16.2 — Poll job status (public — paste jobId from response above)
+GET {{baseUrl}}/hair-analysis/PASTE_JOB_ID_HERE
 ###

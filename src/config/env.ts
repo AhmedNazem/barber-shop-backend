@@ -29,6 +29,9 @@ const schema = z.object({
   AWS_REGION: z.string().optional(),
   AWS_BUCKET_NAME: z.string().optional(),
 
+  // AI
+  GEMINI_API_KEY: z.string().optional(),
+
   // SMS (optional — configured via admin panel after launch)
   SMS_PROVIDER: z.enum(["unifonic", "twilio"]).optional(),
   SMS_API_KEY: z.string().optional(),    // Unifonic: AppSid | Twilio: AccountSid
