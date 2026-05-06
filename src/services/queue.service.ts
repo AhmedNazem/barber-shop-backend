@@ -1,6 +1,8 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { QueueStatus } from '@prisma/client'
+import { applyReliabilityEvent } from '@/services/reliability.service'
+import { earnPoints } from '@/services/loyalty.service'
 
 const ACTIVE_STATUSES: QueueStatus[] = ['WAITING', 'IN_CHAIR']
 
@@ -83,9 +85,25 @@ export async function addWalkIn(
 }
 
 export async function updateStatus(entryId: string, status: QueueStatus) {
-  const entry = await prisma.queueEntry.findUnique({ where: { id: entryId } })
+  const entry = await prisma.queueEntry.findUnique({
+    where:   { id: entryId },
+    include: { booking: { select: { customerId: true, totalPrice: true } } },
+  })
   if (!entry) throw new AppError('not_found', 404)
-  return prisma.queueEntry.update({ where: { id: entryId }, data: { status } })
+
+  const updated = await prisma.queueEntry.update({ where: { id: entryId }, data: { status } })
+
+  const customerId = entry.booking?.customerId
+  if (customerId) {
+    if (status === 'DONE') {
+      await applyReliabilityEvent(customerId, 'COMPLETION')
+      await earnPoints(customerId, entry.booking!.totalPrice, entry.bookingId ?? undefined)
+    } else if (status === 'NO_SHOW') {
+      await applyReliabilityEvent(customerId, 'NO_SHOW')
+    }
+  }
+
+  return updated
 }
 
 export async function reorderEntry(shopId: string, entryId: string, newPosition: number) {

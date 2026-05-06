@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
 import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview } from '@/services/admin.service'
 import { getPlatformConfig, updatePlatformConfig, testSmsConfig } from '@/services/platform-config.service'
+import { unblockUser } from '@/services/reliability.service'
+import { prisma } from '@/config/prisma'
 
 // ─── Shop management ──────────────────────────────────────────────────────────
 
@@ -88,6 +90,26 @@ export async function suspendUserHandler(req: Request, res: Response, next: Next
 export async function deleteUserHandler(req: Request, res: Response, next: NextFunction) {
   try {
     await deleteUser(req.params['id']!)
+    ok(res, { ok: true })
+  } catch (err) { next(err) }
+}
+
+// ─── Reliability / VIP ────────────────────────────────────────────────────────
+
+export async function unblockUserHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    await unblockUser(req.params['id']!)
+    ok(res, { ok: true })
+  } catch (err) { next(err) }
+}
+
+export async function grantVipHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const adminId = req.user!.id
+    await prisma.user.update({
+      where: { id: req.params['id']! },
+      data:  { isVip: true, vipGrantedAt: new Date(), vipGrantedBy: adminId },
+    })
     ok(res, { ok: true })
   } catch (err) { next(err) }
 }

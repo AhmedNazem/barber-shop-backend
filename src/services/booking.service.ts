@@ -2,6 +2,7 @@ import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { PaymentMethod } from '@prisma/client'
 import { createNotification } from '@/services/notification.service'
+import { applyReliabilityEvent } from '@/services/reliability.service'
 
 type CreateBookingInput = {
   shopId:        string
@@ -38,20 +39,14 @@ export async function cancelBooking(bookingId: string, customerId: string) {
   const twoHoursFromNow = new Date(Date.now() + 2 * 60 * 60 * 1000)
   const isLateCancellation = booking.slot < twoHoursFromNow
 
-  await prisma.$transaction(async (tx) => {
-    await tx.booking.update({
-      where: { id: bookingId },
-      data:  { status: 'CANCELLED', cancelledBy: customerId },
-    })
-
-    if (isLateCancellation) {
-      await tx.reliabilityRecord.upsert({
-        where:  { userId: customerId },
-        update: { score: { decrement: 10 }, updatedAt: new Date() },
-        create: { userId: customerId, score: Math.max(0, 90) },
-      })
-    }
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data:  { status: 'CANCELLED', cancelledBy: customerId },
   })
+
+  if (isLateCancellation) {
+    await applyReliabilityEvent(customerId, 'LATE_CANCEL')
+  }
 
   await createNotification(
     customerId, 'CANCELLATION',
@@ -172,6 +167,7 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
 
     return booking
   }).then(async (booking) => {
+    await applyReliabilityEvent(customerId, 'ON_TIME')
     await createNotification(
       customerId, 'BOOKING_CONFIRMED',
       'Booking Confirmed', 'تم تأكيد الحجز',

@@ -45,9 +45,9 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S9    | Dashboard Analytics                 | ✅ Complete               |
 | S10   | Notifications                       | ✅ Complete               |
 | S11   | Onboarding Wizard                   | ✅ Complete               |
-| S12   | Platform Settings + Admin           | ⏳ Pending                |
-| S13   | Subscription Plans + Feature Gating | ⏳ Pending                |
-| S14   | Loyalty + Reliability + VIP         | ⏳ Pending                |
+| S12   | Platform Settings + Admin           | ✅ Complete               |
+| S13   | Subscription Plans + Feature Gating | ✅ Complete               |
+| S14   | Loyalty + Reliability + VIP         | ✅ Complete               |
 | S15   | Discount System                     | ⏳ Pending                |
 | S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending                |
 | S17   | Contact Form + Saved Shops          | ⏳ Pending                |

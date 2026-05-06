@@ -7,6 +7,7 @@ import {
   approveShopHandler, rejectShopHandler, suspendShopHandler, suspendPreviewHandler,
   getPlatformConfigHandler, updatePlatformConfigHandler, testSmsHandler,
   listUsersHandler, getUserHandler, changeRoleHandler, suspendUserHandler, deleteUserHandler,
+  unblockUserHandler, grantVipHandler,
 } from '@/controllers/admin.controller'
 import { updateShopPlanHandler } from '@/controllers/shop.controller'
 
@@ -49,4 +50,6 @@ adminRouter.get(   '/users',          ...guard,                       listUsersH
 adminRouter.get(   '/users/:id',      ...guard,                       getUserHandler)
 adminRouter.patch( '/users/:id/role', ...guard, validate(roleSchema), changeRoleHandler)
 adminRouter.patch( '/users/:id/suspend', ...guard,                    suspendUserHandler)
-adminRouter.delete('/users/:id',      ...guard,                       deleteUserHandler)
+adminRouter.delete('/users/:id',         ...guard, deleteUserHandler)
+adminRouter.post(  '/users/:id/unblock', ...guard, unblockUserHandler)
+adminRouter.post(  '/users/:id/vip',     ...guard, grantVipHandler)
