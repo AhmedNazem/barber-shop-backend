@@ -3,7 +3,13 @@ import { z } from 'zod'
 import { validate } from '@/middleware/validate'
 import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
-import { createShopHandler, updateShopHandler, uploadImageHandler, listShopsHandler, getShopHandler } from '@/controllers/shop.controller'
+
+const discountSchema = z.object({
+  pct:       z.number().int().min(1).max(100),
+  maxUsers:  z.number().int().min(1),
+  expiresAt: z.string().datetime(),
+})
+import { createShopHandler, updateShopHandler, uploadImageHandler, listShopsHandler, getShopHandler, getDiscountHandler, createDiscountHandler, deleteDiscountHandler } from '@/controllers/shop.controller'
 import { listShopReviewsHandler } from '@/controllers/review.controller'
 import { getShopAvailabilityHandler } from '@/controllers/availability.controller'
 import { optionalAuth } from '@/middleware/auth'
@@ -33,3 +39,8 @@ shopsRouter.post('/:id/cover', authenticate, requireRole('SHOP_OWNER'), singleIm
 shopsRouter.post('/:id/logo', authenticate, requireRole('SHOP_OWNER'), singleImage('file'), uploadImageHandler('logoUrl'))
 shopsRouter.get('/:id/reviews', listShopReviewsHandler)
 shopsRouter.get('/:id/availability', optionalAuth, getShopAvailabilityHandler)
+
+// ─── Discount ─────────────────────────────────────────────────────────────────
+shopsRouter.get(   '/:id/discount', getDiscountHandler)
+shopsRouter.post(  '/:id/discount', authenticate, requireRole('SHOP_OWNER'), validate(discountSchema), createDiscountHandler)
+shopsRouter.delete('/:id/discount', authenticate, requireRole('SHOP_OWNER'), deleteDiscountHandler)

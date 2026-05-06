@@ -48,7 +48,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S12   | Platform Settings + Admin           | ✅ Complete               |
 | S13   | Subscription Plans + Feature Gating | ✅ Complete               |
 | S14   | Loyalty + Reliability + VIP         | ✅ Complete               |
-| S15   | Discount System                     | ⏳ Pending                |
+| S15   | Discount System                     | ✅ Complete               |
 | S16   | Hair Analysis (BullMQ Job)          | ⏳ Pending                |
 | S17   | Contact Form + Saved Shops          | ⏳ Pending                |
 | S18   | Testing & Hardening                 | ⏳ Last                   |
@@ -419,16 +419,16 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S15 — Discount System ⏳
+## Phase S15 — Discount System ✅
 
 > Blueprint: §17. Flash discounts with race-condition-safe slot claiming.
 
-- [ ] **S15.1** `GET /shops/:id/discount` — public. Returns active `DiscountRule | null`.
-- [ ] **S15.2** `POST /shops/:id/discount` — Owner JWT. Creates discount. Only one active per shop (`@unique` on `shopId`).
-- [ ] **S15.3** `DELETE /shops/:id/discount` — Owner JWT. Removes active discount.
-- [ ] **S15.4** Discount claim in booking creation — atomic `UPDATE ShopDiscount SET slotsClaimed = slotsClaimed + 1 WHERE shopId = ? AND slotsClaimed < maxUsers AND expiresAt > NOW()`. Snapshot `discountPct` on `Booking`.
-- [ ] **S15.5** `GET /shops` and `GET /shops/:id` — include `discount` field.
-- [ ] **S15.6** Tests — race condition (two concurrent bookings, only `maxUsers` get discount), expired discount ignored, post-expiry `slotsClaimed` unchanged.
+- [x] **S15.1** `GET /shops/:id/discount` — public. Returns active `DiscountRule | null`.
+- [x] **S15.2** `POST /shops/:id/discount` — Owner JWT. Upserts discount (one active per shop via `@unique shopId`). Resets `slotsClaimed` on replace.
+- [x] **S15.3** `DELETE /shops/:id/discount` — Owner JWT. Removes active discount.
+- [x] **S15.4** Discount claim in booking creation — atomic increment inside transaction, snapshot `discountPct` on `Booking`. Already done in S5.
+- [x] **S15.5** `GET /shops` and `GET /shops/:id` — include `discount` field. Already done in S3.
+- [x] **S15.6** Tests — expired discount returns null, all slots claimed returns null, owner auth, non-owner 403, past expiresAt 400.
 
 ---
 

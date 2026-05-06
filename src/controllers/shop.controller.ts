@@ -3,6 +3,7 @@ import { ok, paginated } from '@/lib/response'
 import { createShop, updateShop, setShopImage, getShopStatus, getShop } from '@/services/shop.service'
 import { listShops } from '@/services/shop.list.service'
 import { getShopPlan, updateShopPlan, updateBookingMode } from '@/services/plan.service'
+import { getDiscount, createDiscount, deleteDiscount } from '@/services/discount.service'
 import { uploadToS3 } from '@/lib/s3'
 import { ShopPlan, BookingMode } from '@prisma/client'
 import { PriceRange } from '@prisma/client'
@@ -94,6 +95,27 @@ export async function updateShopPlanHandler(req: Request, res: Response, next: N
 export async function updateBookingModeHandler(req: Request, res: Response, next: NextFunction) {
   try {
     await updateBookingMode(req.params['id']!, req.user!.id, req.body.mode as BookingMode)
+    ok(res, { ok: true })
+  } catch (err) { next(err) }
+}
+
+// ─── Discount ─────────────────────────────────────────────────────────────────
+
+export async function getDiscountHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await getDiscount(req.params['id']!))
+  } catch (err) { next(err) }
+}
+
+export async function createDiscountHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await createDiscount(req.params['id']!, req.user!.id, req.body))
+  } catch (err) { next(err) }
+}
+
+export async function deleteDiscountHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    await deleteDiscount(req.params['id']!, req.user!.id)
     ok(res, { ok: true })
   } catch (err) { next(err) }
 }
