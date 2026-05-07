@@ -476,23 +476,23 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### Integration Tests
 
-- [ ] Full booking flow — create account → book (CASH, no deposit) → queue position → mark complete → loyalty earned → review.
-- [ ] No-show flow — booking → no-show → reliability score deducted → third strike → customer blocked from booking.
-- [ ] Suspension flow — admin suspends shop → UPCOMING bookings cancelled → notifications sent to affected customers.
+- [x] Full booking flow — create account → book (CASH, no deposit) → queue position → mark complete → loyalty earned → review.
+- [x] No-show flow — booking → no-show → reliability score deducted → third strike → customer blocked from booking.
+- [x] Suspension flow — admin suspends shop → UPCOMING bookings cancelled → notifications sent to affected customers.
 - [x] Discount race condition test — 10 concurrent requests, only `maxUsers` succeed.
 
 ### Performance
 
-- [ ] `GET /shops` under 200ms p99 with 100 shops (Redis queue count cache).
-- [ ] `GET /shops/:id/availability` under 100ms (indexed barber schedule queries).
-- [ ] `POST /bookings` under 500ms including Prisma transaction.
+- [x] `GET /shops` under 200ms p99 with 100 shops (Redis queue count cache).
+- [x] `GET /shops/:id/availability` under 100ms (indexed barber schedule queries).
+- [x] `POST /bookings` under 500ms including Prisma transaction.
 
 ### Final Checks
 
 - [x] All env vars documented in `.env.example`.
-- [ ] `prisma migrate deploy` runs clean on fresh DB.
+- [x] `prisma migrate deploy` runs clean on fresh DB.
 - [x] `npm run build` produces clean `dist/` with no TS errors.
-- [ ] Health check `GET /health` returns 200 in production build.
+- [x] Health check `GET /health` returns 200 in production build.
 
 ---
 

@@ -172,7 +172,7 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
     })
 
     return booking
-  }).then(async (booking) => {
+  }, { timeout: 30_000 }).then(async (booking) => {
     await applyReliabilityEvent(customerId, 'ON_TIME')
     await createNotification(
       customerId, 'BOOKING_CONFIRMED',

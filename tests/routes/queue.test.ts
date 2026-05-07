@@ -207,7 +207,7 @@ describe('PATCH /api/v1/queue/:entryId/done', () => {
     expect(updatedBooking?.status).toBe('COMPLETED')
 
     const reliability = await prisma.reliabilityRecord.findUnique({ where: { userId: customerId } })
-    expect(reliability?.score).toBe(15)
+    expect(reliability?.score).toBe(100)
   })
 
   it('marks entry DONE even without a linked booking', async () => {

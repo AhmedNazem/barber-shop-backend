@@ -22,6 +22,7 @@ const BASE_SHOP = {
   neighborhood: 'K', neighborhoodAr: 'ك',
   phone: '+9640000000114', lat: 33.34, lng: 44.40,
   status: 'APPROVED' as const, isActive: true,
+  plan: 'PRO' as const,
   bookingMode: 'BOOKING_ONLY' as const,
   depositRequired: true, depositPercent: 20,
 }

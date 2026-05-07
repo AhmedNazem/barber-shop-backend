@@ -64,12 +64,32 @@ export async function listShops(filters: ListShopsFilters) {
   if (shops.length === 0) return { shops: [], total, limit, offset }
 
   const shopIds = shops.map(s => s.id)
-  const queueGroups = await prisma.queueEntry.groupBy({
-    by: ['shopId'],
-    where: { shopId: { in: shopIds }, status: { in: ['WAITING', 'IN_CHAIR'] } },
-    _count: { id: true },
+
+  // Redis queue-count cache (TTL: 60s) — avoids groupBy on warm requests
+  const queueKeys = shopIds.map(id => `shop:queue:${id}`)
+  const cachedQ   = await redisClient.mget(...queueKeys)
+  const queueMap  = new Map<string, number>()
+  const missIds: string[] = []
+
+  cachedQ.forEach((val, i) => {
+    if (val !== null) queueMap.set(shopIds[i]!, parseInt(val, 10))
+    else              missIds.push(shopIds[i]!)
   })
-  const queueMap = new Map(queueGroups.map(q => [q.shopId, q._count.id]))
+
+  if (missIds.length > 0) {
+    const queueGroups = await prisma.queueEntry.groupBy({
+      by:    ['shopId'],
+      where: { shopId: { in: missIds }, status: { in: ['WAITING', 'IN_CHAIR'] } },
+      _count: { id: true },
+    })
+    const pipeline = redisClient.pipeline()
+    missIds.forEach(id => {
+      const count = queueGroups.find(q => q.shopId === id)?._count.id ?? 0
+      queueMap.set(id, count)
+      pipeline.setex(`shop:queue:${id}`, 60, count.toString())
+    })
+    await pipeline.exec()
+  }
 
   const ratingKeys = shopIds.map(id => `shop:rating:${id}`)
   const cachedRatings = await redisClient.mget(...ratingKeys)

@@ -42,11 +42,6 @@ export async function doneHandler(req: Request, res: Response, next: NextFunctio
       const booking = await prisma.booking.findUnique({ where: { id: entry.bookingId } })
       if (booking) {
         await prisma.booking.update({ where: { id: entry.bookingId }, data: { status: 'COMPLETED' } })
-        await prisma.reliabilityRecord.upsert({
-          where:  { userId: booking.customerId },
-          update: { score: { increment: 15 }, updatedAt: new Date() },
-          create: { userId: booking.customerId, score: Math.min(100, 15) },
-        })
       }
     }
     ok(res, entry)
@@ -60,11 +55,6 @@ export async function noShowHandler(req: Request, res: Response, next: NextFunct
       const booking = await prisma.booking.findUnique({ where: { id: entry.bookingId } })
       if (booking) {
         await prisma.booking.update({ where: { id: entry.bookingId }, data: { status: 'NO_SHOW' } })
-        await prisma.reliabilityRecord.upsert({
-          where:  { userId: booking.customerId },
-          update: { score: { decrement: 20 }, noShowCount: { increment: 1 }, updatedAt: new Date() },
-          create: { userId: booking.customerId, score: Math.max(0, 80), noShowCount: 1 },
-        })
         await createNotification(
           booking.customerId, 'CANCELLATION',
           'No-Show Recorded', 'تم تسجيل غياب',
