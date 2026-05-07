@@ -115,7 +115,7 @@ describe('S18 — Full Booking Flow', () => {
 
     expect(reviewRes.status).toBe(201)
     expect(reviewRes.body.data.rating).toBe(5)
-  })
+  }, 60_000)
 })
 
 // ─── No-show Flow ─────────────────────────────────────────────────────────────

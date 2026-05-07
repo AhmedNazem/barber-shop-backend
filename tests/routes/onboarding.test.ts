@@ -35,6 +35,26 @@ const basicsPayload = {
 }
 
 beforeEach(async () => {
+  // Delete shops before users to avoid FK constraint failures during cleanup
+  const staleOwners = await prisma.user.findMany({
+    where: { phone: { in: [E164_OWNER, E164_OWNER2] } },
+    select: { id: true },
+  })
+  const staleOwnerIds = staleOwners.map(u => u.id)
+  if (staleOwnerIds.length) {
+    const staleShops = await prisma.shop.findMany({
+      where: { ownerId: { in: staleOwnerIds } },
+      select: { id: true },
+    })
+    const staleShopIds = staleShops.map(s => s.id)
+    if (staleShopIds.length) {
+      await prisma.notification.deleteMany({ where: { userId: { in: staleOwnerIds } } })
+      await prisma.businessHours.deleteMany({ where: { shopId: { in: staleShopIds } } })
+      await prisma.service.deleteMany({ where: { shopId: { in: staleShopIds } } })
+      await prisma.booking.deleteMany({ where: { shopId: { in: staleShopIds } } })
+      await prisma.shop.deleteMany({ where: { id: { in: staleShopIds } } })
+    }
+  }
   await cleanupPhone(E164_OWNER)
   await cleanupPhone(E164_OWNER2)
   await cleanupPhone(E164_ADMIN)
