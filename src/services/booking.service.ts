@@ -98,17 +98,17 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
   const subtotal    = services.reduce((s, sv) => s + sv.price, 0)
   const totalDurMin = services.reduce((s, sv) => s + sv.durationMin, 0)
 
-  // 5. Discount
+  // 5. Discount (preliminary — confirmed atomically inside the transaction)
   let discountPct = 0
   if (shop.discount) {
     const d = shop.discount
     const active = d.expiresAt > new Date() && d.slotsClaimed < d.maxUsers
     if (active) discountPct = d.pct
   }
-  const discountedSubtotal = Math.round(subtotal * (1 - discountPct / 100))
+  let discountedSubtotal = Math.round(subtotal * (1 - discountPct / 100))
 
   // 6. Deposit
-  const depositPaid = shop.depositRequired
+  let depositPaid = shop.depositRequired
     ? calcDeposit(discountedSubtotal, shop.depositPercent)
     : 0
 
@@ -129,12 +129,18 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
       if (hasOverlap(slotDate, totalDurMin, conflicts)) throw new AppError('slot_taken', 409)
     }
 
-    // Claim discount slot if applicable
+    // Atomically claim one discount slot — uses updateMany so 0 rows = maxed out
     if (discountPct > 0 && shop.discount) {
-      await tx.shopDiscount.update({
-        where: { shopId: input.shopId },
+      const claimed = await tx.shopDiscount.updateMany({
+        where: { shopId: input.shopId, slotsClaimed: { lt: shop.discount.maxUsers } },
         data:  { slotsClaimed: { increment: 1 } },
       })
+      if (claimed.count === 0) {
+        // Concurrent request claimed the last slot — fall back to full price
+        discountPct          = 0
+        discountedSubtotal   = subtotal
+        depositPaid          = shop.depositRequired ? calcDeposit(subtotal, shop.depositPercent) : 0
+      }
     }
 
     const barber = input.barberId

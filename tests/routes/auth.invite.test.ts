@@ -125,7 +125,7 @@ describe('POST /api/v1/auth/invite/accept', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.data.accessToken).toBeTruthy()
-    expect(res.body.data.refreshToken).toBeTruthy()
+    expect(res.headers['set-cookie']).toBeDefined()
 
     const user = await prisma.user.findUnique({ where: { phone: E164_BARBER } })
     expect(user?.role).toBe('BARBER')

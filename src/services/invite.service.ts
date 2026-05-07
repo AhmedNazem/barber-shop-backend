@@ -76,5 +76,6 @@ export async function acceptInvite(code: string, phone: string, otp: string) {
     return u
   })
 
-  return issueTokens(user)
+  const tokens = await issueTokens(user)
+  return { ...tokens, role: user.role }
 }

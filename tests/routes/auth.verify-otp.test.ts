@@ -26,8 +26,8 @@ describe('POST /api/v1/auth/verify-otp', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.data.accessToken).toBeTruthy()
-    expect(res.body.data.refreshToken).toBeTruthy()
     expect(res.body.data.role).toBe('CUSTOMER')
+    expect(res.headers['set-cookie']).toBeDefined()
   })
 
   it('registers a shop owner when shopName is provided', async () => {

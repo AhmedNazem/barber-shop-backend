@@ -459,26 +459,27 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### TTL Cleanup Jobs
 
-- [ ] Expired `OtpCode` cleanup — BullMQ repeatable job (every 10 min): `DELETE FROM OtpCode WHERE expiresAt < NOW()`. Prevents table bloat.
-- [ ] Expired `RefreshToken` cleanup — BullMQ repeatable job (every 1h): `DELETE FROM RefreshToken WHERE expiresAt < NOW()`.
-- [ ] Expired `InviteCode` cleanup — BullMQ repeatable job (every 1h): `DELETE FROM InviteCode WHERE expiresAt < NOW() AND used = false`.
+- [x] Expired `OtpCode` cleanup — BullMQ repeatable job (every 10 min): `DELETE FROM OtpCode WHERE expiresAt < NOW()`. Prevents table bloat.
+- [x] Expired `RefreshToken` cleanup — BullMQ repeatable job (every 1h): `DELETE FROM RefreshToken WHERE expiresAt < NOW()`.
+- [x] Expired `InviteCode` cleanup — BullMQ repeatable job (every 1h): `DELETE FROM InviteCode WHERE expiresAt < NOW() AND used = false`.
 
 ### Security Audit
 
-- [ ] OWASP Top 10 checklist — injection, broken auth, sensitive data, XXE, broken access control, security misconfiguration, XSS, insecure deserialisation, known vulnerabilities, insufficient logging.
-- [ ] Rate limits verified — auth endpoints capped at 3–10 req/min per IP.
-- [ ] All payment callback endpoints verify gateway signatures — never trust unsigned webhooks. _(Applies to S6-A Paddle webhook and S6-B FIB webhook — post-launch only)_
-- [ ] All file upload endpoints validate MIME type server-side, not just file extension.
-- [ ] No secrets in logs — Winston transport configured to redact `Authorization`, `password`, `apiKey` fields.
-- [ ] `requireOwnership` applied on every mutating shop/barber/service route — verify with a test that attempts cross-shop access (expect 403).
-- [ ] `requireShopStatus` applied on all `/dashboard/*` routes — verify with a test using a PENDING shop (expect 403 with `shop_pending`).
+- [x] OWASP Top 10 checklist — all 10 reviewed. 9/10 pass. Fix applied: refresh token removed from response body + cookie-only auth; invite accept now sets httpOnly cookie; cookie path broadened to `/api/v1/auth`.
+- [x] Rate limits verified — auth endpoints capped at 3–10 req/min per IP.
+- [ ] All payment callback endpoints verify gateway signatures — never trust unsigned webhooks. _(Post-launch can
+      only — no payment provider integrated yet)_
+- [x] All file upload endpoints validate MIME type server-side, not just file extension.
+- [x] No secrets in logs — Winston transport configured to redact `Authorization`, `password`, `apiKey` fields.
+- [x] `requireOwnership` applied on every mutating shop/barber/service route — verify with a test that attempts cross-shop access (expect 403).
+- [x] `requireShopStatus` applied on all `/dashboard/*` routes — verify with a test using a PENDING shop (expect 403 with `shop_pending`).
 
 ### Integration Tests
 
 - [ ] Full booking flow — create account → book (CASH, no deposit) → queue position → mark complete → loyalty earned → review.
 - [ ] No-show flow — booking → no-show → reliability score deducted → third strike → customer blocked from booking.
 - [ ] Suspension flow — admin suspends shop → UPCOMING bookings cancelled → notifications sent to affected customers.
-- [ ] Discount race condition test — 10 concurrent requests, only `maxUsers` succeed.
+- [x] Discount race condition test — 10 concurrent requests, only `maxUsers` succeed.
 
 ### Performance
 
@@ -488,9 +489,9 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### Final Checks
 
-- [ ] All env vars documented in `.env.example`.
+- [x] All env vars documented in `.env.example`.
 - [ ] `prisma migrate deploy` runs clean on fresh DB.
-- [ ] `npm run build` produces clean `dist/` with no TS errors.
+- [x] `npm run build` produces clean `dist/` with no TS errors.
 - [ ] Health check `GET /health` returns 200 in production build.
 
 ---

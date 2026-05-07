@@ -35,7 +35,7 @@ describe('POST /api/v1/auth/logout', () => {
     const res = await request(app)
       .post('/api/v1/auth/logout')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ refreshToken })
+      .set('Cookie', [`refreshToken=${refreshToken}`])
 
     expect(res.status).toBe(200)
     expect(res.body.data.ok).toBe(true)

@@ -57,6 +57,11 @@ async function processJob(job: Job<HairJobData>) {
   }
 }
 
+// Thin wrapper for unit tests — lets tests invoke job logic without a real BullMQ Job object
+export function processHairAnalysisJob(jobId: string, data: HairJobData) {
+  return processJob({ id: jobId, data } as Job<HairJobData>)
+}
+
 export function startHairAnalysisWorker() {
   const worker = new Worker<HairJobData>(QUEUE_NAME, processJob, { connection })
 

@@ -37,13 +37,14 @@ let serviceId: string
 beforeEach(async () => {
   const owner = await prisma.user.create({ data: { phone: E164_OWNER, name: 'Owner', role: 'SHOP_OWNER' } })
   ownerId = owner.id
-  ownerToken = signAccess({ id: owner.id, role: owner.role })
 
   const other = await prisma.user.create({ data: { phone: E164_OTHER, name: 'Other', role: 'SHOP_OWNER' } })
-  otherToken = signAccess({ id: other.id, role: other.role })
+  otherToken = signAccess({ id: other.id, role: other.role, shopId: undefined })
 
   const shop = await prisma.shop.create({ data: { ...BASE_SHOP, ownerId } })
   shopId = shop.id
+
+  ownerToken = signAccess({ id: owner.id, role: owner.role, shopId })
 
   const svc = await prisma.service.create({
     data: { shopId, nameEn: 'Haircut', nameAr: 'قص شعر', price: 5000, durationMin: 30, category: 'cut' },

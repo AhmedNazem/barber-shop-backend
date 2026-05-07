@@ -28,19 +28,19 @@ async function seedUserAndToken() {
 }
 
 describe('POST /api/v1/auth/refresh', () => {
-  it('returns a new accessToken when given a valid refresh token in the body', async () => {
+  it('returns a new accessToken when given a valid refresh token via cookie', async () => {
     const { refreshToken } = await seedUserAndToken()
 
     const res = await request(app)
       .post('/api/v1/auth/refresh')
-      .send({ refreshToken })
+      .set('Cookie', [`refreshToken=${refreshToken}`])
 
     expect(res.status).toBe(200)
     expect(res.body.data.accessToken).toBeTruthy()
   })
 
   it('returns 401 when no token is provided', async () => {
-    const res = await request(app).post('/api/v1/auth/refresh').send({})
+    const res = await request(app).post('/api/v1/auth/refresh')
     expect(res.status).toBe(401)
   })
 
@@ -52,7 +52,7 @@ describe('POST /api/v1/auth/refresh', () => {
 
     const res = await request(app)
       .post('/api/v1/auth/refresh')
-      .send({ refreshToken: rogueToken })
+      .set('Cookie', [`refreshToken=${rogueToken}`])
 
     expect(res.status).toBe(401)
   })
@@ -60,7 +60,7 @@ describe('POST /api/v1/auth/refresh', () => {
   it('returns 401 for a tampered/invalid JWT', async () => {
     const res = await request(app)
       .post('/api/v1/auth/refresh')
-      .send({ refreshToken: 'not.a.valid.token' })
+      .set('Cookie', ['refreshToken=not.a.valid.token'])
 
     expect(res.status).toBe(401)
   })

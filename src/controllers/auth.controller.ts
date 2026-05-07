@@ -12,7 +12,7 @@ import {
   getSession,
 } from '@/services/auth.service'
 
-const REFRESH_COOKIE_PATH = '/api/v1/auth/refresh'
+const REFRESH_COOKIE_PATH = '/api/v1/auth'
 const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 export async function requestOtpHandler(req: Request, res: Response, next: NextFunction) {
@@ -40,7 +40,7 @@ export async function verifyOtpHandler(req: Request, res: Response, next: NextFu
       maxAge: REFRESH_TTL_MS,
     })
 
-    ok(res, { accessToken, refreshToken, role: user.role })
+    ok(res, { accessToken, role: user.role })
   } catch (err) {
     next(err)
   }
@@ -48,7 +48,7 @@ export async function verifyOtpHandler(req: Request, res: Response, next: NextFu
 
 export async function refreshHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const token: string | undefined = req.cookies?.refreshToken ?? req.body?.refreshToken
+    const token: string | undefined = req.cookies?.refreshToken
     if (!token) throw new AppError('unauthorized', 401)
     const accessToken = await rotateAccessToken(token)
     ok(res, { accessToken })
@@ -68,7 +68,7 @@ export async function meHandler(req: Request, res: Response, next: NextFunction)
 
 export async function logoutHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const token: string | undefined = req.cookies?.refreshToken ?? req.body?.refreshToken
+    const token: string | undefined = req.cookies?.refreshToken
     if (token) await revokeToken(token)
     res.clearCookie('refreshToken', { path: REFRESH_COOKIE_PATH })
     ok(res, { ok: true })
