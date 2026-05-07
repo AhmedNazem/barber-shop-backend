@@ -36,7 +36,7 @@ beforeEach(async () => {
     data: {
       ownerId, nameEn: 'Dash Shop', nameAr: 'محل', address: 'St', city: 'Baghdad',
       neighborhood: 'K', neighborhoodAr: 'ك', phone: '+9640000000123',
-      lat: 33.34, lng: 44.40, status: 'APPROVED', isActive: true,
+      lat: 33.34, lng: 44.40, status: 'APPROVED', isActive: true, plan: 'PRO',
     },
   })
   shopId = shop.id

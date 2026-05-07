@@ -186,7 +186,7 @@ describe('Notification wiring — booking events', () => {
       data: {
         ownerId: owner.id, nameEn: 'N Shop', nameAr: 'محل', address: 'St', city: 'Baghdad',
         neighborhood: 'K', neighborhoodAr: 'ك', phone: '+9640000000196',
-        lat: 33.3, lng: 44.4, status: 'APPROVED', isActive: true, bookingMode: 'BOTH',
+        lat: 33.3, lng: 44.4, status: 'APPROVED', isActive: true, plan: 'PRO', bookingMode: 'BOTH',
       },
     })
     const service = await prisma.service.create({

@@ -13,12 +13,13 @@ vi.mock('@/lib/s3', () => ({
   downloadFromS3: vi.fn().mockResolvedValue(Buffer.from('fake-image')),
 }))
 
-vi.mock('@/lib/queue', () => ({
-  hairAnalysisQueue: { add: vi.fn().mockResolvedValue({ id: 'test-job-123' }) },
-  notificationQueue: { add: vi.fn() },
-  loyaltyQueue:      { add: vi.fn() },
-  cleanupQueue:      { add: vi.fn() },
-}))
+vi.mock('@/jobs/hair-analysis.worker', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/jobs/hair-analysis.worker')>()
+  return {
+    ...actual,
+    hairAnalysisQueue: { add: vi.fn().mockResolvedValue({ id: 'test-job-123' }) },
+  }
+})
 
 vi.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
