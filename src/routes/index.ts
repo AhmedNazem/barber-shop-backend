@@ -15,6 +15,8 @@ import { onboardingRouter } from '@/routes/onboarding'
 import { adminRouter } from '@/routes/admin'
 import { userRouter } from '@/routes/user'
 import { hairAnalysisRouter } from '@/routes/hair-analysis'
+import { contactRouter } from '@/routes/contact'
+import { accountRouter } from '@/routes/account'
 
 export const router = Router()
 
@@ -35,3 +37,5 @@ router.use('/onboarding',   onboardingRouter)
 router.use('/admin',        adminRouter)
 router.use('/user',          userRouter)
 router.use('/hair-analysis', hairAnalysisRouter)
+router.use('/contact',      contactRouter)
+router.use('/account',      accountRouter)

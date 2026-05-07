@@ -903,3 +903,35 @@ Content-Type: image/jpeg
 ### S16.2 — Poll job status (public — paste jobId from response above)
 GET {{baseUrl}}/hair-analysis/PASTE_JOB_ID_HERE
 ###
+
+
+# ════════════════════════════════════════════════
+#  S17 — Contact Form + Saved Shops
+# ════════════════════════════════════════════════
+
+### S17.1 — Submit contact form (public)
+POST {{baseUrl}}/contact
+Content-Type: application/json
+
+{
+  "name": "Ahmed Nazem",
+  "email": "ahmed@example.com",
+  "subject": "general",
+  "message": "Hello from the contact form"
+}
+###
+
+### S17.2 — List saved shops (Customer JWT)
+GET {{baseUrl}}/account/saved-shops
+Authorization: Bearer {{accessToken}}
+###
+
+### S17.3 — Save a shop (Customer JWT)
+POST {{baseUrl}}/account/saved-shops/PASTE_SHOP_ID_HERE
+Authorization: Bearer {{accessToken}}
+###
+
+### S17.4 — Unsave a shop (Customer JWT)
+DELETE {{baseUrl}}/account/saved-shops/PASTE_SHOP_ID_HERE
+Authorization: Bearer {{accessToken}}
+###

@@ -2,7 +2,8 @@ import { createApp } from "@/app";
 import { prisma } from "@/config/prisma";
 import { validateEnv } from "@/config/env";
 import { redisClient } from "@/lib/redis";
-import { startHairAnalysisWorker } from "@/jobs/hair-analysis.worker";
+import { startHairAnalysisWorker } from "@/jobs/hair-analysis.worker"
+import { startContactEmailWorker } from "@/jobs/contact-email.worker";
 const env = validateEnv();
 const app = createApp(env);
 
@@ -22,6 +23,7 @@ process.on("SIGINT", shutdown);
 
 const start = async () => {
   startHairAnalysisWorker()
+  startContactEmailWorker()
   httpServer = app.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
   });

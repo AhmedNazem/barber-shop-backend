@@ -50,7 +50,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S14   | Loyalty + Reliability + VIP         | ✅ Complete               |
 | S15   | Discount System                     | ✅ Complete               |
 | S16   | Hair Analysis (BullMQ Job)          | ✅ Complete               |
-| S17   | Contact Form + Saved Shops          | ⏳ Pending                |
+| S17   | Contact Form + Saved Shops          | ✅ Complete               |
 | S18   | Testing & Hardening                 | ⏳ Last                   |
 
 ---
@@ -443,15 +443,15 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ---
 
-## Phase S17 — Contact Form + Saved Shops ⏳
+## Phase S17 — Contact Form + Saved Shops ✅
 
 > Blueprint: §10, §18 (`saved-shops-mock.ts`). Small but needed to close all frontend stubs.
 
-- [ ] **S17.1** `POST /contact` — public. Zod: `{ name, email, subject, message }`. Save to `ContactMessage`. Queue email to admin via BullMQ.
-- [ ] **S17.2** `GET /account/saved-shops` — Customer JWT. Returns `SavedShop[]`.
-- [ ] **S17.3** `POST /account/saved-shops/:shopId` — Customer JWT. Upsert `SavedShop`.
-- [ ] **S17.4** `DELETE /account/saved-shops/:shopId` — Customer JWT. Remove.
-- [ ] **S17.5** Tests — duplicate save is idempotent, contact message persisted.
+- [x] **S17.1** `POST /contact` — public. Zod: `{ name, email, subject, message }`. Save to `ContactMessage`. Queue email to admin via BullMQ.
+- [x] **S17.2** `GET /account/saved-shops` — Customer JWT. Returns `SavedShop[]`.
+- [x] **S17.3** `POST /account/saved-shops/:shopId` — Customer JWT. Upsert `SavedShop`.
+- [x] **S17.4** `DELETE /account/saved-shops/:shopId` — Customer JWT. Remove.
+- [x] **S17.5** Tests — duplicate save is idempotent, contact message persisted.
 
 ---
 
