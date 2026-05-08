@@ -29,6 +29,7 @@ export async function syncAnbarShops(): Promise<SyncStats> {
 
     for (const p of places) {
       const isNew = !existingPlaceIds.has(p.placeId);
+
       const neighborhood = p.neighborhood || city;
 
       await prisma.shop.upsert({
