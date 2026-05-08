@@ -518,7 +518,7 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - [x] Add `placeId String? @unique` to `Shop` model + DB pushed ✅
 - [x] `ownerId` made nullable (`String?`) — imported shops have no real owner ✅
 - [x] Registered `startSyncShopsWorker()` in `src/server.ts` ✅
-- [ ] Admin notification when new shops are found — not yet implemented
+- [x] Admin notification when new shops are found — notifies all ADMINs via in-app notification ✅
 
 ### S19.3 — Admin review endpoint
 
