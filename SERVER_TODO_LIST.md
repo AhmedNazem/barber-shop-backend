@@ -507,30 +507,25 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 
 ### S19.1 — One-time seed script
 
-- [ ] `scripts/seed-anbar-shops.ts` — standalone script (run with `npx tsx scripts/seed-anbar-shops.ts`)
-  - Calls Google Maps Places API `nearbySearch` with `location=Anbar` + `type=hair_care|barber_shop` + `radius=50000`
-  - Handles pagination (`next_page_token`) to get full result list
-  - For each place: fetch details (name, address, phone, lat/lng, rating, photos)
-  - Maps to `Shop` schema: `nameEn` from place name, `nameAr` from place name (fallback), `phone`, `lat`, `lng`, `address`, `city='Anbar'`, `status='PENDING'`
-  - Skips duplicates by checking `lat+lng` uniqueness before insert
-  - Logs: how many found, how many inserted, how many skipped (already exist)
+- [x] `scripts/seed-anbar-shops.ts` — standalone script (`npx tsx scripts/seed-anbar-shops.ts`)
+  - Covers 4 cities: Ramadi, Fallujah, Hit, Haditha (10km radius each via Places API v1)
+  - Upserts by `placeId` — safe to re-run, no duplicates
+  - **80 shops seeded** across all 4 cities ✅
 
 ### S19.2 — BullMQ monthly sync job
 
-- [ ] `src/jobs/sync-anbar-shops.job.ts` — BullMQ repeatable job
-  - Queue name: `shop-sync`
-  - Repeat: every 1st of the month (cron: `0 3 1 * *`)
-  - Same logic as seed script but delta-only: only inserts shops not already in DB (matched by `lat+lng` or Google `placeId` stored on the `Shop` model)
-  - Sends admin notification when new shops are found: "X new barbershops found in Anbar — pending review"
-- [ ] Add `placeId String? @unique` to `Shop` model in `schema.prisma` + migration — used as the dedup key
-- [ ] Register the repeatable job in `src/server.ts` on startup (alongside existing cleanup jobs)
+- [x] `src/jobs/sync-shops.worker.ts` — BullMQ repeatable job (every 30 days, stable jobId prevents duplicate schedules)
+- [x] Add `placeId String? @unique` to `Shop` model + DB pushed ✅
+- [x] `ownerId` made nullable (`String?`) — imported shops have no real owner ✅
+- [x] Registered `startSyncShopsWorker()` in `src/server.ts` ✅
+- [ ] Admin notification when new shops are found — not yet implemented
 
 ### S19.3 — Admin review endpoint
 
-- [ ] `GET /admin/shops/pending` — Admin JWT. Lists all shops with `status: PENDING` so admin can approve/reject imported shops.
+- [x] `GET /admin/shops/pending` — Admin JWT. Lists all PENDING shops paginated ✅
 
 ### Notes
 
-- All imported shops start as `status: PENDING` — never auto-approve
-- `ownerId` for imported shops: create a system user `phone: +9640000000000, role: SHOP_OWNER, name: 'System Import'` and use its ID
-- Rate limit: Google Places API allows 60 req/s — add 200ms delay between paginated calls
+- All imported shops: `status: PENDING`, `isActive: false`, `ownerId: null`
+- `src/lib/google-maps.ts` — Places API (New) client
+- `src/services/shop-sync.service.ts` — shared upsert logic used by both seed and worker
