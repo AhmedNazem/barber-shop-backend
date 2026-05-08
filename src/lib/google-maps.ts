@@ -33,7 +33,7 @@ function extractNeighborhood(components: AddressComponent[] | undefined): string
   if (!components) return ''
   const sublocalityTypes = ['sublocality_level_1', 'sublocality', 'neighborhood']
   for (const type of sublocalityTypes) {
-    const comp = components.find(c => c.types.includes(type))
+    const comp = components.find(c => c.types?.includes(type))
     if (comp) return comp.longText
   }
   return ''
