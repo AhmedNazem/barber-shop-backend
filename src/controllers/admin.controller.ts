@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview } from '@/services/admin.service'
+import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops } from '@/services/admin.service'
 import { getPlatformConfig, updatePlatformConfig, testSmsConfig } from '@/services/platform-config.service'
 import { unblockUser } from '@/services/reliability.service'
 import { prisma } from '@/config/prisma'
@@ -31,6 +31,14 @@ export async function suspendShopHandler(req: Request, res: Response, next: Next
 export async function suspendPreviewHandler(req: Request, res: Response, next: NextFunction) {
   try {
     ok(res, await getSuspendPreview(req.params['id']!))
+  } catch (err) { next(err) }
+}
+
+export async function listPendingShopsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page  = Math.max(1, parseInt(String(req.query['page']  ?? '1'),  10))
+    const limit = Math.min(100, Math.max(1, parseInt(String(req.query['limit'] ?? '20'), 10)))
+    ok(res, await listPendingShops({ page, limit }))
   } catch (err) { next(err) }
 }
 

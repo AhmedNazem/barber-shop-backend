@@ -4,7 +4,8 @@ import { validateEnv } from "@/config/env";
 import { redisClient } from "@/lib/redis";
 import { startHairAnalysisWorker } from "@/jobs/hair-analysis.worker"
 import { startContactEmailWorker } from "@/jobs/contact-email.worker"
-import { startCleanupWorker } from "@/jobs/cleanup.worker";
+import { startCleanupWorker } from "@/jobs/cleanup.worker"
+import { startSyncShopsWorker } from "@/jobs/sync-shops.worker"
 const env = validateEnv();
 const app = createApp(env);
 
@@ -26,6 +27,7 @@ const start = async () => {
   startHairAnalysisWorker()
   startContactEmailWorker()
   await startCleanupWorker()
+  await startSyncShopsWorker()
   httpServer = app.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
   });

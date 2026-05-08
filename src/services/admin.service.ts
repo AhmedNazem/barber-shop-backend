@@ -20,12 +20,14 @@ export async function approveShop(shopId: string) {
     data: { status: 'APPROVED', isActive: true },
   })
 
-  await createNotification(
-    shop.ownerId, 'SYSTEM_ALERT',
-    'Shop Approved', 'تمت الموافقة على محلك',
-    'Your shop has been approved and is now live!',
-    'تمت الموافقة على محلك وهو الآن نشط.',
-  )
+  if (shop.ownerId) {
+    await createNotification(
+      shop.ownerId, 'SYSTEM_ALERT',
+      'Shop Approved', 'تمت الموافقة على محلك',
+      'Your shop has been approved and is now live!',
+      'تمت الموافقة على محلك وهو الآن نشط.',
+    )
+  }
 }
 
 export async function rejectShop(shopId: string, reason: string, reasonAr: string) {
@@ -37,12 +39,14 @@ export async function rejectShop(shopId: string, reason: string, reasonAr: strin
     data: { status: 'REJECTED', rejectionReason: reason, rejectionReasonAr: reasonAr },
   })
 
-  await createNotification(
-    shop.ownerId, 'SYSTEM_ALERT',
-    'Shop Application Rejected', 'تم رفض طلب محلك',
-    `Your shop application was rejected. Reason: ${reason}`,
-    `تم رفض طلب محلك. السبب: ${reasonAr}`,
-  )
+  if (shop.ownerId) {
+    await createNotification(
+      shop.ownerId, 'SYSTEM_ALERT',
+      'Shop Application Rejected', 'تم رفض طلب محلك',
+      `Your shop application was rejected. Reason: ${reason}`,
+      `تم رفض طلب محلك. السبب: ${reasonAr}`,
+    )
+  }
 }
 
 export async function suspendShop(shopId: string, reason: string) {
@@ -73,6 +77,15 @@ export async function suspendShop(shopId: string, reason: string) {
   })
 
   // Notify customers and owner outside the transaction (fire-and-forget; not worth aborting the suspension if one fails)
+  const ownerNotif = shop.ownerId
+    ? [createNotification(
+        shop.ownerId, 'SYSTEM_ALERT',
+        'Shop Suspended', 'تم تعليق محلك',
+        `Your shop has been suspended. Reason: ${reason}`,
+        `تم تعليق محلك. السبب: ${reason}`,
+      )]
+    : []
+
   await Promise.all([
     ...upcomingBookings.map(b =>
       createNotification(
@@ -83,12 +96,7 @@ export async function suspendShop(shopId: string, reason: string) {
         { bookingId: b.id },
       ),
     ),
-    createNotification(
-      shop.ownerId, 'SYSTEM_ALERT',
-      'Shop Suspended', 'تم تعليق محلك',
-      `Your shop has been suspended. Reason: ${reason}`,
-      `تم تعليق محلك. السبب: ${reason}`,
-    ),
+    ...ownerNotif,
   ])
 }
 
@@ -169,4 +177,20 @@ export async function getSuspendPreview(shopId: string) {
   ])
 
   return { activeBookings: bookings, pendingDepositsIQD: agg._sum.depositPaid ?? 0 }
+}
+
+// ─── Pending shops (Google Maps imports) ─────────────────────────────────────
+
+export async function listPendingShops(opts: { page: number; limit: number }) {
+  const [shops, total] = await Promise.all([
+    prisma.shop.findMany({
+      where:   { status: 'PENDING' },
+      select:  { id: true, nameEn: true, nameAr: true, city: true, address: true, placeId: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+      skip:    (opts.page - 1) * opts.limit,
+      take:    opts.limit,
+    }),
+    prisma.shop.count({ where: { status: 'PENDING' } }),
+  ])
+  return { shops, total, page: opts.page, limit: opts.limit }
 }

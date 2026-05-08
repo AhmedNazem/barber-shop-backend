@@ -935,3 +935,13 @@ Authorization: Bearer {{accessToken}}
 DELETE {{baseUrl}}/account/saved-shops/PASTE_SHOP_ID_HERE
 Authorization: Bearer {{accessToken}}
 ###
+
+
+# ════════════════════════════════════════════════
+#  S19 — Google Maps Barbershop Seeder
+# ════════════════════════════════════════════════
+
+### S19.1 — List pending shops for admin review (Admin JWT)
+GET {{baseUrl}}/admin/shops/pending?page=1&limit=20
+Authorization: Bearer {{accessToken}}
+###

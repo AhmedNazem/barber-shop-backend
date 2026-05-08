@@ -174,7 +174,8 @@ model RefreshToken {
 
 model Shop {
   id                String      @id @default(cuid())
-  ownerId           String
+  ownerId           String?
+  placeId           String?     @unique
   nameEn            String
   nameAr            String
   address           String

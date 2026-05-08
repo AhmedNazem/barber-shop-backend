@@ -100,7 +100,7 @@ export async function resolveFlag(
 
   if (action === 'remove') {
     const shop = await prisma.shop.findUnique({ where: { id: review.shopId }, select: { ownerId: true } })
-    if (shop) {
+    if (shop?.ownerId) {
       await createNotification(
         shop.ownerId, 'SYSTEM_ALERT',
         'Review Removed', 'تم حذف التقييم',
