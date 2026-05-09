@@ -5,10 +5,20 @@ const REGULAR_DAYS_AHEAD = 3
 const VIP_DAYS_AHEAD = 7
 const SLOT_MINUTES = 30
 
-function parseTime(timeStr: string, baseDate: Date): Date {
+const IRAQ_OFFSET_MS = 3 * 60 * 60 * 1000
+
+function getBaghdadMidnight(dateStr?: string): Date {
+  const d = dateStr ? new Date(dateStr) : new Date()
+  if (isNaN(d.getTime())) return new Date(NaN)
+  const local = new Date(d.getTime() + IRAQ_OFFSET_MS)
+  local.setUTCHours(0, 0, 0, 0)
+  return new Date(local.getTime() - IRAQ_OFFSET_MS)
+}
+
+function parseTime(timeStr: string, baseDateBaghdadMidnight: Date): Date {
   const [h, m] = timeStr.split(':').map(Number)
-  const d = new Date(baseDate)
-  d.setUTCHours(h!, m!, 0, 0)
+  const d = new Date(baseDateBaghdadMidnight)
+  d.setUTCHours(d.getUTCHours() + h!, d.getUTCMinutes() + m!, 0, 0)
   return d
 }
 
@@ -55,8 +65,7 @@ async function getBarberFreeSlots(
   const slotEnd   = parseTime(schedule.endTime,   target)
   const allSlots  = generateSlots(slotStart, slotEnd)
 
-  const dayEnd = new Date(target)
-  dayEnd.setUTCDate(dayEnd.getUTCDate() + 1)
+  const dayEnd = new Date(target.getTime() + 24 * 60 * 60 * 1000)
 
   const bookings = await prisma.booking.findMany({
     where: {
@@ -71,21 +80,17 @@ async function getBarberFreeSlots(
 }
 
 function validateDateWindow(date: string, isVip: boolean): Date {
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
+  const todayBaghdad = getBaghdadMidnight()
+  const targetBaghdad = getBaghdadMidnight(date)
 
-  const target = new Date(date)
-  if (isNaN(target.getTime())) throw new AppError('invalid_date', 400)
-  target.setUTCHours(0, 0, 0, 0)
-
-  if (target < today) throw new AppError('date_in_past', 400)
+  if (isNaN(targetBaghdad.getTime())) throw new AppError('invalid_date', 400)
+  if (targetBaghdad < todayBaghdad) throw new AppError('date_in_past', 400)
 
   const maxDays = isVip ? VIP_DAYS_AHEAD : REGULAR_DAYS_AHEAD
-  const maxDate = new Date(today)
-  maxDate.setUTCDate(maxDate.getUTCDate() + maxDays)
-  if (target >= maxDate) throw new AppError('date_too_far', 400)
+  const maxDate = new Date(todayBaghdad.getTime() + maxDays * 24 * 60 * 60 * 1000)
+  if (targetBaghdad >= maxDate) throw new AppError('date_too_far', 400)
 
-  return target
+  return targetBaghdad
 }
 
 export async function getShopAvailability(

@@ -115,6 +115,28 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
   const slotDate = new Date(input.slot)
   if (isNaN(slotDate.getTime())) throw new AppError('invalid_date', 400)
 
+  // 6.5 Timezone validation (Asia/Baghdad)
+  const IRAQ_OFFSET_MS = 3 * 60 * 60 * 1000
+  const baghdadTime = new Date(slotDate.getTime() + IRAQ_OFFSET_MS)
+  const baghdadDayOfWeek = baghdadTime.getUTCDay()
+
+  const shopHours = await prisma.businessHours.findFirst({
+    where: { shopId: input.shopId, dayOfWeek: baghdadDayOfWeek }
+  })
+
+  if (!shopHours || shopHours.isClosed) throw new AppError('shop_closed', 422)
+
+  const [openH, openM] = shopHours.openTime.split(':').map(Number)
+  const [closeH, closeM] = shopHours.closeTime.split(':').map(Number)
+
+  const slotTotalMins = baghdadTime.getUTCHours() * 60 + baghdadTime.getUTCMinutes()
+  const openTotalMins = openH! * 60 + openM!
+  const closeTotalMins = closeH! * 60 + closeM!
+
+  if (slotTotalMins < openTotalMins || slotTotalMins + totalDurMin > closeTotalMins) {
+    throw new AppError('outside_open_hours', 422)
+  }
+
   // 7. Transaction: conflict check + create
   return prisma.$transaction(async (tx) => {
     if (input.barberId) {
