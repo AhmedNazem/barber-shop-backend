@@ -31,13 +31,13 @@ export async function addWalkInHandler(req: Request, res: Response, next: NextFu
 
 export async function startServiceHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    ok(res, await updateStatus(req.params['entryId']!, 'IN_CHAIR'))
+    ok(res, await updateStatus(req.params['entryId']!, 'IN_CHAIR', req.user!))
   } catch (err) { next(err) }
 }
 
 export async function doneHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const entry = await updateStatus(req.params['entryId']!, 'DONE')
+    const entry = await updateStatus(req.params['entryId']!, 'DONE', req.user!)
     if (entry.bookingId) {
       const booking = await prisma.booking.findUnique({ where: { id: entry.bookingId } })
       if (booking) {
@@ -50,7 +50,7 @@ export async function doneHandler(req: Request, res: Response, next: NextFunctio
 
 export async function noShowHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const entry = await updateStatus(req.params['entryId']!, 'NO_SHOW')
+    const entry = await updateStatus(req.params['entryId']!, 'NO_SHOW', req.user!)
     if (entry.bookingId) {
       const booking = await prisma.booking.findUnique({ where: { id: entry.bookingId } })
       if (booking) {
@@ -74,7 +74,7 @@ export async function reorderHandler(req: Request, res: Response, next: NextFunc
     if (!position || position < 1) throw new AppError('validation_error', 400)
     const entry = await prisma.queueEntry.findUnique({ where: { id: entryId } })
     if (!entry) throw new AppError('not_found', 404)
-    ok(res, await reorderEntry(entry.shopId, entryId, position))
+    ok(res, await reorderEntry(entry.shopId, entryId, position, req.user!))
   } catch (err) { next(err) }
 }
 

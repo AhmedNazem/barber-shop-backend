@@ -84,12 +84,20 @@ export async function addWalkIn(
   })
 }
 
-export async function updateStatus(entryId: string, status: QueueStatus) {
+export async function updateStatus(
+  entryId: string,
+  status: QueueStatus,
+  actor: { role: string; shopId?: string | null }
+) {
   const entry = await prisma.queueEntry.findUnique({
     where:   { id: entryId },
     include: { booking: { select: { customerId: true, totalPrice: true } } },
   })
   if (!entry) throw new AppError('not_found', 404)
+
+  if (actor.role !== 'ADMIN' && entry.shopId !== actor.shopId) {
+    throw new AppError('forbidden', 403)
+  }
 
   const updated = await prisma.queueEntry.update({ where: { id: entryId }, data: { status } })
 
@@ -106,7 +114,12 @@ export async function updateStatus(entryId: string, status: QueueStatus) {
   return updated
 }
 
-export async function reorderEntry(shopId: string, entryId: string, newPosition: number) {
+export async function reorderEntry(
+  shopId: string,
+  entryId: string,
+  newPosition: number,
+  actor: { role: string; shopId?: string | null }
+) {
   return prisma.$transaction(async (tx) => {
     const entries = await tx.queueEntry.findMany({
       where: { shopId, status: 'WAITING' },
@@ -114,6 +127,10 @@ export async function reorderEntry(shopId: string, entryId: string, newPosition:
     })
     const target = entries.find(e => e.id === entryId)
     if (!target) throw new AppError('not_found', 404)
+
+    if (actor.role !== 'ADMIN' && target.shopId !== actor.shopId) {
+      throw new AppError('forbidden', 403)
+    }
 
     const reordered = entries.filter(e => e.id !== entryId)
     reordered.splice(newPosition - 1, 0, target)
