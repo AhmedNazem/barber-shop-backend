@@ -33,6 +33,23 @@ export async function issueTokens(user: { id: string; role: string; shopId: stri
   const accessToken = signAccess(payload)
   const refreshToken = signRefresh(payload)
 
+  const recentTokens = await prisma.refreshToken.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 9,
+    select: { id: true },
+  })
+  const recentIds = recentTokens.map((t) => t.id)
+
+  if (recentIds.length > 0) {
+    await prisma.refreshToken.deleteMany({
+      where: {
+        userId: user.id,
+        id: { notIn: recentIds },
+      },
+    })
+  }
+
   await prisma.refreshToken.create({
     data: { userId: user.id, token: refreshToken, expiresAt: new Date(Date.now() + REFRESH_TTL_MS) },
   })
