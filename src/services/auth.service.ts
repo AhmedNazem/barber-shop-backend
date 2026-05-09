@@ -59,7 +59,10 @@ export async function revokeToken(token: string) {
 }
 
 export async function getSession(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId } })
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { reliabilityRecord: true }
+  })
   if (!user) throw new AppError('unauthorized', 401)
 
   let shop = null
@@ -75,6 +78,8 @@ export async function getSession(userId: string) {
     name: user.name,
     role: user.role,
     isVip: user.isVip,
+    reliabilityScore: user.reliabilityRecord?.score ?? 100,
+    noShowCount: user.reliabilityRecord?.noShowCount ?? 0,
     ...(shop && { shopId: shop.id, shopStatus: shop.status, plan: shop.plan }),
   }
 }
