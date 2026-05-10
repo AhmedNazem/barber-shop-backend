@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
@@ -12,6 +12,19 @@ import { router } from "@/routes";
 import { Env } from "@/config/env";
 import { prisma } from "@/config/prisma";
 import { redisClient } from "@/lib/redis";
+
+function makeTimeout(ms: number) {
+  return (_req: Request, res: Response, next: NextFunction) => {
+    const timer = setTimeout(() => {
+      if (!res.headersSent) {
+        res.status(503).json({ error: "request_timeout", message: "Request timed out" });
+      }
+    }, ms);
+    res.on("finish", () => clearTimeout(timer));
+    res.on("close",  () => clearTimeout(timer));
+    next();
+  };
+}
 
 export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
   const app = express();
@@ -110,6 +123,8 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
     });
   });
 
+  app.use("/api/v1/hair-analysis", makeTimeout(30_000)); // Gemini AI can be slow
+  app.use("/api/v1", makeTimeout(8_000));
   app.use("/api/v1", router);
 
   app.use(errorHandler);
