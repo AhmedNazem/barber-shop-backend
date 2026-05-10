@@ -9,7 +9,12 @@ const QUEUE_NAME = 'hair-analysis'
 
 const connection = redisClient
 
-export const hairAnalysisQueue = new Queue(QUEUE_NAME, { connection })
+const defaultJobOptions = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 2000 },
+}
+
+export const hairAnalysisQueue = new Queue(QUEUE_NAME, { connection, defaultJobOptions })
 
 export type HairJobData = {
   userId:   string
@@ -63,10 +68,10 @@ export function processHairAnalysisJob(jobId: string, data: HairJobData) {
 }
 
 export function startHairAnalysisWorker() {
-  const worker = new Worker<HairJobData>(QUEUE_NAME, processJob, { connection })
+  const worker = new Worker<HairJobData>(QUEUE_NAME, processJob, { connection, concurrency: 2 })
 
   worker.on('completed', (job) => console.log(`[hair-analysis] job ${job.id} completed`))
-  worker.on('failed', (job, err) => console.error(`[hair-analysis] job ${job?.id} failed:`, err.message))
+  worker.on('failed', (job, err) => console.error(`[hair-analysis] job ${job?.id} failed after ${job?.attemptsMade} attempts:`, err.message))
   worker.on('error', (err) => console.error('[hair-analysis] worker error:', err.message))
 
   return worker

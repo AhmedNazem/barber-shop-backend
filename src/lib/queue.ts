@@ -13,8 +13,13 @@ function makeConnection(): Redis {
   })
 }
 
+const defaultJobOptions = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 2000 },
+}
+
 function createQueue(name: string): Queue {
-  return new Queue(name, { connection: makeConnection() })
+  return new Queue(name, { connection: makeConnection(), defaultJobOptions })
 }
 
 type QueueMap = {

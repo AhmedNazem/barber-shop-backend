@@ -5,7 +5,12 @@ import { syncAnbarShops } from '@/services/shop-sync.service'
 const QUEUE_NAME = 'sync-shops'
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
-export const syncShopsQueue = new Queue(QUEUE_NAME, { connection: redisClient })
+const defaultJobOptions = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 2000 },
+}
+
+export const syncShopsQueue = new Queue(QUEUE_NAME, { connection: redisClient, defaultJobOptions })
 
 async function processJob() {
   const stats = await syncAnbarShops()
@@ -20,10 +25,10 @@ export async function startSyncShopsWorker() {
     jobId:   'sync-anbar-monthly',
   })
 
-  const worker = new Worker(QUEUE_NAME, processJob, { connection: redisClient })
+  const worker = new Worker(QUEUE_NAME, processJob, { connection: redisClient, concurrency: 1 })
 
   worker.on('completed', job  => console.log(`[sync-shops] ${job.id} done`))
-  worker.on('failed',    (job, err) => console.error(`[sync-shops] ${job?.id} failed:`, err.message))
+  worker.on('failed',    (job, err) => console.error(`[sync-shops] ${job?.id} failed after ${job?.attemptsMade} attempts:`, err.message))
   worker.on('error',     err  => console.error('[sync-shops] worker error:', err.message))
 
   return worker

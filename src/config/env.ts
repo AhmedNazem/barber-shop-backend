@@ -32,6 +32,11 @@ const schema = z.object({
   // AI
   GEMINI_API_KEY: z.string().optional(),
 
+  // Email (Resend)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM:     z.string().optional(),
+  EMAIL_TO:       z.string().optional(),
+
   // SMS (optional — configured via admin panel after launch)
   SMS_PROVIDER: z.enum(["unifonic", "twilio"]).optional(),
   SMS_API_KEY: z.string().optional(),    // Unifonic: AppSid | Twilio: AccountSid

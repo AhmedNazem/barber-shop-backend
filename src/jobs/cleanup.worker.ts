@@ -38,10 +38,10 @@ export async function startCleanupWorker() {
   await cleanupQueue.add('refresh-token-cleanup', {}, { repeat: { every: 60 * 60 * 1000 } })
   await cleanupQueue.add('invite-cleanup',        {}, { repeat: { every: 60 * 60 * 1000 } })
 
-  const worker = new Worker('cleanup', processJob, { connection: redisClient })
+  const worker = new Worker('cleanup', processJob, { connection: redisClient, concurrency: 1 })
 
   worker.on('completed', (job) => console.log(`[cleanup] ${job.name}#${job.id} done`))
-  worker.on('failed',    (job, err) => console.error(`[cleanup] ${job?.name}#${job?.id} failed:`, err.message))
+  worker.on('failed',    (job, err) => console.error(`[cleanup] ${job?.name}#${job?.id} failed after ${job?.attemptsMade} attempts:`, err.message))
   worker.on('error',     (err) => console.error('[cleanup] worker error:', err.message))
 
   return worker
