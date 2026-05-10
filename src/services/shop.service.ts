@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { redisClient } from "@/lib/redis";
 import { isShopOpen } from "@/lib/shop-hours";
 import { computeLoad } from "@/lib/shop-load";
+import { stripHtml } from "@/lib/sanitize";
 
 const RATING_TTL = 300;
 
@@ -23,7 +24,8 @@ export async function createShop(
   const existing = await prisma.shop.findFirst({ where: { ownerId } });
   if (existing) throw new AppError("conflict", 409);
 
-  return prisma.shop.create({ data: { ownerId, ...data, status: "PENDING" } });
+  const clean = { ...data, nameEn: stripHtml(data.nameEn), nameAr: stripHtml(data.nameAr), address: stripHtml(data.address) }
+  return prisma.shop.create({ data: { ownerId, ...clean, status: "PENDING" } });
 }
 
 export async function updateShop(
@@ -45,7 +47,13 @@ export async function updateShop(
   if (!shop) throw new AppError("not_found", 404);
   if (shop.ownerId !== ownerId) throw new AppError("forbidden", 403);
 
-  return prisma.shop.update({ where: { id: shopId }, data });
+  const clean = {
+    ...data,
+    ...(data.nameEn   && { nameEn:   stripHtml(data.nameEn) }),
+    ...(data.nameAr   && { nameAr:   stripHtml(data.nameAr) }),
+    ...(data.address  && { address:  stripHtml(data.address) }),
+  }
+  return prisma.shop.update({ where: { id: shopId }, data: clean });
 }
 
 export async function setShopImage(

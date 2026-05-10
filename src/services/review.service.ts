@@ -2,6 +2,7 @@ import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { FlagReason } from '@prisma/client'
 import { createNotification } from '@/services/notification.service'
+import { stripHtml } from '@/lib/sanitize'
 
 export async function listShopReviews(shopId: string, asOwner: boolean, page: number, limit: number) {
   const where = asOwner ? { shopId } : { shopId, isVisible: true }
@@ -54,7 +55,7 @@ export async function createReview(
         shopId:     booking.shopId,
         barberId:   data.barberId,
         rating:     data.rating,
-        comment:    data.comment,
+        comment:    stripHtml(data.comment),
         photos:     data.photoUrls?.length
           ? { create: data.photoUrls.map(url => ({ url })) }
           : undefined,
