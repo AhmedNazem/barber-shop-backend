@@ -95,7 +95,8 @@ export async function rejectPayment(
 
 export async function listPendingPayments() {
   return prisma.booking.findMany({
-    where: { paymentStatus: 'AWAITING_CONFIRMATION' },
+    where:   { paymentStatus: 'AWAITING_CONFIRMATION' },
+    take:    50,
     include: {
       shop:        { select: { id: true, nameEn: true, nameAr: true } },
       services:    { select: { nameEn: true, price: true } },

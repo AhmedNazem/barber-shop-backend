@@ -9,9 +9,10 @@ async function assertOwnership(shopId: string, ownerId: string) {
 
 export async function listServices(shopId: string) {
   return prisma.service.findMany({
-    where: { shopId, isActive: true },
+    where:   { shopId, isActive: true },
     include: { photos: { orderBy: { order: 'asc' } } },
     orderBy: { nameEn: 'asc' },
+    take:    50,
   })
 }
 

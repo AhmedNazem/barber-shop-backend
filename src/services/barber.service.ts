@@ -10,8 +10,9 @@ async function assertOwnership(shopId: string, ownerId: string) {
 
 export async function listBarbers(shopId: string) {
   return prisma.barber.findMany({
-    where: { shopId, isActive: true },
+    where:   { shopId, isActive: true },
     orderBy: { nameEn: 'asc' },
+    take:    50,
   })
 }
 

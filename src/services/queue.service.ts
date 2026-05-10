@@ -45,8 +45,9 @@ async function rebuildWaitTimes(shopId: string, tx = prisma as typeof prisma) {
 
 export async function getQueue(shopId: string, vipLaneEnabled: boolean) {
   const entries = await prisma.queueEntry.findMany({
-    where: { shopId, status: { in: ACTIVE_STATUSES } },
+    where:   { shopId, status: { in: ACTIVE_STATUSES } },
     orderBy: [{ isVip: 'desc' }, { position: 'asc' }],
+    take:    100,
   })
 
   return entries.map((e, i) => ({

@@ -70,6 +70,7 @@ export async function getBookings(customerId: string) {
   return prisma.booking.findMany({
     where:   { customerId },
     orderBy: { slot: 'desc' },
+    take:    50,
     include: { services: true },
   })
 }

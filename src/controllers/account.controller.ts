@@ -9,6 +9,7 @@ export async function getSavedShopsHandler(req: Request, res: Response, next: Ne
     const saved = await prisma.savedShop.findMany({
       where:   { userId },
       orderBy: { savedAt: 'desc' },
+      take:    50,
     })
     res.json({ data: saved })
   } catch (err) { next(err) }
