@@ -58,6 +58,7 @@ enum PaymentMethod {
 
 enum PaymentStatus {
   PENDING
+  AWAITING_CONFIRMATION
   PAID
   REFUNDED
   FAILED
@@ -329,10 +330,11 @@ model Booking {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
-  shop     Shop             @relation(fields: [shopId], references: [id])
-  services BookingService[]
-  review   Review?
-  queue    QueueEntry?
+  shop         Shop                 @relation(fields: [shopId], references: [id])
+  services     BookingService[]
+  review       Review?
+  queue        QueueEntry?
+  paymentProof ManualPaymentProof?
 
   @@index([customerId, status])
   @@index([shopId, status])
@@ -351,6 +353,19 @@ model BookingService {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@id([bookingId, serviceId])
+}
+
+model ManualPaymentProof {
+  id            String    @id @default(cuid())
+  bookingId     String    @unique
+  referenceNote String?
+  screenshotUrl String?
+  submittedAt   DateTime  @default(now())
+  reviewedAt    DateTime?
+  reviewedBy    String?
+  rejectReason  String?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 // ─── Queue ────────────────────────────────────────────────────────────────────
