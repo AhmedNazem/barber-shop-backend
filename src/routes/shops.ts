@@ -16,23 +16,35 @@ import { optionalAuth } from '@/middleware/auth'
 import { singleImage } from '@/lib/upload'
 
 const createShopSchema = z.object({
-  nameEn:        z.string().min(2),
-  nameAr:        z.string().min(2),
-  address:       z.string().min(3),
-  city:          z.string().min(2),
-  neighborhood:  z.string().min(2),
-  neighborhoodAr: z.string().min(2),
-  phone:         z.string().regex(/^\+964\d{9,10}$/),
-  lat:           z.number(),
-  lng:           z.number(),
+  nameEn:         z.string().min(2).max(100),
+  nameAr:         z.string().min(2).max(100),
+  address:        z.string().min(3).max(200),
+  city:           z.string().min(2).max(100),
+  neighborhood:   z.string().min(2).max(100),
+  neighborhoodAr: z.string().min(2).max(100),
+  phone:          z.string().regex(/^\+964\d{9,10}$/),
+  lat:            z.number().min(-90).max(90),
+  lng:            z.number().min(-180).max(180),
 })
 
 const updateShopSchema = createShopSchema.partial()
 
+const listShopsQuerySchema = z.object({
+  search:     z.string().max(100).optional(),
+  service:    z.string().max(100).optional(),
+  city:       z.string().max(100).optional(),
+  priceRange: z.enum(['BUDGET', 'MID', 'PREMIUM']).optional(),
+  minRating:  z.coerce.number().min(0).max(5).optional(),
+  lat:        z.coerce.number().min(-90).max(90).optional(),
+  lng:        z.coerce.number().min(-180).max(180).optional(),
+  limit:      z.coerce.number().int().min(1).max(50).optional(),
+  offset:     z.coerce.number().int().min(0).optional(),
+})
+
 export const shopsRouter = Router()
 
 shopsRouter.post('/', authenticate, requireRole('SHOP_OWNER'), validate(createShopSchema), createShopHandler)
-shopsRouter.get('/', listShopsHandler)
+shopsRouter.get('/', validate(listShopsQuerySchema, 'query'), listShopsHandler)
 shopsRouter.get('/:id', getShopHandler)
 shopsRouter.patch('/:id', authenticate, requireRole('SHOP_OWNER'), validate(updateShopSchema), updateShopHandler)
 shopsRouter.post('/:id/cover', authenticate, requireRole('SHOP_OWNER'), singleImage('file'), uploadImageHandler('coverUrl'))
