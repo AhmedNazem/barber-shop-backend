@@ -10,6 +10,11 @@ import {
   listUsersHandler, getUserHandler, changeRoleHandler, suspendUserHandler, deleteUserHandler,
   unblockUserHandler, grantVipHandler,
 } from '@/controllers/admin.controller'
+import {
+  listPendingPaymentsHandler,
+  confirmPaymentHandler,
+  rejectPaymentHandler,
+} from '@/controllers/manual-payment.controller'
 import { updateShopPlanHandler } from '@/controllers/shop.controller'
 
 const rejectSchema  = z.object({ reason: z.string().min(2), reasonAr: z.string().min(2) })
@@ -55,3 +60,10 @@ adminRouter.patch( '/users/:id/suspend', ...guard,                    suspendUse
 adminRouter.delete('/users/:id',         ...guard, deleteUserHandler)
 adminRouter.post(  '/users/:id/unblock', ...guard, unblockUserHandler)
 adminRouter.post(  '/users/:id/vip',     ...guard, grantVipHandler)
+
+// ─── Manual payment review ────────────────────────────────────────────────────
+const rejectPaymentSchema = z.object({ reason: z.string().min(2) })
+
+adminRouter.get(  '/payments/pending',      ...guard,                                    listPendingPaymentsHandler)
+adminRouter.post( '/payments/:id/confirm',  ...guard,                                    confirmPaymentHandler)
+adminRouter.post( '/payments/:id/reject',   ...guard, validate(rejectPaymentSchema),     rejectPaymentHandler)

@@ -38,5 +38,8 @@ export const ERROR_MESSAGES: Record<string, { en: string; ar: string }> = {
   low_reliability:      { en: 'Booking blocked due to past no-shows', ar: 'الحجز محظور بسبب الغيابات السابقة' },
   slot_taken:           { en: 'This time slot is no longer available', ar: 'هذا الوقت لم يعد متاحاً' },
   invalid_date:         { en: 'Invalid date format',            ar: 'صيغة التاريخ غير صحيحة' },
-  already_resolved:     { en: 'Booking cannot be cancelled',    ar: 'لا يمكن إلغاء هذا الحجز' },
+  already_resolved:          { en: 'Booking cannot be cancelled',             ar: 'لا يمكن إلغاء هذا الحجز' },
+  payment_already_submitted: { en: 'Payment proof already submitted',         ar: 'تم إرسال إثبات الدفع مسبقاً' },
+  method_not_manual:         { en: 'Payment method does not require proof',   ar: 'طريقة الدفع لا تتطلب إثباتاً' },
+  not_awaiting:              { en: 'Payment is not awaiting confirmation',    ar: 'الدفع ليس في انتظار التأكيد' },
 }

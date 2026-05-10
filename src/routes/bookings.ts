@@ -4,6 +4,7 @@ import { validate } from '@/middleware/validate'
 import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
 import { cancelBookingHandler, getBookingByIdHandler, getBookingsHandler, createBookingHandler } from '@/controllers/booking.controller'
+import { submitProofHandler } from '@/controllers/manual-payment.controller'
 
 const createBookingSchema = z.object({
   shopId:        z.string().cuid(),
@@ -19,3 +20,4 @@ bookingsRouter.get('/',    authenticate, requireRole('CUSTOMER'), getBookingsHan
 bookingsRouter.get('/:id',         authenticate, requireRole('CUSTOMER'), getBookingByIdHandler)
 bookingsRouter.patch('/:id/cancel', authenticate, requireRole('CUSTOMER'), cancelBookingHandler)
 bookingsRouter.post('/',  authenticate, requireRole('CUSTOMER'), validate(createBookingSchema), createBookingHandler)
+bookingsRouter.post('/:id/payment-proof', authenticate, requireRole('CUSTOMER'), submitProofHandler)
