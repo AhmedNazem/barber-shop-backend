@@ -52,6 +52,7 @@ Code → Write test → `npm test` passes → `git commit` → move to next task
 | S16   | Hair Analysis (BullMQ Job)          | ✅ Complete               |
 | S17   | Contact Form + Saved Shops          | ✅ Complete               |
 | S18   | Testing & Hardening                 | ⏳ Last                   |
+| S20   | Nginx & Production Deployment       | ⏳ Pending                |
 
 ---
 
