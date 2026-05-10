@@ -530,3 +530,133 @@ Each phase unblocks the next. S1–S3 must be done before any frontend wiring ca
 - All imported shops: `status: PENDING`, `isActive: false`, `ownerId: null`
 - `src/lib/google-maps.ts` — Places API (New) client
 - `src/services/shop-sync.service.ts` — shared upsert logic used by both seed and worker
+
+---
+
+## Phase S20 — Nginx & Production Deployment ⏳
+
+> **Goal:** Ship the Express backend behind Nginx on a Linux VPS. Nginx handles TLS termination, compression, rate limiting, and proxying to the Node process. Node is managed by systemd so it restarts automatically on crash or reboot.
+
+### Prerequisites
+
+- Ubuntu/Debian VPS with a public IP
+- Domain name pointed at the VPS (`api.barberos.iq` or similar)
+- `DOMAIN` added to `.env` / server environment
+
+---
+
+### S20.1 — Systemd service for Node.js
+
+- [ ] Create `/etc/systemd/system/barberos-api.service` — runs `node dist/server.js` as a non-root user (`barberos`). Set `Restart=always`, `RestartSec=5`, `EnvironmentFile=/etc/barberos/.env`. Enable with `systemctl enable --now barberos-api`.
+- [ ] Confirm `GET /health` returns 200 from `localhost:3000` (or whatever `PORT` is set to) before moving on.
+
+---
+
+### S20.2 — Base Nginx config
+
+- [ ] Install Nginx (`apt install nginx`).
+- [ ] Create `/etc/nginx/sites-available/barberos-api` — HTTP-only stub that proxies all traffic to `http://127.0.0.1:3000`. Enable with symlink to `sites-enabled/`. Reload Nginx and confirm the API is reachable over HTTP on port 80.
+
+---
+
+### S20.3 — TLS with Let's Encrypt
+
+- [ ] Install Certbot (`apt install certbot python3-certbot-nginx`).
+- [ ] Run `certbot --nginx -d api.barberos.iq` — auto-edits the Nginx config, obtains cert, sets up auto-renewal cron.
+- [ ] Verify HTTPS redirect works and certificate is valid.
+- [ ] Confirm auto-renewal: `certbot renew --dry-run` exits cleanly.
+
+---
+
+### S20.4 — Reverse proxy tuning
+
+- [ ] `proxy_pass http://127.0.0.1:3000` with correct headers:
+  ```nginx
+  proxy_set_header Host              $host;
+  proxy_set_header X-Real-IP         $remote_addr;
+  proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  ```
+- [ ] `proxy_read_timeout 60s` — covers the 30s queue polling interval the frontend uses (see §7).
+- [ ] `proxy_connect_timeout 10s`, `proxy_send_timeout 30s`.
+- [ ] Set `trust proxy = 1` in Express (`app.set('trust proxy', 1)`) so `req.ip` reflects the real client IP behind Nginx, not `127.0.0.1`. This is required for rate limiting to work correctly.
+
+---
+
+### S20.5 — Security headers
+
+- [ ] Add the following to the Nginx server block (these complement the Express Helmet headers):
+  ```nginx
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+  add_header X-Frame-Options           DENY                                   always;
+  add_header X-Content-Type-Options    nosniff                                always;
+  add_header Referrer-Policy           "no-referrer-when-downgrade"           always;
+  add_header Permissions-Policy        "geolocation=(), microphone=()"        always;
+  ```
+- [ ] Remove the `Server: nginx` header: `server_tokens off;` in `nginx.conf` http block.
+
+---
+
+### S20.6 — Gzip compression
+
+- [ ] Enable in the `http` block of `/etc/nginx/nginx.conf`:
+  ```nginx
+  gzip            on;
+  gzip_vary       on;
+  gzip_min_length 1024;
+  gzip_proxied    any;
+  gzip_types      application/json text/plain application/javascript;
+  ```
+- [ ] Verify: `curl -H "Accept-Encoding: gzip" -I https://api.barberos.iq/health` shows `Content-Encoding: gzip`.
+
+---
+
+### S20.7 — Nginx-level rate limiting
+
+- [ ] Define a rate-limit zone in the `http` block:
+  ```nginx
+  limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
+  ```
+- [ ] Apply in the `location /` block:
+  ```nginx
+  limit_req zone=api burst=60 nodelay;
+  limit_req_status 429;
+  ```
+  This is a second layer on top of Express `express-rate-limit` — protects against floods before they hit Node.
+
+---
+
+### S20.8 — File upload size limit
+
+- [ ] Set `client_max_body_size 10m;` in the server block to accommodate the largest file upload allowed by the API (cover image 5MB + multipart overhead). This prevents Nginx from rejecting review photo batches (4 × 4MB each — but those are uploaded one at a time).
+
+---
+
+### S20.9 — Logging
+
+- [ ] Confirm Nginx access logs go to `/var/log/nginx/barberos-api.access.log` and error logs to `/var/log/nginx/barberos-api.error.log`.
+- [ ] Set up logrotate for both files (`/etc/logrotate.d/nginx` already handles this by default — verify it's active).
+- [ ] Confirm Node/Winston logs land in a persistent location (e.g., `journalctl -u barberos-api` or a log file path set in `.env`).
+
+---
+
+### S20.10 — Health check & deployment smoke test
+
+- [ ] `curl https://api.barberos.iq/health` returns `{ ok: true }` with status 200.
+- [ ] `curl -I https://api.barberos.iq/health` shows:
+  - `HTTP/2 200`
+  - `Strict-Transport-Security` header present
+  - `X-Frame-Options: DENY` present
+  - No `Server: nginx` header
+- [ ] `curl http://api.barberos.iq/health` redirects 301 → HTTPS (not 200 over plain HTTP).
+- [ ] Restart the Node process (`systemctl restart barberos-api`) and confirm it comes back within 5s.
+- [ ] Reboot the VPS and confirm both Nginx and Node start automatically on boot.
+
+---
+
+### Notes
+
+- Express `PORT` should be `3000` (or any non-privileged port) — Nginx listens on 443/80.
+- Never run `node` as root. The `barberos` system user owns the app directory and the systemd service runs as that user.
+- All secrets stay in `/etc/barberos/.env` (mode 600, owned by `barberos`) — never in the Nginx config.
+- The `X-Forwarded-For` chain is trusted only because Nginx is the sole entry point. If a CDN (Cloudflare) is added later, update `app.set('trust proxy', number_of_proxies)`.
