@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 import { requestId } from "@/middleware/request-id";
 import { errorHandler } from "@/middleware/error-handler";
 import { maintenanceGuard } from "@/middleware/maintenance";
@@ -34,12 +35,47 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
   app.use(cookieParser());
 
   if (config.NODE_ENV !== "test") {
+    // Global baseline: 100 req/min per IP across all routes
     app.use(
       rateLimit({
         windowMs: 60 * 1000,
         limit: 100,
         standardHeaders: true,
         legacyHeaders: false,
+        message: { error: "rate_limited", message: "Too many requests" },
+      }),
+    );
+
+    // Stricter limit on auth routes: 5 req/min per IP
+    app.use(
+      "/api/v1/auth",
+      rateLimit({
+        windowMs: 60 * 1000,
+        limit: 5,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { error: "rate_limited", message: "Too many requests" },
+      }),
+    );
+
+    // Per-user limit: 50 req/min keyed by userId (falls back to IP for unauthenticated requests)
+    app.use(
+      "/api/v1",
+      rateLimit({
+        windowMs: 60 * 1000,
+        limit: 50,
+        standardHeaders: true,
+        legacyHeaders: false,
+        keyGenerator: (req) => {
+          try {
+            const token = req.cookies?.barber_token as string | undefined;
+            if (token) {
+              const payload = jwt.decode(token) as { id?: string } | null;
+              if (payload?.id) return `user:${payload.id}`;
+            }
+          } catch {}
+          return `ip:${req.ip ?? "unknown"}`;
+        },
         message: { error: "rate_limited", message: "Too many requests" },
       }),
     );
