@@ -22,7 +22,7 @@ export async function createOrFindUser(
       },
     })
   } else {
-    if (!user) throw new AppError('user_not_found', 404)
+    if (!user) throw new AppError('invalid_otp', 401)
   }
 
   return user

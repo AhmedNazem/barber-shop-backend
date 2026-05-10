@@ -59,10 +59,20 @@ export async function redeemReward(userId: string, rewardId: string) {
     const points  = account?.points ?? 0
     if (points < reward.pointsCost) throw new AppError('insufficient_points', 422)
 
+    const newPoints = points - reward.pointsCost
+    const newTier   = calcTier(newPoints)
+
     await tx.loyaltyAccount.update({
       where: { userId },
-      data:  { points: { decrement: reward.pointsCost } },
+      data:  { points: { decrement: reward.pointsCost }, tier: newTier },
     })
+
+    if (newTier !== 'GOLD') {
+      await tx.user.updateMany({
+        where: { id: userId, isVip: true },
+        data:  { isVip: false },
+      })
+    }
 
     await tx.loyaltyTransaction.create({
       data: { userId, type: 'REDEEM', points: -reward.pointsCost, rewardId },
