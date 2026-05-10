@@ -145,19 +145,42 @@ export async function reorderEntry(
 export async function getCustomerQueueEntry(bookingId: string, customerId: string) {
   const entry = await prisma.queueEntry.findUnique({
     where: { bookingId },
-    include: { booking: { select: { customerId: true } } },
+    include: {
+      booking: {
+        select: {
+          customerId: true,
+          barberName: true,
+          shop:     { select: { nameEn: true, nameAr: true } },
+          services: { select: { nameEn: true, nameAr: true }, take: 1 },
+        },
+      },
+    },
   })
   if (!entry) throw new AppError('not_found', 404)
   if (entry.booking?.customerId !== customerId) throw new AppError('forbidden', 403)
 
-  const ahead = await prisma.queueEntry.count({
-    where: { shopId: entry.shopId, status: 'WAITING', position: { lt: entry.position } },
-  })
+  const [ahead, totalInQueue] = await Promise.all([
+    prisma.queueEntry.count({
+      where: { shopId: entry.shopId, status: 'WAITING', position: { lt: entry.position } },
+    }),
+    prisma.queueEntry.count({
+      where: { shopId: entry.shopId, status: 'WAITING' },
+    }),
+  ])
+
+  const position = ahead + 1
+  const service  = entry.booking?.services[0]
 
   return {
-    id:           entry.id,
-    position:     ahead + 1,
-    status:       mapStatus({ status: entry.status, position: ahead + 1 }),
-    estimatedWait: ahead * (entry.estimatedWait || 30),
+    bookingId,
+    position,
+    totalInQueue,
+    estimatedWaitMin: ahead * (entry.estimatedWait || 30),
+    status:       mapStatus({ status: entry.status, position }),
+    shopName:     entry.booking?.shop.nameEn ?? '',
+    shopNameAr:   entry.booking?.shop.nameAr ?? '',
+    barberName:   entry.booking?.barberName  ?? 'Any Barber',
+    serviceName:  service?.nameEn ?? '',
+    serviceNameAr: service?.nameAr ?? '',
   }
 }
