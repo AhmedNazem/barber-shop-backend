@@ -3,6 +3,15 @@ import { AppError } from '@/lib/errors'
 import { FlagReason } from '@prisma/client'
 import { createNotification } from '@/services/notification.service'
 import { stripHtml } from '@/lib/sanitize'
+import { env } from '@/config/env'
+
+function isAllowedPhotoUrl(url: string): boolean {
+  if (!env.AWS_BUCKET_NAME) return true
+  try {
+    const { hostname } = new URL(url)
+    return hostname === `${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com`
+  } catch { return false }
+}
 
 export async function listShopReviews(shopId: string, asOwner: boolean, page: number, limit: number) {
   const where = asOwner ? { shopId } : { shopId, isVisible: true }
@@ -42,6 +51,10 @@ export async function createReview(
   customerId: string,
   data: { bookingId: string; rating: number; comment: string; barberId?: string; photoUrls?: string[] },
 ) {
+  if (data.photoUrls?.some(url => !isAllowedPhotoUrl(url))) {
+    throw new AppError('invalid_photo_url', 400)
+  }
+
   const booking = await prisma.booking.findUnique({ where: { id: data.bookingId } })
   if (!booking) throw new AppError('not_found', 404)
   if (booking.customerId !== customerId) throw new AppError('forbidden', 403)

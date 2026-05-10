@@ -1,5 +1,6 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
+import { ShopPlan } from '@prisma/client'
 
 type CreateDiscountInput = {
   pct:      number
@@ -26,6 +27,7 @@ export async function createDiscount(shopId: string, ownerId: string, input: Cre
   const shop = await prisma.shop.findUnique({ where: { id: shopId } })
   if (!shop) throw new AppError('not_found', 404)
   if (shop.ownerId !== ownerId) throw new AppError('forbidden', 403)
+  if (shop.plan === ShopPlan.FREE) throw new AppError('plan_required', 403)
 
   const expiresAt = new Date(input.expiresAt)
   if (isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {

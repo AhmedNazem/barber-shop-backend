@@ -9,6 +9,8 @@ import { errorHandler } from "@/middleware/error-handler";
 import { maintenanceGuard } from "@/middleware/maintenance";
 import { router } from "@/routes";
 import { Env } from "@/config/env";
+import { prisma } from "@/config/prisma";
+import { redisClient } from "@/lib/redis";
 
 export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
   const app = express();
@@ -52,6 +54,23 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
       ok: true,
       env: config.NODE_ENV,
       version: process.env["npm_package_version"] ?? "1.0.0",
+    });
+  });
+
+  app.get("/healthz", async (_req, res) => {
+    const [dbResult, redisResult] = await Promise.allSettled([
+      prisma.$queryRaw`SELECT 1`,
+      redisClient.ping(),
+    ]);
+    const db    = dbResult.status    === 'fulfilled' ? 'up' : 'down';
+    const redis = redisResult.status === 'fulfilled' ? 'up' : 'down';
+    const ok    = db === 'up' && redis === 'up';
+    res.status(ok ? 200 : 503).json({
+      status: ok ? 'ok' : 'degraded',
+      db,
+      redis,
+      uptime:    Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
     });
   });
 
