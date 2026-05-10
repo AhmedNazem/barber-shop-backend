@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '@/config/prisma'
 import { getLoyalty } from '@/services/loyalty.service'
+import { getReliability } from '@/services/reliability.service'
 
 export async function getSavedShopsHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -49,5 +50,12 @@ export async function getLoyaltyHandler(req: Request, res: Response, next: NextF
       select: { isVip: true },
     }))?.isVip
     res.json({ data: { points: data.points, tier: data.tier, isVip } })
+  } catch (err) { next(err) }
+}
+
+export async function getReliabilityHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = await getReliability(req.user!.id)
+    res.json({ data })
   } catch (err) { next(err) }
 }
