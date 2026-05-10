@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '@/config/prisma'
+import { getLoyalty } from '@/services/loyalty.service'
 
 export async function getSavedShopsHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -37,5 +38,16 @@ export async function unsaveShopHandler(req: Request, res: Response, next: NextF
     })
 
     res.status(204).send()
+  } catch (err) { next(err) }
+}
+
+export async function getLoyaltyHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = await getLoyalty(req.user!.id)
+    const isVip = !!(await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { isVip: true },
+    }))?.isVip
+    res.json({ data: { points: data.points, tier: data.tier, isVip } })
   } catch (err) { next(err) }
 }
