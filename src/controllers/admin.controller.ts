@@ -131,3 +131,32 @@ export async function grantVipHandler(req: Request, res: Response, next: NextFun
     ok(res, { ok: true })
   } catch (err) { next(err) }
 }
+
+// ─── Overview stats ───────────────────────────────────────────────────────────
+
+export async function getAdminStatsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const now       = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    const [bookingsToday, pendingShops, totalUsers, revenueAgg, pendingPayments] = await Promise.all([
+      prisma.booking.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.shop.count({ where: { status: 'PENDING' } }),
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.booking.aggregate({
+        where: { status: 'COMPLETED', slot: { gte: monthStart } },
+        _sum: { totalPrice: true },
+      }),
+      prisma.manualPaymentProof.count({ where: { reviewedAt: null } }),
+    ])
+
+    ok(res, {
+      bookingsToday,
+      pendingShops,
+      totalUsers,
+      revenueThisMonth: revenueAgg._sum.totalPrice ?? 0,
+      pendingPayments,
+    })
+  } catch (err) { next(err) }
+}

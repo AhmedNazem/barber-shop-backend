@@ -8,7 +8,7 @@ import {
   listPendingShopsHandler,
   getPlatformConfigHandler, updatePlatformConfigHandler, testSmsHandler,
   listUsersHandler, getUserHandler, changeRoleHandler, suspendUserHandler, deleteUserHandler,
-  unblockUserHandler, grantVipHandler,
+  unblockUserHandler, grantVipHandler, getAdminStatsHandler,
 } from '@/controllers/admin.controller'
 import {
   listPendingPaymentsHandler,
@@ -38,6 +38,9 @@ const platformConfigSchema = z.object({
 export const adminRouter = Router()
 
 const guard = [authenticate, requireRole('ADMIN')]
+
+// ─── Overview stats ───────────────────────────────────────────────────────────
+adminRouter.get('/stats', ...guard, getAdminStatsHandler)
 
 // ─── Shop management ──────────────────────────────────────────────────────────
 adminRouter.get(  '/shops/pending',              ...guard,                          listPendingShopsHandler)
