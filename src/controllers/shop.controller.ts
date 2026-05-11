@@ -7,6 +7,7 @@ import { getDiscount, createDiscount, deleteDiscount } from '@/services/discount
 import { uploadToS3 } from '@/lib/s3'
 import { ShopPlan, BookingMode } from '@prisma/client'
 import { PriceRange } from '@prisma/client'
+import { auditLog } from '@/lib/audit'
 
 export async function createShopHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -91,6 +92,7 @@ export async function getShopPlanHandler(req: Request, res: Response, next: Next
 export async function updateShopPlanHandler(req: Request, res: Response, next: NextFunction) {
   try {
     await updateShopPlan(req.params['id']!, req.body.plan as ShopPlan, req.body.expiresAt)
+    auditLog({ adminId: req.user!.id, action: 'shop.plan_update', targetId: req.params['id']!, targetType: 'shop', detail: { plan: req.body.plan, expiresAt: req.body.expiresAt } })
     ok(res, { ok: true })
   } catch (err) { next(err) }
 }
