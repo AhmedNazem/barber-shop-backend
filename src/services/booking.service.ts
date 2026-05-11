@@ -36,12 +36,22 @@ export async function cancelBooking(bookingId: string, customerId: string) {
   if (booking.customerId !== customerId) throw new AppError('forbidden', 403)
   if (!['UPCOMING', 'CONFIRMED'].includes(booking.status)) throw new AppError('already_resolved', 422)
 
-  const twoHoursFromNow = new Date(Date.now() + 2 * 60 * 60 * 1000)
-  const isLateCancellation = booking.slot < twoHoursFromNow
+  const hoursUntilSlot = (booking.slot.getTime() - Date.now()) / 3_600_000
+  const isLateCancellation = hoursUntilSlot < 2
+
+  const refundAmount =
+    hoursUntilSlot >= 24 ? booking.depositPaid :
+    hoursUntilSlot >= 2  ? Math.floor(booking.depositPaid * 0.5) :
+    0
 
   await prisma.booking.update({
     where: { id: bookingId },
-    data:  { status: 'CANCELLED', cancelledBy: customerId },
+    data:  {
+      status: 'CANCELLED',
+      cancelledBy: customerId,
+      refundAmount,
+      depositRefunded: false, // set to true once payment gateway processes the reversal
+    },
   })
 
   if (isLateCancellation) {
