@@ -19,7 +19,8 @@ export async function submitHairAnalysisHandler(req: Request, res: Response, nex
       create: { userId, dryness: 3, damage: 3, scalpCondition: 'normal', cutFrequencyWeeks: 4 },
     })
 
-    const job = await hairAnalysisQueue.add('analyze', { userId, imageKey, mimeType: file.mimetype })
+    const locale = typeof req.body?.locale === 'string' ? req.body.locale : 'en'
+    const job = await hairAnalysisQueue.add('analyze', { userId, imageKey, mimeType: file.mimetype, locale })
 
     await prisma.hairAnalysis.create({
       data: { userId, jobId: job.id!, imageKey, status: 'processing' },

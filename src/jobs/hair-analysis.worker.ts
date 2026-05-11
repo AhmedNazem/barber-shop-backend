@@ -20,15 +20,16 @@ export type HairJobData = {
   userId:   string
   imageKey: string
   mimeType: string
+  locale:   string
 }
 
 async function processJob(job: Job<HairJobData>) {
-  const { userId, imageKey, mimeType } = job.data
+  const { userId, imageKey, mimeType, locale } = job.data
   const key = `hair-analysis:${job.id}`
 
   try {
     const buffer = await downloadFromS3(imageKey)
-    const result = await analyzeHairImage(buffer, mimeType)
+    const result = await analyzeHairImage(buffer, mimeType, locale)
 
     await redisClient.set(key, JSON.stringify({ status: 'done', result }), 'EX', REDIS_TTL)
 

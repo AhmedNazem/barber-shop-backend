@@ -80,6 +80,13 @@ export async function downloadFromS3(key: string): Promise<Buffer> {
     return localDownload(key.slice(LOCAL_PREFIX.length))
   }
 
+  // Public bucket — download via HTTP to avoid needing s3:GetObject IAM permission
+  if (key.startsWith('https://')) {
+    const res = await fetch(key)
+    if (!res.ok) throw new Error(`S3 download failed: ${res.status}`)
+    return Buffer.from(await res.arrayBuffer())
+  }
+
   const res = await getClient().send(new GetObjectCommand({
     Bucket: env.AWS_BUCKET_NAME!,
     Key: key,
