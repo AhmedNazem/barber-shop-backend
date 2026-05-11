@@ -7,6 +7,7 @@ import {
   unsaveShopHandler,
   getLoyaltyHandler,
   getReliabilityHandler,
+  exportAccountHandler,
 } from '@/controllers/account.controller'
 
 export const accountRouter = Router()
@@ -18,3 +19,4 @@ accountRouter.post(  '/saved-shops/:shopId', ...guard, saveShopHandler)
 accountRouter.delete('/saved-shops/:shopId', ...guard, unsaveShopHandler)
 accountRouter.get(   '/loyalty',             ...guard, getLoyaltyHandler)
 accountRouter.get(   '/reliability',         ...guard, getReliabilityHandler)
+accountRouter.get(   '/export',              authenticate, exportAccountHandler)

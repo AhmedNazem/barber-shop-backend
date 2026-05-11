@@ -60,3 +60,58 @@ export async function getReliabilityHandler(req: Request, res: Response, next: N
     res.json({ data })
   } catch (err) { next(err) }
 }
+
+export async function exportAccountHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id
+
+    const [profile, bookings, reviews, loyaltyHistory, hairAnalyses, savedShops, reliability] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true, phone: true, name: true, role: true,
+          shopId: true, isVip: true, vipGrantedAt: true,
+          suspended: true, createdAt: true, updatedAt: true,
+        },
+      }),
+      prisma.booking.findMany({
+        where: { customerId: userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.review.findMany({
+        where: { customerId: userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.loyaltyTransaction.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.hairAnalysis.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.savedShop.findMany({
+        where: { userId },
+        orderBy: { savedAt: 'desc' },
+      }),
+      prisma.reliabilityRecord.findUnique({
+        where: { userId },
+      }),
+    ])
+
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      profile,
+      reliability,
+      bookings,
+      reviews,
+      loyaltyHistory,
+      hairAnalyses,
+      savedShops,
+    }
+
+    res.setHeader('Content-Type', 'application/json')
+    res.setHeader('Content-Disposition', 'attachment; filename="my-data.json"')
+    res.send(JSON.stringify(payload, null, 2))
+  } catch (err) { next(err) }
+}
