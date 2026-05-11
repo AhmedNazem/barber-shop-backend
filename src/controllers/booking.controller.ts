@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { cancelBooking, getBookingById, getBookings, createBooking } from '@/services/booking.service'
+import { cancelBooking, getBookingById, getBookings, createBooking, getBookingForReceipt } from '@/services/booking.service'
+import { generateReceiptHtml } from '@/lib/receipt'
 
 export async function cancelBookingHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -28,4 +29,15 @@ export async function createBookingHandler(req: Request, res: Response, next: Ne
   } catch (err) {
     next(err)
   }
+}
+
+export async function downloadReceiptHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const booking = await getBookingForReceipt(req.params['id']!, req.user!.id)
+    const html = generateReceiptHtml(booking)
+    const filename = `receipt-${booking.id.slice(-8).toUpperCase()}.html`
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.send(html)
+  } catch (err) { next(err) }
 }

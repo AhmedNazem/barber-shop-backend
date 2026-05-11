@@ -76,6 +76,19 @@ export async function getBookingById(bookingId: string, customerId: string) {
   return booking
 }
 
+export async function getBookingForReceipt(bookingId: string, customerId: string) {
+  const booking = await prisma.booking.findUnique({
+    where:   { id: bookingId },
+    include: {
+      services: true,
+      shop: { select: { nameEn: true, nameAr: true, address: true } },
+    },
+  })
+  if (!booking) throw new AppError('not_found', 404)
+  if (booking.customerId !== customerId) throw new AppError('forbidden', 403)
+  return booking
+}
+
 export async function getBookings(customerId: string) {
   return prisma.booking.findMany({
     where:   { customerId },

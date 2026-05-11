@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { validate } from '@/middleware/validate'
 import { authenticate } from '@/middleware/auth'
-import { cancelBookingHandler, getBookingByIdHandler, getBookingsHandler, createBookingHandler } from '@/controllers/booking.controller'
+import { cancelBookingHandler, getBookingByIdHandler, getBookingsHandler, createBookingHandler, downloadReceiptHandler } from '@/controllers/booking.controller'
 import { submitProofHandler } from '@/controllers/manual-payment.controller'
 
 const createBookingSchema = z.object({
@@ -20,3 +20,4 @@ bookingsRouter.get('/:id',            authenticate, getBookingByIdHandler)
 bookingsRouter.patch('/:id/cancel',   authenticate, cancelBookingHandler)
 bookingsRouter.post('/',              authenticate, validate(createBookingSchema), createBookingHandler)
 bookingsRouter.post('/:id/payment-proof', authenticate, submitProofHandler)
+bookingsRouter.get( '/:id/receipt',       authenticate, downloadReceiptHandler)
