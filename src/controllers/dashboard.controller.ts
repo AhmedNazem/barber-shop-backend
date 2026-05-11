@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
 import { recordWalkInSale, getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+import { getQueue } from '@/services/queue.service'
+import { AppError } from '@/lib/errors'
+import { prisma } from '@/config/prisma'
 
 export async function recordWalkInSaleHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -45,5 +48,14 @@ export async function getDashboardActivityHandler(req: Request, res: Response, n
 export async function getDashboardStatsHandler(req: Request, res: Response, next: NextFunction) {
   try {
     ok(res, await getDashboardStats(req.user!.id, req.user!.role, req.user!.shopId))
+  } catch (err) { next(err) }
+}
+
+export async function getDashboardQueueHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const shopId = req.user!.shopId
+    if (!shopId) throw new AppError('forbidden', 403)
+    const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { vipLaneEnabled: true } })
+    ok(res, await getQueue(shopId, shop?.vipLaneEnabled ?? false))
   } catch (err) { next(err) }
 }
