@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import express, { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -127,6 +128,7 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
   app.use("/api/v1", makeTimeout(8_000));
   app.use("/api/v1", router);
 
+  Sentry.setupExpressErrorHandler(app);
   app.use(errorHandler);
 
   return app;
