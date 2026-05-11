@@ -126,6 +126,7 @@ model User {
   notifications       Notification[]
   savedShops          SavedShop[]
   hairProfile         HairProfile?
+  pushSubscriptions   PushSubscription[]
 
   @@index([phone])
   @@index([role])
@@ -426,6 +427,21 @@ model ReviewPhoto {
   review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   @@index([reviewId])
+}
+
+// ─── Push Subscriptions ───────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────

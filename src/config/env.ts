@@ -43,6 +43,11 @@ const schema = z.object({
   SMS_API_SECRET: z.string().optional(), // Twilio only: AuthToken
   SMS_SENDER_ID: z.string().optional(),  // Unifonic: SenderID | Twilio: from-number
 
+  // Web Push (VAPID)
+  VAPID_PUBLIC_KEY:  z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_EMAIL:       z.string().optional(),
+
   // Payment gateways (optional — configured per environment)
   ZAINCASH_MERCHANT_ID: z.string().optional(),
   ZAINCASH_SECRET: z.string().optional(),
