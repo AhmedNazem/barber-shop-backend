@@ -1,6 +1,6 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
-import { uploadToS3 } from '@/lib/s3'
+import { uploadImageVariants } from '@/lib/s3'
 
 async function assertBarberOwnership(shopId: string, barberId: string, ownerId: string) {
   const shop = await prisma.shop.findUnique({ where: { id: shopId } })
@@ -19,7 +19,7 @@ export async function addPortfolioPhoto(
     where: { barberId }, orderBy: { order: 'desc' },
   })
   const order = (last?.order ?? -1) + 1
-  const url = await uploadToS3(`barbers/${barberId}/portfolio-${order}`, buffer, mimeType)
+  const url = await uploadImageVariants(`barbers/${barberId}/portfolio-${order}`, buffer)
   return prisma.barberPortfolio.create({ data: { barberId, photoUrl: url, order } })
 }
 

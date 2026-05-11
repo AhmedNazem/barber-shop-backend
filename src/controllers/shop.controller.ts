@@ -4,7 +4,7 @@ import { createShop, updateShop, setShopImage, getShopStatus, getShop } from '@/
 import { listShops } from '@/services/shop.list.service'
 import { getShopPlan, updateShopPlan, updateBookingMode } from '@/services/plan.service'
 import { getDiscount, createDiscount, deleteDiscount } from '@/services/discount.service'
-import { uploadToS3 } from '@/lib/s3'
+import { uploadImageVariants } from '@/lib/s3'
 import { ShopPlan, BookingMode } from '@prisma/client'
 import { PriceRange } from '@prisma/client'
 import { auditLog } from '@/lib/audit'
@@ -33,7 +33,7 @@ export function uploadImageHandler(field: 'coverUrl' | 'logoUrl') {
       const shopId = req.params['id']!
       const file = req.file!
       const ext = field === 'coverUrl' ? 'cover' : 'logo'
-      const url = await uploadToS3(`shops/${shopId}/${ext}`, file.buffer, file.mimetype)
+      const url = await uploadImageVariants(`shops/${shopId}/${ext}`, file.buffer)
       const result = await setShopImage(shopId, req.user!.id, field, url)
       ok(res, { url: result[field] })
     } catch (err) {

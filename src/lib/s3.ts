@@ -2,6 +2,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { env } from '@/config/env'
 import fs from 'fs/promises'
 import path from 'path'
+import { resizeImage } from './resize'
 
 // ─── Local dev fallback (no S3 credentials) ───────────────────────────────────
 
@@ -48,6 +49,30 @@ export async function uploadToS3(key: string, buffer: Buffer, mimeType: string):
   }))
 
   return `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${key}`
+}
+
+// Uploads 3 resized WebP variants: {baseKey}-thumb.webp, -md.webp, -full.webp
+// Returns the medium URL as the primary stored value.
+export async function uploadImageVariants(baseKey: string, buffer: Buffer): Promise<string> {
+  const { thumb, medium, full } = await resizeImage(buffer)
+
+  if (!env.AWS_BUCKET_NAME || !env.AWS_ACCESS_KEY_ID) {
+    await Promise.all([
+      localUpload(`${baseKey}-thumb.webp`, thumb),
+      localUpload(`${baseKey}-md.webp`, medium),
+      localUpload(`${baseKey}-full.webp`, full),
+    ])
+    return `${LOCAL_PREFIX}${baseKey}-md.webp`
+  }
+
+  const bucket = env.AWS_BUCKET_NAME
+  await Promise.all([
+    getClient().send(new PutObjectCommand({ Bucket: bucket, Key: `${baseKey}-thumb.webp`, Body: thumb, ContentType: 'image/webp' })),
+    getClient().send(new PutObjectCommand({ Bucket: bucket, Key: `${baseKey}-md.webp`,    Body: medium, ContentType: 'image/webp' })),
+    getClient().send(new PutObjectCommand({ Bucket: bucket, Key: `${baseKey}-full.webp`,  Body: full,   ContentType: 'image/webp' })),
+  ])
+
+  return `https://${bucket}.s3.${env.AWS_REGION}.amazonaws.com/${baseKey}-md.webp`
 }
 
 export async function downloadFromS3(key: string): Promise<Buffer> {

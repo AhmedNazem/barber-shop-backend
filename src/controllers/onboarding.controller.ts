@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { uploadToS3 } from '@/lib/s3'
+import { uploadImageVariants } from '@/lib/s3'
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { onboardBasics, onboardBranding, onboardServices, onboardHours, onboardSubmit } from '@/services/onboarding.service'
@@ -24,10 +24,10 @@ export async function onboardBrandingHandler(req: Request, res: Response, next: 
     const logoFile  = files['logo']?.[0]
 
     const coverUrl = coverFile
-      ? await uploadToS3(`shops/${shop.id}/cover`, coverFile.buffer, coverFile.mimetype)
+      ? await uploadImageVariants(`shops/${shop.id}/cover`, coverFile.buffer)
       : undefined
     const logoUrl = logoFile
-      ? await uploadToS3(`shops/${shop.id}/logo`, logoFile.buffer, logoFile.mimetype)
+      ? await uploadImageVariants(`shops/${shop.id}/logo`, logoFile.buffer)
       : undefined
 
     ok(res, await onboardBranding(ownerId, coverUrl, logoUrl))

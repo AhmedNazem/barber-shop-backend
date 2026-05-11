@@ -1,6 +1,6 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
-import { uploadToS3 } from '@/lib/s3'
+import { uploadImageVariants } from '@/lib/s3'
 
 async function assertServiceOwnership(shopId: string, serviceId: string, ownerId: string) {
   const shop = await prisma.shop.findUnique({ where: { id: shopId } })
@@ -20,7 +20,7 @@ export async function addServicePhoto(
     where: { serviceId }, orderBy: { order: 'desc' },
   })
   const order = (last?.order ?? -1) + 1
-  const url = await uploadToS3(`services/${serviceId}/photo-${order}`, buffer, mimeType)
+  const url = await uploadImageVariants(`services/${serviceId}/photo-${order}`, buffer)
   return prisma.servicePhoto.create({ data: { serviceId, url, order } })
 }
 
