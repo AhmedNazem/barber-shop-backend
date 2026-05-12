@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops, listAllShops, listAllUsers } from '@/services/admin.service'
+import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops, listAllShops, listAllUsers, listAllBookings, forceCancelBooking } from '@/services/admin.service'
 import { getPlatformConfig, updatePlatformConfig, testSmsConfig } from '@/services/platform-config.service'
 import { unblockUser } from '@/services/reliability.service'
 import { prisma } from '@/config/prisma'
@@ -139,6 +139,28 @@ export async function grantVipHandler(req: Request, res: Response, next: NextFun
       data:  { isVip: true, vipGrantedAt: new Date(), vipGrantedBy: adminId },
     })
     auditLog({ adminId, action: 'user.vip_grant', targetId: req.params['id']!, targetType: 'user' })
+    ok(res, { ok: true })
+  } catch (err) { next(err) }
+}
+
+// ─── Booking management ───────────────────────────────────────────────────────
+
+export async function listAllBookingsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page   = Math.max(1, parseInt(String(req.query['page']  ?? '1'),  10))
+    const limit  = Math.min(100, Math.max(1, parseInt(String(req.query['limit'] ?? '20'), 10)))
+    const status = req.query['status'] as string | undefined
+    const shopId = req.query['shopId'] as string | undefined
+    const search = req.query['search'] as string | undefined
+    ok(res, await listAllBookings({ status, shopId, search, page, limit }))
+  } catch (err) { next(err) }
+}
+
+export async function forceCancelBookingHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { reason } = req.body as { reason: string }
+    await forceCancelBooking(req.params['id']!, reason)
+    auditLog({ adminId: req.user!.id, action: 'booking.force_cancel', targetId: req.params['id']!, targetType: 'booking', detail: { reason } })
     ok(res, { ok: true })
   } catch (err) { next(err) }
 }

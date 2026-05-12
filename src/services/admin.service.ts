@@ -1,7 +1,7 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { createNotification } from '@/services/notification.service'
-import { UserRole } from '@prisma/client'
+import { UserRole, BookingStatus } from '@prisma/client'
 
 // Role transitions blocked per §1b
 const BLOCKED_FROM: Partial<Record<UserRole, UserRole[]>> = {
@@ -371,6 +371,131 @@ export async function listAllShops(opts: { status?: string; search?: string; pag
   })
 
   return { shops: result, total, page: opts.page, limit: opts.limit }
+}
+
+// ─── Booking management ───────────────────────────────────────────────────────
+
+const BOOKING_STATUS_DISPLAY: Record<string, 'pending' | 'confirmed' | 'completed' | 'cancelled'> = {
+  UPCOMING: 'pending', CONFIRMED: 'confirmed', COMPLETED: 'completed',
+  CANCELLED: 'cancelled', NO_SHOW: 'cancelled',
+}
+const BOOKING_STATUS_FILTER: Record<string, string[]> = {
+  pending: ['UPCOMING'], confirmed: ['CONFIRMED'], completed: ['COMPLETED'],
+  cancelled: ['CANCELLED', 'NO_SHOW'],
+}
+const PAYMENT_DISPLAY: Record<string, 'unpaid' | 'deposit_paid' | 'fully_paid' | 'refunded'> = {
+  PENDING: 'unpaid', AWAITING_CONFIRMATION: 'deposit_paid',
+  PAID: 'fully_paid', REFUNDED: 'refunded', FAILED: 'unpaid',
+}
+
+function fmtBaghdad(d: Date): string {
+  const local = new Date(d.getTime() + 3 * 3_600_000)
+  return local.toISOString().slice(0, 16).replace('T', ' ')
+}
+
+export async function listAllBookings(opts: { status?: string; shopId?: string; search?: string; page: number; limit: number }) {
+  const statusIn = opts.status ? BOOKING_STATUS_FILTER[opts.status] : undefined
+
+  let searchCustomerIds: string[] | undefined
+  if (opts.search) {
+    const matches = await prisma.user.findMany({
+      where: { name: { contains: opts.search, mode: 'insensitive' } },
+      select: { id: true },
+    })
+    searchCustomerIds = matches.map((u) => u.id)
+  }
+
+  const where = {
+    ...(statusIn ? { status: { in: statusIn as BookingStatus[] } } : {}),
+    ...(opts.shopId && opts.shopId !== 'all' ? { shopId: opts.shopId } : {}),
+    ...(opts.search ? {
+      OR: [
+        { id: { contains: opts.search, mode: 'insensitive' } },
+        { shop: { nameEn: { contains: opts.search, mode: 'insensitive' } } },
+        ...(searchCustomerIds?.length ? [{ customerId: { in: searchCustomerIds } }] : []),
+      ],
+    } : {}),
+  }
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      select: {
+        id: true, customerId: true, shopId: true, barberName: true,
+        slot: true, status: true, totalPrice: true, depositPaid: true,
+        paymentStatus: true, cancelledBy: true, cancellationReason: true,
+        shop:     { select: { nameEn: true } },
+        services: { select: { nameEn: true }, orderBy: { price: 'desc' }, take: 1 },
+        review:   { select: { flagStatus: true, comment: true } },
+      },
+      orderBy: { slot: 'desc' },
+      skip: (opts.page - 1) * opts.limit,
+      take: opts.limit,
+    }),
+    prisma.booking.count({ where }),
+  ])
+
+  if (bookings.length === 0) return { bookings: [], total: 0, page: opts.page, limit: opts.limit }
+
+  const custIds   = [...new Set(bookings.map((b) => b.customerId))]
+  const customers = await prisma.user.findMany({
+    where: { id: { in: custIds } },
+    select: { id: true, name: true },
+  })
+  const custMap = new Map(customers.map((c) => [c.id, c.name]))
+
+  const result = bookings.map((b) => {
+    const disputeFlag = b.review?.flagStatus === 'PENDING'
+    return {
+      id: b.id,
+      customerId: b.customerId,
+      customerName: custMap.get(b.customerId) ?? '—',
+      shopId: b.shopId,
+      shopName: b.shop.nameEn,
+      serviceName: b.services[0]?.nameEn ?? '—',
+      barberName: b.barberName ?? '—',
+      dateTime: fmtBaghdad(b.slot),
+      status: BOOKING_STATUS_DISPLAY[b.status] ?? 'pending',
+      paymentStatus: PAYMENT_DISPLAY[b.paymentStatus] ?? 'unpaid',
+      totalIQD: b.totalPrice,
+      depositIQD: b.depositPaid,
+      cancelledBy: b.cancelledBy as 'customer' | 'shop' | 'admin' | undefined,
+      cancellationReason: b.cancellationReason ?? undefined,
+      disputeFlag,
+      disputeReason: disputeFlag ? b.review?.comment : undefined,
+    }
+  })
+
+  return { bookings: result, total, page: opts.page, limit: opts.limit }
+}
+
+export async function forceCancelBooking(bookingId: string, reason: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { id: true, customerId: true, paymentStatus: true, status: true },
+  })
+  if (!booking) throw new AppError('not_found', 404)
+  if (booking.status === 'CANCELLED' || booking.status === 'COMPLETED') {
+    throw new AppError('invalid_state', 400)
+  }
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: 'CANCELLED',
+      cancelledBy: 'admin',
+      cancellationReason: reason,
+      ...(booking.paymentStatus === 'PAID' ? { paymentStatus: 'REFUNDED' } : {}),
+    },
+  })
+
+  await createNotification(
+    booking.customerId, 'CANCELLATION',
+    'Booking Cancelled', 'تم إلغاء الحجز',
+    `Your booking was cancelled by admin. Reason: ${reason}`,
+    `تم إلغاء حجزك من قبل الإدارة. السبب: ${reason}`,
+    { bookingId },
+  )
 }
 
 // ─── Pending shops (Google Maps imports) ─────────────────────────────────────

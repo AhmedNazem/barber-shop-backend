@@ -9,6 +9,7 @@ import {
   getPlatformConfigHandler, updatePlatformConfigHandler, testSmsHandler,
   listUsersHandler, getUserHandler, changeRoleHandler, suspendUserHandler, deleteUserHandler,
   unblockUserHandler, grantVipHandler, getAdminStatsHandler,
+  listAllBookingsHandler, forceCancelBookingHandler,
 } from '@/controllers/admin.controller'
 import {
   listPendingPaymentsHandler,
@@ -64,6 +65,12 @@ adminRouter.patch( '/users/:id/suspend', ...guard,                    suspendUse
 adminRouter.delete('/users/:id',         ...guard, deleteUserHandler)
 adminRouter.post(  '/users/:id/unblock', ...guard, unblockUserHandler)
 adminRouter.post(  '/users/:id/vip',     ...guard, grantVipHandler)
+
+// ─── Booking management ───────────────────────────────────────────────────────
+const cancelSchema = z.object({ reason: z.string().min(2) })
+
+adminRouter.get(  '/bookings',             ...guard,                        listAllBookingsHandler)
+adminRouter.patch('/bookings/:id/cancel',  ...guard, validate(cancelSchema), forceCancelBookingHandler)
 
 // ─── Manual payment review ────────────────────────────────────────────────────
 const rejectPaymentSchema = z.object({ reason: z.string().min(2) })
