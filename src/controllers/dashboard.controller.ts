@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { recordWalkInSale, getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats, getDashboardUpcoming } from '@/services/dashboard.service'
+import { recordWalkInSale, getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats, getDashboardUpcoming, getDashboardAppointments, getDashboardBarbers } from '@/services/dashboard.service'
 import { getQueue } from '@/services/queue.service'
 import { AppError } from '@/lib/errors'
 import { prisma } from '@/config/prisma'
@@ -55,6 +55,21 @@ export async function getDashboardUpcomingHandler(req: Request, res: Response, n
 export async function getDashboardStatsHandler(req: Request, res: Response, next: NextFunction) {
   try {
     ok(res, await getDashboardStats(req.user!.id, req.user!.role, req.user!.shopId))
+  } catch (err) { next(err) }
+}
+
+export async function getDashboardBarbersHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await getDashboardBarbers(req.user!.shopId))
+  } catch (err) { next(err) }
+}
+
+export async function getDashboardAppointmentsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const dateFrom = (req.query['dateFrom'] as string) || new Date().toISOString().slice(0, 10)
+    const dateTo   = (req.query['dateTo']   as string) || dateFrom
+    const barberId = req.query['barberId']  as string | undefined
+    ok(res, await getDashboardAppointments(req.user!.shopId, dateFrom, dateTo, barberId))
   } catch (err) { next(err) }
 }
 

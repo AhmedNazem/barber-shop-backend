@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
+import { UserRole } from '@prisma/client'
 import { AppError } from '@/lib/errors'
 import { ok } from '@/lib/response'
 import { env } from '@/config/env'
@@ -30,7 +31,16 @@ export async function verifyOtpHandler(req: Request, res: Response, next: NextFu
     const e164 = normalisePhone(phone)
     await verifyOtp(e164, otp)
     const user = await createOrFindUser(e164, { name, shopName, isRegister })
-    const { accessToken, refreshToken } = await issueTokens(user)
+
+    // User.shopId is the barber's assigned shop — not set for SHOP_OWNERs.
+    // Look up their owned shop so the JWT carries the correct shopId.
+    let shopId: string | null = user.shopId
+    if (user.role === UserRole.SHOP_OWNER) {
+      const { prisma } = await import('@/config/prisma')
+      const shop = await prisma.shop.findFirst({ where: { ownerId: user.id }, select: { id: true } })
+      shopId = shop?.id ?? null
+    }
+    const { accessToken, refreshToken } = await issueTokens({ ...user, shopId })
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,

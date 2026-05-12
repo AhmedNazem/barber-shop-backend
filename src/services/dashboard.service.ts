@@ -242,6 +242,82 @@ export async function getDashboardUpcoming(shopId: string | undefined, limit = 5
   }))
 }
 
+export async function getDashboardBarbers(shopId: string | undefined) {
+  if (!shopId) throw new AppError('not_found', 404)
+  return prisma.barber.findMany({
+    where:   { shopId, isActive: true },
+    orderBy: { nameEn: 'asc' },
+    select:  { id: true, nameEn: true, nameAr: true },
+  })
+}
+
+const STATUS_MAP: Record<string, string> = {
+  UPCOMING:  'pending',
+  CONFIRMED: 'confirmed',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  NO_SHOW:   'cancelled',
+}
+
+export async function getDashboardAppointments(
+  shopId:    string | undefined,
+  dateFrom:  string,
+  dateTo:    string,
+  barberId?: string,
+) {
+  if (!shopId) throw new AppError('not_found', 404)
+
+  const from = new Date(dateFrom); from.setHours(0, 0, 0, 0)
+  const to   = new Date(dateTo);   to.setHours(23, 59, 59, 999)
+
+  const bookings = await prisma.booking.findMany({
+    where:   { shopId, slot: { gte: from, lte: to }, ...(barberId ? { barberId } : {}) },
+    orderBy: { slot: 'asc' },
+    take:    500,
+    include: { services: { select: { nameEn: true, nameAr: true, durationMin: true }, take: 1 } },
+  })
+
+  const customerIds = [...new Set(bookings.map(b => b.customerId))]
+  const barberIds   = [...new Set(bookings.map(b => b.barberId).filter(Boolean) as string[])]
+
+  const [customers, barbers] = await Promise.all([
+    customerIds.length > 0
+      ? prisma.user.findMany({ where: { id: { in: customerIds } }, select: { id: true, name: true } })
+      : Promise.resolve([]),
+    barberIds.length > 0
+      ? prisma.barber.findMany({ where: { id: { in: barberIds } }, select: { id: true, nameEn: true, nameAr: true } })
+      : Promise.resolve([]),
+  ])
+
+  const nameMap   = new Map(customers.map(c => [c.id, c.name]))
+  const barberMap = new Map(barbers.map(b => [b.id, b]))
+
+  return bookings.map(b => {
+    const svc = b.services[0]
+    const dur = svc?.durationMin ?? 30
+    const end = new Date(b.slot.getTime() + dur * 60_000)
+    const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleString('en-CA', { ...o, timeZone: 'Asia/Baghdad' })
+    const barber = b.barberId ? barberMap.get(b.barberId) : null
+
+    return {
+      id:           b.id,
+      customerName: nameMap.get(b.customerId) ?? 'Customer',
+      service:      svc?.nameEn ?? '',
+      serviceAr:    svc?.nameAr ?? '',
+      barberId:     b.barberId ?? '',
+      barberName:   barber?.nameEn ?? b.barberName ?? '',
+      barberNameAr: barber?.nameAr ?? b.barberName ?? '',
+      date:         fmt(b.slot, { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-'),
+      startTime:    fmt(b.slot, { hour: '2-digit', minute: '2-digit', hour12: false }),
+      endTime:      fmt(end,    { hour: '2-digit', minute: '2-digit', hour12: false }),
+      durationMin:  dur,
+      status:       (STATUS_MAP[b.status] ?? 'pending') as 'confirmed' | 'pending' | 'completed' | 'cancelled',
+      depositPaid:  b.depositPaid,
+      totalPrice:   b.totalPrice,
+    }
+  })
+}
+
 export async function recordWalkInSale(
   userId: string,
   shopId: string | undefined,
