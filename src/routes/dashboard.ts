@@ -5,7 +5,7 @@ import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
 import { requirePlan } from '@/middleware/require-plan'
 import { requireShopStatus } from '@/middleware/require-shop-status'
-import { recordWalkInSaleHandler, getPeakHoursHandler, getTopServicesHandler, getBarberAnalyticsHandler, getDashboardAnalyticsHandler, getDashboardActivityHandler, getDashboardStatsHandler, getDashboardQueueHandler } from '@/controllers/dashboard.controller'
+import { recordWalkInSaleHandler, getPeakHoursHandler, getTopServicesHandler, getBarberAnalyticsHandler, getDashboardAnalyticsHandler, getDashboardActivityHandler, getDashboardStatsHandler, getDashboardQueueHandler, getDashboardUpcomingHandler } from '@/controllers/dashboard.controller'
 
 const walkInSaleSchema = z.object({
   serviceIds: z.array(z.string().cuid()).min(1),
@@ -19,6 +19,7 @@ export const dashboardRouter = Router()
 const shopGuard = [authenticate, requireShopStatus()]
 
 dashboardRouter.get('/stats',     ...shopGuard, requireRole('SHOP_OWNER', 'BARBER'), getDashboardStatsHandler)
+dashboardRouter.get('/upcoming',  ...shopGuard, requireRole('SHOP_OWNER', 'BARBER'), getDashboardUpcomingHandler)
 dashboardRouter.get('/queue',     ...shopGuard, requireRole('SHOP_OWNER', 'BARBER'), getDashboardQueueHandler)
 dashboardRouter.get('/activity',  ...shopGuard, requireRole('SHOP_OWNER'),           getDashboardActivityHandler)
 dashboardRouter.get('/analytics',              ...shopGuard, requireRole('SHOP_OWNER', 'BARBER'), requirePlan('PRO'), getDashboardAnalyticsHandler)

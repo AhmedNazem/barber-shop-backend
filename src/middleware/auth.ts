@@ -25,7 +25,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     next()
   } catch (err) {
     if (err instanceof TokenExpiredError) {
-      res.status(403).json({ error: 'token_expired', message: 'Token has expired' })
+      res.status(401).json({ error: 'token_expired', message: 'Token has expired' })
       return
     }
     res.status(401).json({ error: 'unauthorized', message: 'Invalid token' })

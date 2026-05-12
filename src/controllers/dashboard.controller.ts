@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { recordWalkInSale, getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats } from '@/services/dashboard.service'
+import { recordWalkInSale, getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats, getDashboardUpcoming } from '@/services/dashboard.service'
 import { getQueue } from '@/services/queue.service'
 import { AppError } from '@/lib/errors'
 import { prisma } from '@/config/prisma'
@@ -41,7 +41,14 @@ export async function getDashboardAnalyticsHandler(req: Request, res: Response, 
 
 export async function getDashboardActivityHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    ok(res, await getDashboardActivity(req.user!.id))
+    ok(res, await getDashboardActivity(req.user!.id, req.user!.shopId))
+  } catch (err) { next(err) }
+}
+
+export async function getDashboardUpcomingHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const limit = Math.min(10, Number(req.query['limit']) || 5)
+    ok(res, await getDashboardUpcoming(req.user!.shopId, limit))
   } catch (err) { next(err) }
 }
 

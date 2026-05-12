@@ -183,12 +183,63 @@ export async function getDashboardAnalytics(
   return { totalRevenue, totalBookings, completedBookings, cancelledBookings, noShowBookings, dailyRevenue }
 }
 
-export async function getDashboardActivity(userId: string) {
-  return prisma.notification.findMany({
-    where:   { userId },
+export async function getDashboardActivity(_userId: string, shopId: string | undefined) {
+  if (!shopId) throw new AppError('not_found', 404)
+
+  const bookings = await prisma.booking.findMany({
+    where:   { shopId },
     orderBy: { createdAt: 'desc' },
     take:    10,
+    include: { services: { select: { nameEn: true, nameAr: true }, take: 1 } },
   })
+
+  const customerIds = [...new Set(bookings.map(b => b.customerId))]
+  const customers = customerIds.length > 0
+    ? await prisma.user.findMany({ where: { id: { in: customerIds } }, select: { id: true, name: true } })
+    : []
+  const nameMap = new Map(customers.map(c => [c.id, c.name]))
+  const now = Date.now()
+
+  return bookings.map(b => {
+    const name      = nameMap.get(b.customerId) ?? 'Customer'
+    const svc       = b.services[0]?.nameEn ?? 'Service'
+    const svcAr     = b.services[0]?.nameAr ?? 'خدمة'
+    const timeAgo   = Math.floor((now - b.createdAt.getTime()) / 60000)
+
+    if (b.status === 'CANCELLED') {
+      return { id: b.id, type: 'cancellation', message: `${name} cancelled their booking`, messageAr: `${name} ألغى حجزه`, timeAgo }
+    }
+    if (b.paymentStatus === 'PAID') {
+      return { id: b.id, type: 'payment', message: `${name} paid ${b.totalPrice.toLocaleString()} IQD`, messageAr: `${name} دفع ${b.totalPrice.toLocaleString()} د.ع`, timeAgo }
+    }
+    return { id: b.id, type: 'booking', message: `${name} booked ${svc}`, messageAr: `${name} حجز ${svcAr}`, timeAgo }
+  })
+}
+
+export async function getDashboardUpcoming(shopId: string | undefined, limit = 5) {
+  if (!shopId) throw new AppError('not_found', 404)
+
+  const bookings = await prisma.booking.findMany({
+    where:   { shopId, slot: { gte: new Date() }, status: { in: ['UPCOMING', 'CONFIRMED'] } },
+    orderBy: { slot: 'asc' },
+    take:    limit,
+    include: { services: { select: { nameEn: true, nameAr: true }, take: 1 } },
+  })
+
+  const customerIds = [...new Set(bookings.map(b => b.customerId))]
+  const customers = customerIds.length > 0
+    ? await prisma.user.findMany({ where: { id: { in: customerIds } }, select: { id: true, name: true } })
+    : []
+  const nameMap = new Map(customers.map(c => [c.id, c.name]))
+
+  return bookings.map(b => ({
+    id:         b.id,
+    clientName: nameMap.get(b.customerId) ?? 'Customer',
+    service:    b.services[0]?.nameEn ?? '',
+    serviceAr:  b.services[0]?.nameAr ?? '',
+    time:       b.slot.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Baghdad' }),
+    status:     b.status === 'CONFIRMED' ? 'confirmed' as const : 'pending' as const,
+  }))
 }
 
 export async function recordWalkInSale(
