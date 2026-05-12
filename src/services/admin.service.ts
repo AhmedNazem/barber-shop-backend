@@ -179,6 +179,98 @@ export async function getSuspendPreview(shopId: string) {
   return { activeBookings: bookings, pendingDepositsIQD: agg._sum.depositPaid ?? 0 }
 }
 
+// ─── All users list (admin management) ───────────────────────────────────────
+
+const ROLE_DISPLAY: Record<string, 'customer' | 'barber' | 'shop_owner'> = {
+  CUSTOMER: 'customer', BARBER: 'barber', SHOP_OWNER: 'shop_owner',
+}
+const ROLE_FILTER: Record<string, string> = {
+  customer: 'CUSTOMER', barber: 'BARBER', shop_owner: 'SHOP_OWNER',
+}
+
+export async function listAllUsers(opts: { role?: string; search?: string; page: number; limit: number }) {
+  const where = {
+    deletedAt: null,
+    ...(opts.role && ROLE_FILTER[opts.role] ? { role: ROLE_FILTER[opts.role] as UserRole } : {}),
+    ...(opts.search ? {
+      OR: [
+        { name:  { contains: opts.search, mode: 'insensitive' as const } },
+        { phone: { contains: opts.search } },
+      ],
+    } : {}),
+  }
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true, name: true, phone: true, role: true, shopId: true,
+        suspended: true, createdAt: true, updatedAt: true,
+        reliabilityRecord: { select: { noShowCount: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (opts.page - 1) * opts.limit,
+      take: opts.limit,
+    }),
+    prisma.user.count({ where }),
+  ])
+
+  if (users.length === 0) return { users: [], total: 0, page: opts.page, limit: opts.limit }
+
+  const userIds  = users.map((u) => u.id)
+  const shopIds  = users.map((u) => u.shopId).filter((id): id is string => id !== null)
+  const ownerIds = users.filter((u) => u.role === 'SHOP_OWNER').map((u) => u.id)
+
+  const [bookingGroups, shopsByBarber, shopsByOwner] = await Promise.all([
+    prisma.booking.groupBy({
+      by: ['customerId', 'status'],
+      where: { customerId: { in: userIds } },
+      _count: { _all: true },
+      _sum:   { totalPrice: true },
+    }),
+    shopIds.length  ? prisma.shop.findMany({ where: { id:      { in: shopIds  } }, select: { id: true, nameEn: true, status: true } }) : Promise.resolve([]),
+    ownerIds.length ? prisma.shop.findMany({ where: { ownerId: { in: ownerIds } }, select: { ownerId: true, nameEn: true, status: true } }) : Promise.resolve([]),
+  ])
+
+  type BG = (typeof bookingGroups)[0]
+  const bookingMap   = new Map<string, BG[]>()
+  for (const g of bookingGroups) {
+    const arr = bookingMap.get(g.customerId) ?? []
+    arr.push(g)
+    bookingMap.set(g.customerId, arr)
+  }
+  const shopByIdMap    = new Map(shopsByBarber.map((s) => [s.id, s]))
+  const shopByOwnerMap = new Map(shopsByOwner.map((s) => [s.ownerId!, s]))
+
+  const result = users.map((user) => {
+    const groups = bookingMap.get(user.id) ?? []
+    const completed = groups.find((g) => g.status === 'COMPLETED')
+    const linkedShop = user.role === 'SHOP_OWNER'
+      ? shopByOwnerMap.get(user.id)
+      : user.shopId ? shopByIdMap.get(user.shopId) : null
+
+    const noShows = user.reliabilityRecord?.noShowCount ?? 0
+    const flags: string[] = Array.from({ length: Math.min(noShows, 3) }, () => 'no_show')
+    if (linkedShop?.status === 'SUSPENDED') flags.push('shop_suspended')
+
+    return {
+      id:             user.id,
+      name:           user.name,
+      phone:          user.phone,
+      role:           ROLE_DISPLAY[user.role] ?? 'customer',
+      status:         user.suspended ? 'suspended' : 'active',
+      joinedAt:       user.createdAt.toISOString().slice(0, 10),
+      lastActive:     user.updatedAt.toISOString().slice(0, 10),
+      bookingCount:   groups.reduce((n, g) => n + g._count._all, 0),
+      totalSpentIQD:  completed?._sum.totalPrice ?? 0,
+      linkedShopName: linkedShop?.nameEn,
+      flags,
+    }
+  })
+
+  return { users: result, total, page: opts.page, limit: opts.limit }
+}
+
 // ─── All shops list (admin management) ───────────────────────────────────────
 
 const DISPLAY_STATUS: Record<string, 'active' | 'pending' | 'suspended'> = {

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops, listAllShops } from '@/services/admin.service'
+import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops, listAllShops, listAllUsers } from '@/services/admin.service'
 import { getPlatformConfig, updatePlatformConfig, testSmsConfig } from '@/services/platform-config.service'
 import { unblockUser } from '@/services/reliability.service'
 import { prisma } from '@/config/prisma'
@@ -83,10 +83,11 @@ export async function testSmsHandler(req: Request, res: Response, next: NextFunc
 
 export async function listUsersHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const page  = Math.max(1, parseInt(String(req.query['page']  ?? '1'),  10))
-    const limit = Math.min(100, Math.max(1, parseInt(String(req.query['limit'] ?? '20'), 10)))
-    const role  = req.query['role'] as string | undefined
-    ok(res, await listUsers({ role, page, limit }))
+    const page   = Math.max(1, parseInt(String(req.query['page']  ?? '1'),  10))
+    const limit  = Math.min(100, Math.max(1, parseInt(String(req.query['limit'] ?? '20'), 10)))
+    const role   = req.query['role']   as string | undefined
+    const search = req.query['search'] as string | undefined
+    ok(res, await listAllUsers({ role, search, page, limit }))
   } catch (err) { next(err) }
 }
 
