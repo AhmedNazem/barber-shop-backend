@@ -5,7 +5,7 @@ import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
 import {
   approveShopHandler, rejectShopHandler, suspendShopHandler, suspendPreviewHandler,
-  listPendingShopsHandler,
+  listPendingShopsHandler, listAllShopsHandler,
   getPlatformConfigHandler, updatePlatformConfigHandler, testSmsHandler,
   listUsersHandler, getUserHandler, changeRoleHandler, suspendUserHandler, deleteUserHandler,
   unblockUserHandler, grantVipHandler, getAdminStatsHandler,
@@ -43,6 +43,7 @@ const guard = [authenticate, requireRole('ADMIN')]
 adminRouter.get('/stats', ...guard, getAdminStatsHandler)
 
 // ─── Shop management ──────────────────────────────────────────────────────────
+adminRouter.get(  '/shops',                      ...guard,                          listAllShopsHandler)
 adminRouter.get(  '/shops/pending',              ...guard,                          listPendingShopsHandler)
 adminRouter.patch('/shops/:id/approve',          ...guard,                          approveShopHandler)
 adminRouter.patch('/shops/:id/reject',           ...guard, validate(rejectSchema),  rejectShopHandler)

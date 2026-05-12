@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops } from '@/services/admin.service'
+import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops, listAllShops } from '@/services/admin.service'
 import { getPlatformConfig, updatePlatformConfig, testSmsConfig } from '@/services/platform-config.service'
 import { unblockUser } from '@/services/reliability.service'
 import { prisma } from '@/config/prisma'
@@ -43,6 +43,16 @@ export async function listPendingShopsHandler(req: Request, res: Response, next:
     const page  = Math.max(1, parseInt(String(req.query['page']  ?? '1'),  10))
     const limit = Math.min(100, Math.max(1, parseInt(String(req.query['limit'] ?? '20'), 10)))
     ok(res, await listPendingShops({ page, limit }))
+  } catch (err) { next(err) }
+}
+
+export async function listAllShopsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page   = Math.max(1, parseInt(String(req.query['page']  ?? '1'),  10))
+    const limit  = Math.min(100, Math.max(1, parseInt(String(req.query['limit'] ?? '50'), 10)))
+    const status = req.query['status'] as string | undefined
+    const search = req.query['search'] as string | undefined
+    ok(res, await listAllShops({ status, search, page, limit }))
   } catch (err) { next(err) }
 }
 
