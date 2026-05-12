@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok, paginated } from '@/lib/response'
 import { createShop, updateShop, setShopImage, getShopStatus, getShop } from '@/services/shop.service'
-import { listShops } from '@/services/shop.list.service'
+import { listShops, getFeaturedShops } from '@/services/shop.list.service'
 import { getShopPlan, updateShopPlan, updateBookingMode } from '@/services/plan.service'
 import { getDiscount, createDiscount, deleteDiscount } from '@/services/discount.service'
 import { uploadImageVariants } from '@/lib/s3'
@@ -49,6 +49,13 @@ export async function getShopStatusHandler(req: Request, res: Response, next: Ne
   } catch (err) {
     next(err)
   }
+}
+
+export async function getFeaturedShopsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const limit = Math.min(Math.max(1, Number(req.query['limit']) || 4), 10)
+    ok(res, await getFeaturedShops(limit))
+  } catch (err) { next(err) }
 }
 
 export async function listShopsHandler(req: Request, res: Response, next: NextFunction) {

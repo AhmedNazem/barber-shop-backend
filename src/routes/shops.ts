@@ -9,7 +9,7 @@ const discountSchema = z.object({
   maxUsers:  z.number().int().min(1),
   expiresAt: z.string().datetime(),
 })
-import { createShopHandler, updateShopHandler, uploadImageHandler, listShopsHandler, getShopHandler, getDiscountHandler, createDiscountHandler, deleteDiscountHandler } from '@/controllers/shop.controller'
+import { createShopHandler, updateShopHandler, uploadImageHandler, listShopsHandler, getShopHandler, getDiscountHandler, createDiscountHandler, deleteDiscountHandler, getFeaturedShopsHandler } from '@/controllers/shop.controller'
 import { listShopReviewsHandler } from '@/controllers/review.controller'
 import { getShopAvailabilityHandler } from '@/controllers/availability.controller'
 import { optionalAuth } from '@/middleware/auth'
@@ -44,6 +44,7 @@ const listShopsQuerySchema = z.object({
 export const shopsRouter = Router()
 
 shopsRouter.post('/', authenticate, requireRole('SHOP_OWNER'), validate(createShopSchema), createShopHandler)
+shopsRouter.get('/featured', getFeaturedShopsHandler)
 shopsRouter.get('/', validate(listShopsQuerySchema, 'query'), listShopsHandler)
 shopsRouter.get('/:id', getShopHandler)
 shopsRouter.patch('/:id', authenticate, requireRole('SHOP_OWNER'), validate(updateShopSchema), updateShopHandler)

@@ -139,3 +139,8 @@ export async function listShops(filters: ListShopsFilters) {
   const filtered = minRating != null ? result.filter(s => s.avgRating != null && s.avgRating >= minRating) : result
   return { shops: filtered, total, limit, offset }
 }
+
+export async function getFeaturedShops(limit: number) {
+  const { shops } = await listShops({ limit: 50, offset: 0 })
+  return [...shops].sort((a, b) => (b.avgRating ?? 0) - (a.avgRating ?? 0)).slice(0, limit)
+}
