@@ -10,7 +10,9 @@ import {
   listUsersHandler, getUserHandler, changeRoleHandler, suspendUserHandler, deleteUserHandler,
   unblockUserHandler, grantVipHandler, getAdminStatsHandler,
   listAllBookingsHandler, forceCancelBookingHandler,
+  listFlaggedReviewsHandler,
 } from '@/controllers/admin.controller'
+import { getKpisHandler, getRevenueHandler, getTopShopsHandler, getPeakHoursHandler } from '@/controllers/analytics.controller'
 import {
   listPendingPaymentsHandler,
   confirmPaymentHandler,
@@ -71,6 +73,15 @@ const cancelSchema = z.object({ reason: z.string().min(2) })
 
 adminRouter.get(  '/bookings',             ...guard,                        listAllBookingsHandler)
 adminRouter.patch('/bookings/:id/cancel',  ...guard, validate(cancelSchema), forceCancelBookingHandler)
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+adminRouter.get('/analytics/kpis',       ...guard, getKpisHandler)
+adminRouter.get('/analytics/revenue',    ...guard, getRevenueHandler)
+adminRouter.get('/analytics/top-shops',  ...guard, getTopShopsHandler)
+adminRouter.get('/analytics/peak-hours', ...guard, getPeakHoursHandler)
+
+// ─── Review moderation ────────────────────────────────────────────────────────
+adminRouter.get('/reviews/flagged', ...guard, listFlaggedReviewsHandler)
 
 // ─── Manual payment review ────────────────────────────────────────────────────
 const rejectPaymentSchema = z.object({ reason: z.string().min(2) })

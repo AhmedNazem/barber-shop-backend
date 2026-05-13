@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
-import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops, listAllShops, listAllUsers, listAllBookings, forceCancelBooking } from '@/services/admin.service'
+import { approveShop, rejectShop, suspendShop, listUsers, getUser, changeUserRole, suspendUser, deleteUser, getSuspendPreview, listPendingShops, listAllShops, listAllUsers, listAllBookings, forceCancelBooking, listFlaggedReviews } from '@/services/admin.service'
 import { getPlatformConfig, updatePlatformConfig, testSmsConfig } from '@/services/platform-config.service'
 import { unblockUser } from '@/services/reliability.service'
 import { prisma } from '@/config/prisma'
@@ -162,6 +162,15 @@ export async function forceCancelBookingHandler(req: Request, res: Response, nex
     await forceCancelBooking(req.params['id']!, reason)
     auditLog({ adminId: req.user!.id, action: 'booking.force_cancel', targetId: req.params['id']!, targetType: 'booking', detail: { reason } })
     ok(res, { ok: true })
+  } catch (err) { next(err) }
+}
+
+// ─── Review moderation ────────────────────────────────────────────────────────
+
+export async function listFlaggedReviewsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const status = req.query['status'] as string | undefined
+    ok(res, await listFlaggedReviews(status))
   } catch (err) { next(err) }
 }
 

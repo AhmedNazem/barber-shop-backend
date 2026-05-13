@@ -1,7 +1,7 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { createNotification } from '@/services/notification.service'
-import { UserRole, BookingStatus } from '@prisma/client'
+import { UserRole, BookingStatus, FlagStatus } from '@prisma/client'
 
 // Role transitions blocked per §1b
 const BLOCKED_FROM: Partial<Record<UserRole, UserRole[]>> = {
@@ -496,6 +496,50 @@ export async function forceCancelBooking(bookingId: string, reason: string) {
     `تم إلغاء حجزك من قبل الإدارة. السبب: ${reason}`,
     { bookingId },
   )
+}
+
+// ─── Flagged review moderation ───────────────────────────────────────────────
+
+const FLAG_REASON_NORM: Record<string, 'spam' | 'inappropriate' | 'fake'> = {
+  SPAM: 'spam', INAPPROPRIATE: 'inappropriate', FAKE: 'fake',
+}
+
+export async function listFlaggedReviews(status?: string) {
+  const isPending = status !== 'resolved'
+  const reviews = await prisma.review.findMany({
+    where:   { flagStatus: isPending ? FlagStatus.PENDING : { in: [FlagStatus.APPROVED, FlagStatus.REMOVED] } },
+    select: {
+      id: true, customerId: true, shopId: true, rating: true,
+      comment: true, flagReason: true, flaggedBy: true, flaggedAt: true, createdAt: true,
+    },
+    orderBy: { flaggedAt: 'desc' },
+  })
+
+  if (!reviews.length) return { reviews: [], total: 0 }
+
+  const custIds = [...new Set(reviews.map((r) => r.customerId))]
+  const shopIds = [...new Set(reviews.map((r) => r.shopId))]
+  const [customers, shops] = await Promise.all([
+    prisma.user.findMany({ where: { id: { in: custIds } }, select: { id: true, name: true } }),
+    prisma.shop.findMany({ where: { id: { in: shopIds } }, select: { id: true, nameEn: true } }),
+  ])
+  const custMap = new Map(customers.map((c) => [c.id, c.name]))
+  const shopMap = new Map(shops.map((s) => [s.id, s.nameEn]))
+
+  const result = reviews.map((r) => ({
+    id:           r.id,
+    customerName: custMap.get(r.customerId)        ?? '—',
+    shopName:     shopMap.get(r.shopId)             ?? '—',
+    shopId:       r.shopId,
+    rating:       r.rating,
+    comment:      r.comment,
+    date:         (r.flaggedAt ?? r.createdAt).toISOString().slice(0, 10),
+    flagReason:   FLAG_REASON_NORM[r.flagReason ?? ''] ?? 'spam',
+    flaggedBy:    r.flaggedBy ? 'shop_owner' : 'system',
+    status:       'pending' as const,
+  }))
+
+  return { reviews: result, total: result.length }
 }
 
 // ─── Pending shops (Google Maps imports) ─────────────────────────────────────
