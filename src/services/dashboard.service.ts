@@ -167,20 +167,25 @@ export async function getDashboardAnalytics(
     .filter(b => b.status === 'COMPLETED')
     .reduce((s, b) => s + b.totalPrice, 0)
 
-  // Group by date (YYYY-MM-DD) for daily chart
-  const dayMap = new Map<string, { revenue: number; bookings: number }>()
+  // Group by date (YYYY-MM-DD) for daily charts
+  const dayRevMap = new Map<string, { revenue: number; bookings: number }>()
+  const dayVolMap = new Map<string, { completed: number; cancelled: number; noShow: number }>()
   for (const b of bookings) {
-    const day = b.slot.toISOString().slice(0, 10)
-    const cur = dayMap.get(day) ?? { revenue: 0, bookings: 0 }
-    cur.bookings++
-    if (b.status === 'COMPLETED') cur.revenue += b.totalPrice
-    dayMap.set(day, cur)
+    const day  = b.slot.toISOString().slice(0, 10)
+    const rev  = dayRevMap.get(day) ?? { revenue: 0, bookings: 0 }
+    const vol  = dayVolMap.get(day) ?? { completed: 0, cancelled: 0, noShow: 0 }
+    rev.bookings++
+    if (b.status === 'COMPLETED') { rev.revenue += b.totalPrice; vol.completed++ }
+    if (b.status === 'CANCELLED') vol.cancelled++
+    if (b.status === 'NO_SHOW')   vol.noShow++
+    dayRevMap.set(day, rev)
+    dayVolMap.set(day, vol)
   }
-  const dailyRevenue = Array.from(dayMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, d]) => ({ date, revenue: d.revenue, bookings: d.bookings }))
+  const sort = (a: [string, unknown], b: [string, unknown]) => (a[0] as string).localeCompare(b[0] as string)
+  const dailyRevenue = Array.from(dayRevMap.entries()).sort(sort).map(([date, d]) => ({ date, revenue: d.revenue, bookings: d.bookings }))
+  const dailyVolume  = Array.from(dayVolMap.entries()).sort(sort).map(([date, d]) => ({ date, ...d }))
 
-  return { totalRevenue, totalBookings, completedBookings, cancelledBookings, noShowBookings, dailyRevenue }
+  return { totalRevenue, totalBookings, completedBookings, cancelledBookings, noShowBookings, dailyRevenue, dailyVolume }
 }
 
 export async function getDashboardActivity(_userId: string, shopId: string | undefined) {
