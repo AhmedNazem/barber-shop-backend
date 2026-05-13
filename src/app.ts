@@ -125,6 +125,7 @@ export function createApp(config: Pick<Env, "NODE_ENV" | "CORS_ORIGIN">) {
   });
 
   app.use("/api/v1/hair-analysis", makeTimeout(30_000)); // Gemini AI can be slow
+  app.use("/api/v1/bookings",     makeTimeout(20_000)); // remote DB + transaction
   app.use("/api/v1", makeTimeout(8_000));
   app.use("/api/v1", router);
 

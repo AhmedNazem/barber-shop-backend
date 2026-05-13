@@ -323,6 +323,7 @@ model Booking {
   totalPrice         Int
   depositPaid        Int
   discountPct        Int?
+  refCode            String?       @unique
   paymentMethod      PaymentMethod
   paymentStatus      PaymentStatus @default(PENDING)
   hasReview          Boolean       @default(false)

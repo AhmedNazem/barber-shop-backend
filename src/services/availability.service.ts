@@ -1,8 +1,8 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 
-const REGULAR_DAYS_AHEAD = 3
-const VIP_DAYS_AHEAD = 7
+const REGULAR_DAYS_AHEAD = 14
+const VIP_DAYS_AHEAD = 30
 const SLOT_MINUTES = 30
 
 const IRAQ_OFFSET_MS = 3 * 60 * 60 * 1000

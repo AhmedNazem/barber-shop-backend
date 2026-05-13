@@ -1,8 +1,13 @@
+import { randomBytes } from 'crypto'
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { PaymentMethod } from '@prisma/client'
 import { createNotification } from '@/services/notification.service'
 import { applyReliabilityEvent } from '@/services/reliability.service'
+
+function generateRefCode(): string {
+  return 'BBQ-' + randomBytes(3).toString('hex').toUpperCase()
+}
 
 type CreateBookingInput = {
   shopId:        string
@@ -200,6 +205,7 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
         barberId:      input.barberId,
         barberName:    barber?.nameEn,
         slot:          slotDate,
+        refCode:       generateRefCode(),
         totalPrice:    discountedSubtotal,
         depositPaid,
         discountPct:   discountPct || null,
@@ -218,14 +224,15 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
     })
 
     return booking
-  }, { timeout: 30_000 }).then(async (booking) => {
-    await applyReliabilityEvent(customerId, 'ON_TIME')
-    await createNotification(
+  }, { timeout: 30_000 }).then((booking) => {
+    // fire-and-forget — don't block the booking response
+    applyReliabilityEvent(customerId, 'ON_TIME').catch(() => {})
+    createNotification(
       customerId, 'BOOKING_CONFIRMED',
       'Booking Confirmed', 'تم تأكيد الحجز',
       'Your booking has been confirmed.', 'تم تأكيد حجزك بنجاح.',
       { bookingId: booking.id },
-    )
+    ).catch(() => {})
     return booking
   })
 }
