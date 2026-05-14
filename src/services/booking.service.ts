@@ -103,7 +103,7 @@ export async function getBookings(customerId: string) {
   })
 }
 
-export async function createBooking(customerId: string, input: CreateBookingInput) {
+export async function createBooking(customerId: string, isVip: boolean, input: CreateBookingInput) {
   // 1. Reliability guard
   const reliability = await prisma.reliabilityRecord.findUnique({ where: { userId: customerId } })
   if (reliability && reliability.score < 50) throw new AppError('low_reliability', 403)
@@ -164,6 +164,11 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
 
   if (slotTotalMins < openTotalMins || slotTotalMins + totalDurMin > closeTotalMins) {
     throw new AppError('outside_open_hours', 422)
+  }
+
+  // VIP lane: top-of-hour slots (minutes === 0) are reserved for VIP customers
+  if (shop.vipLaneEnabled && !isVip && slotDate.getUTCMinutes() === 0) {
+    throw new AppError('vip_slot_only', 403)
   }
 
   // 7. Transaction: conflict check + create

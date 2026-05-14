@@ -65,23 +65,41 @@ export async function addWalkIn(
   shopId: string,
   data: { customerName: string; serviceIds: string[]; barberId?: string; isVip?: boolean },
 ) {
+  const duration = await getServiceDuration(data.serviceIds)
+
+  if (data.isVip) {
+    return prisma.$transaction(async (tx) => {
+      const firstNonVip = await tx.queueEntry.findFirst({
+        where:   { shopId, status: 'WAITING', isVip: false },
+        orderBy: { position: 'asc' },
+      })
+
+      if (firstNonVip) {
+        await tx.queueEntry.updateMany({
+          where: { shopId, status: 'WAITING', isVip: false },
+          data:  { position: { increment: 1 } },
+        })
+        return tx.queueEntry.create({
+          data: { shopId, customerName: data.customerName, serviceIds: data.serviceIds, barberId: data.barberId, isVip: true, position: firstNonVip.position, estimatedWait: duration },
+        })
+      }
+
+      const last = await tx.queueEntry.findFirst({
+        where:   { shopId, status: { in: ACTIVE_STATUSES } },
+        orderBy: { position: 'desc' },
+      })
+      return tx.queueEntry.create({
+        data: { shopId, customerName: data.customerName, serviceIds: data.serviceIds, barberId: data.barberId, isVip: true, position: (last?.position ?? 0) + 1, estimatedWait: duration },
+      })
+    })
+  }
+
   const last = await prisma.queueEntry.findFirst({
-    where: { shopId, status: { in: ACTIVE_STATUSES } },
+    where:   { shopId, status: { in: ACTIVE_STATUSES } },
     orderBy: { position: 'desc' },
   })
-  const duration = await getServiceDuration(data.serviceIds)
-  const position = (last?.position ?? 0) + 1
-
   return prisma.queueEntry.create({
-    data: {
-      shopId,
-      customerName:  data.customerName,
-      serviceIds:    data.serviceIds,
-      barberId:      data.barberId,
-      isVip:         data.isVip ?? false,
-      position,
-      estimatedWait: duration,
-    },
+    data: { shopId, customerName: data.customerName, serviceIds: data.serviceIds, barberId: data.barberId, isVip: false, position: (last?.position ?? 0) + 1, estimatedWait: duration },
   })
 }
 

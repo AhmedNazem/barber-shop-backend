@@ -24,7 +24,7 @@ export async function getBookingsHandler(req: Request, res: Response, next: Next
 
 export async function createBookingHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const booking = await createBooking(req.user!.id, req.body)
+    const booking = await createBooking(req.user!.id, req.user!.isVip ?? false, req.body)
     res.status(201).json({ data: booking })
   } catch (err) {
     next(err)

@@ -49,6 +49,12 @@ function filterFreeSlots(slots: Date[], bookings: BookingWithServices[]): Date[]
   })
 }
 
+// Top-of-hour slots (minutes === 0) are reserved for VIP customers
+function applyVipFilter(slots: Date[], isVip: boolean, vipLaneEnabled: boolean): Date[] {
+  if (!vipLaneEnabled || isVip) return slots
+  return slots.filter(s => s.getUTCMinutes() !== 0)
+}
+
 async function getBarberFreeSlots(
   shopId: string,
   barberId: string,
@@ -101,9 +107,12 @@ export async function getShopAvailability(
 ): Promise<string[]> {
   const target = validateDateWindow(date, isVip)
 
+  const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { vipLaneEnabled: true } })
+  const vipLaneEnabled = shop?.vipLaneEnabled ?? false
+
   if (barberId) {
     const slots = await getBarberFreeSlots(shopId, barberId, target)
-    return slots.map(s => s.toISOString())
+    return applyVipFilter(slots, isVip, vipLaneEnabled).map(s => s.toISOString())
   }
 
   const barbers = await prisma.barber.findMany({
@@ -115,6 +124,6 @@ export async function getShopAvailability(
     barbers.map(b => getBarberFreeSlots(shopId, b.id, target)),
   )
 
-  const merged = [...new Set(results.flat().map(s => s.toISOString()))].sort()
-  return merged
+  const allDates = [...new Set(results.flat().map(s => s.toISOString()))].sort().map(s => new Date(s))
+  return applyVipFilter(allDates, isVip, vipLaneEnabled).map(s => s.toISOString())
 }
