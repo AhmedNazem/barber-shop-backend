@@ -83,6 +83,12 @@ enum FlagReason {
   FAKE
 }
 
+enum PlanPaymentStatus {
+  AWAITING_CONFIRMATION
+  CONFIRMED
+  REJECTED
+}
+
 enum NotificationType {
   BOOKING_CONFIRMED
   REMINDER
@@ -206,11 +212,12 @@ model Shop {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
-  hours    BusinessHours[]
-  services Service[]
-  barbers  Barber[]
-  discount ShopDiscount?
-  bookings Booking[]
+  hours        BusinessHours[]
+  services     Service[]
+  barbers      Barber[]
+  discount     ShopDiscount?
+  bookings     Booking[]
+  planPayments PlanPayment[]
 
   @@index([status])
   @@index([city])
@@ -370,6 +377,27 @@ model ManualPaymentProof {
   rejectReason  String?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model PlanPayment {
+  id            String            @id @default(cuid())
+  shopId        String
+  plan          ShopPlan
+  months        Int               @default(1)
+  amount        Int
+  refCode       String            @unique
+  method        String
+  status        PlanPaymentStatus @default(AWAITING_CONFIRMATION)
+  referenceNote String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  rejectReason  String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, status])
 }
 
 // ─── Queue ────────────────────────────────────────────────────────────────────

@@ -18,6 +18,11 @@ import {
   confirmPaymentHandler,
   rejectPaymentHandler,
 } from '@/controllers/manual-payment.controller'
+import {
+  handleListPendingPlanPayments,
+  handleConfirmPlanPayment,
+  handleRejectPlanPayment,
+} from '@/controllers/plan-payment.controller'
 import { updateShopPlanHandler } from '@/controllers/shop.controller'
 
 const rejectSchema  = z.object({ reason: z.string().min(2), reasonAr: z.string().min(2) })
@@ -89,3 +94,10 @@ const rejectPaymentSchema = z.object({ reason: z.string().min(2) })
 adminRouter.get(  '/payments/pending',      ...guard,                                    listPendingPaymentsHandler)
 adminRouter.post( '/payments/:id/confirm',  ...guard,                                    confirmPaymentHandler)
 adminRouter.post( '/payments/:id/reject',   ...guard, validate(rejectPaymentSchema),     rejectPaymentHandler)
+
+// ─── Plan payment review (subscriptions) ─────────────────────────────────────
+const rejectPlanSchema = z.object({ rejectReason: z.string().min(2) })
+
+adminRouter.get(  '/subscriptions/pending',     ...guard,                             handleListPendingPlanPayments)
+adminRouter.post( '/subscriptions/:id/confirm', ...guard,                             handleConfirmPlanPayment)
+adminRouter.post( '/subscriptions/:id/reject',  ...guard, validate(rejectPlanSchema), handleRejectPlanPayment)

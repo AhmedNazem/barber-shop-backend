@@ -18,6 +18,7 @@ import { hairAnalysisRouter } from '@/routes/hair-analysis'
 import { contactRouter } from '@/routes/contact'
 import { accountRouter } from '@/routes/account'
 import { pushRouter } from '@/routes/push'
+import { subscriptionsRouter } from '@/routes/subscriptions'
 
 export const router = Router()
 
@@ -40,4 +41,5 @@ router.use('/user',          userRouter)
 router.use('/hair-analysis', hairAnalysisRouter)
 router.use('/contact',      contactRouter)
 router.use('/account',      accountRouter)
-router.use('/push',         pushRouter)
+router.use('/push',          pushRouter)
+router.use('/subscriptions', subscriptionsRouter)
