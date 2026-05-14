@@ -3,8 +3,9 @@ import { redisClient } from '@/lib/redis'
 import { cleanupQueue } from '@/lib/queue'
 import { prisma } from '@/config/prisma'
 import { expireOldPoints } from '@/services/loyalty.service'
+import { createNotification } from '@/services/notification.service'
 
-type CleanupJobName = 'otp-cleanup' | 'refresh-token-cleanup' | 'invite-cleanup' | 'loyalty-expiry'
+type CleanupJobName = 'otp-cleanup' | 'refresh-token-cleanup' | 'invite-cleanup' | 'loyalty-expiry' | 'payment-expiry'
 
 async function processJob(job: Job) {
   const name = job.name as CleanupJobName
@@ -40,6 +41,41 @@ async function processJob(job: Job) {
       const count = await expireOldPoints()
       console.log(`[cleanup] expired loyalty points for ${count} users`)
 
+    } else if (name === 'payment-expiry') {
+      const expired = await prisma.payment.findMany({
+        where: { status: 'PENDING', expiresAt: { lt: new Date() } },
+        select: { id: true, bookingId: true },
+      })
+
+      if (expired.length) {
+        const paymentIds = expired.map(p => p.id)
+        const bookingIds = expired.map(p => p.bookingId)
+
+        const bookings = await prisma.booking.findMany({
+          where: { id: { in: bookingIds } },
+          select: { id: true, customerId: true },
+        })
+
+        await prisma.$transaction([
+          prisma.payment.updateMany({ where: { id: { in: paymentIds } }, data: { status: 'FAILED' } }),
+          prisma.booking.updateMany({ where: { id: { in: bookingIds } }, data: { status: 'CANCELLED', cancellationReason: 'payment_expired' } }),
+        ])
+
+        await Promise.all(
+          bookings.map(b =>
+            createNotification(
+              b.customerId, 'SYSTEM_ALERT',
+              'Payment Expired', 'انتهت مهلة الدفع',
+              'Your checkout session expired. The booking was cancelled and the slot is now free.',
+              'انتهت مهلة إتمام الدفع وتم إلغاء الحجز. الموعد متاح الآن للحجز من جديد.',
+              { bookingId: b.id },
+            ).catch(() => {}),
+          ),
+        )
+
+        console.log(`[cleanup] expired ${expired.length} pending payments, cancelled bookings`)
+      }
+
     } else {
       console.warn(`[cleanup] unknown job name: ${name}`)
     }
@@ -53,6 +89,7 @@ export async function startCleanupWorker() {
   await cleanupQueue.add('refresh-token-cleanup', {}, { repeat: { every: 60 * 60 * 1000 } })
   await cleanupQueue.add('invite-cleanup',        {}, { repeat: { every: 60 * 60 * 1000 } })
   await cleanupQueue.add('loyalty-expiry',        {}, { repeat: { every: 24 * 60 * 60 * 1000 } })
+  await cleanupQueue.add('payment-expiry',        {}, { repeat: { every: 5 * 60 * 1000 } })
 
   const worker = new Worker('cleanup', processJob, { connection: redisClient, concurrency: 1 })
 

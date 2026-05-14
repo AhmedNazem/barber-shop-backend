@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto'
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { Prisma, PaymentProvider } from '@prisma/client'
+import { createNotification } from '@/services/notification.service'
 
 function makeIdempotencyKey(prefix: string): string {
   return `${prefix}-${randomBytes(8).toString('hex')}`
@@ -62,17 +63,30 @@ export async function confirmPayment(
 }
 
 export async function failPayment(paymentId: string, reason?: string) {
-  const payment = await prisma.payment.findUnique({ where: { id: paymentId } })
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: { booking: { select: { customerId: true } } },
+  })
   if (!payment) throw new AppError('not_found', 404)
   if (payment.status === 'COMPLETED') throw new AppError('payment_already_completed', 400)
 
-  return prisma.payment.update({
+  const updated = await prisma.payment.update({
     where: { id: paymentId },
     data: {
       status: 'FAILED',
       ...(reason ? { gatewayResponse: { reason } as Prisma.InputJsonValue } : {}),
     },
   })
+
+  createNotification(
+    payment.booking.customerId, 'SYSTEM_ALERT',
+    'Payment Failed', 'فشل الدفع',
+    reason ?? 'Your payment could not be processed. Please try again.',
+    reason ?? 'لم نتمكن من معالجة الدفعة. يرجى المحاولة مرة أخرى.',
+    { bookingId: payment.bookingId },
+  ).catch(() => {})
+
+  return updated
 }
 
 // PA-3: Cash — immediately COMPLETED, reliability guard ≥ 80
