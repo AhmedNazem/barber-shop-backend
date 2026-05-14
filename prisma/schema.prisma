@@ -335,6 +335,8 @@ model Booking {
   status             BookingStatus @default(UPCOMING)
   totalPrice         Int
   vatAmount          Int           @default(0)
+  platformFee        Int           @default(0)
+  shopPayout         Int           @default(0)
   depositPaid        Int
   discountPct        Int?
   refCode            String?       @unique

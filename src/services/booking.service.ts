@@ -112,12 +112,13 @@ export async function createBooking(customerId: string, isVip: boolean, input: C
   const reliability = await prisma.reliabilityRecord.findUnique({ where: { userId: customerId } })
   if (reliability && reliability.score < 50) throw new AppError('low_reliability', 403)
 
-  // 2. Validate shop
-  const shop = await prisma.shop.findUnique({
-    where:   { id: input.shopId },
-    include: { discount: true },
-  })
+  // 2. Validate shop + fetch platform commission rate
+  const [shop, platformConfig] = await Promise.all([
+    prisma.shop.findUnique({ where: { id: input.shopId }, include: { discount: true } }),
+    prisma.platformConfig.findUnique({ where: { id: 'singleton' }, select: { commissionPercent: true } }),
+  ])
   if (!shop || !shop.isActive) throw new AppError('not_found', 404)
+  const commissionPct = platformConfig?.commissionPercent ?? 10
   if (shop.plan === 'FREE') throw new AppError('plan_required', 403)
   if (shop.bookingMode === 'QUEUE_ONLY') throw new AppError('booking_disabled', 422)
 
@@ -204,6 +205,9 @@ export async function createBooking(customerId: string, isVip: boolean, input: C
       }
     }
 
+    const platformFee = Math.round(discountedSubtotal * commissionPct / 100 / 250) * 250
+    const shopPayout  = discountedSubtotal - platformFee
+
     const barber = input.barberId
       ? await tx.barber.findFirst({ where: { id: input.barberId, shopId: input.shopId } })
       : null
@@ -218,6 +222,8 @@ export async function createBooking(customerId: string, isVip: boolean, input: C
         refCode:       generateRefCode(),
         totalPrice:    discountedSubtotal,
         vatAmount,
+        platformFee,
+        shopPayout,
         depositPaid,
         discountPct:   discountPct || null,
         paymentMethod: input.paymentMethod,

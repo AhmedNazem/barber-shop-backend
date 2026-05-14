@@ -4,20 +4,21 @@ export async function getAdminKpis() {
   const now        = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const [allTimeRev, monthRev, totalBookings, activeShops, registeredUsers] = await Promise.all([
+  const [allTimeRev, monthRev, allTimeFee, monthFee, totalBookings, activeShops, registeredUsers] = await Promise.all([
     prisma.booking.aggregate({ where: { status: 'COMPLETED' }, _sum: { totalPrice: true } }),
-    prisma.booking.aggregate({
-      where: { status: 'COMPLETED', slot: { gte: monthStart } },
-      _sum:  { totalPrice: true },
-    }),
+    prisma.booking.aggregate({ where: { status: 'COMPLETED', slot: { gte: monthStart } }, _sum: { totalPrice: true } }),
+    prisma.booking.aggregate({ where: { status: 'COMPLETED' }, _sum: { platformFee: true } }),
+    prisma.booking.aggregate({ where: { status: 'COMPLETED', slot: { gte: monthStart } }, _sum: { platformFee: true } }),
     prisma.booking.count(),
     prisma.shop.count({ where: { status: 'APPROVED' } }),
     prisma.user.count({ where: { deletedAt: null } }),
   ])
 
   return {
-    revenueAllTime:   allTimeRev._sum.totalPrice ?? 0,
-    revenueThisMonth: monthRev._sum.totalPrice   ?? 0,
+    revenueAllTime:       allTimeRev._sum.totalPrice  ?? 0,
+    revenueThisMonth:     monthRev._sum.totalPrice    ?? 0,
+    platformFeeAllTime:   allTimeFee._sum.platformFee ?? 0,
+    platformFeeThisMonth: monthFee._sum.platformFee   ?? 0,
     totalBookings,
     activeShops,
     registeredUsers,
@@ -30,21 +31,26 @@ export async function getAdminRevenue() {
 
   const completed = await prisma.booking.findMany({
     where:  { status: 'COMPLETED', slot: { gte: rangeStart } },
-    select: { slot: true, totalPrice: true },
+    select: { slot: true, totalPrice: true, platformFee: true, shopPayout: true },
   })
 
-  const monthMap = new Map<string, number>()
-  for (const { slot, totalPrice } of completed) {
+  const monthMap = new Map<string, { gross: number; commission: number; payout: number }>()
+  for (const { slot, totalPrice, platformFee, shopPayout } of completed) {
     const local = new Date(slot.getTime() + 3 * 3_600_000) // UTC+3 Baghdad
     const key   = `${local.getUTCFullYear()}-${String(local.getUTCMonth() + 1).padStart(2, '0')}`
-    monthMap.set(key, (monthMap.get(key) ?? 0) + totalPrice)
+    const entry = monthMap.get(key) ?? { gross: 0, commission: 0, payout: 0 }
+    // back-fill for bookings created before this feature (platformFee = 0 in DB)
+    entry.gross      += totalPrice
+    entry.commission += platformFee || Math.round(totalPrice * 0.10)
+    entry.payout     += shopPayout  || totalPrice - Math.round(totalPrice * 0.10)
+    monthMap.set(key, entry)
   }
 
   return Array.from({ length: 12 }, (_, i) => {
-    const d   = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const gross = monthMap.get(key) ?? 0
-    return { month: key, gross, commission: Math.round(gross * 0.10) }
+    const d     = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)
+    const key   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const entry = monthMap.get(key) ?? { gross: 0, commission: 0, payout: 0 }
+    return { month: key, gross: entry.gross, commission: entry.commission, payout: entry.payout }
   })
 }
 

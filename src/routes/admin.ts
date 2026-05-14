@@ -12,7 +12,7 @@ import {
   listAllBookingsHandler, forceCancelBookingHandler,
   listFlaggedReviewsHandler,
 } from '@/controllers/admin.controller'
-import { getKpisHandler, getRevenueHandler, getTopShopsHandler, getPeakHoursHandler } from '@/controllers/analytics.controller'
+import { getKpisHandler, getRevenueHandler, getTopShopsHandler, getPeakHoursHandler, getAdminPayoutsHandler } from '@/controllers/analytics.controller'
 import {
   listPendingPaymentsHandler,
   confirmPaymentHandler,
@@ -84,6 +84,7 @@ adminRouter.get('/analytics/kpis',       ...guard, getKpisHandler)
 adminRouter.get('/analytics/revenue',    ...guard, getRevenueHandler)
 adminRouter.get('/analytics/top-shops',  ...guard, getTopShopsHandler)
 adminRouter.get('/analytics/peak-hours', ...guard, getPeakHoursHandler)
+adminRouter.get('/analytics/payouts',    ...guard, getAdminPayoutsHandler)
 
 // ─── Review moderation ────────────────────────────────────────────────────────
 adminRouter.get('/reviews/flagged', ...guard, listFlaggedReviewsHandler)

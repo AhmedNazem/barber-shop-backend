@@ -5,7 +5,7 @@ import { authenticate } from '@/middleware/auth'
 import { requireRole } from '@/middleware/require-role'
 import { requirePlan } from '@/middleware/require-plan'
 import { requireShopStatus } from '@/middleware/require-shop-status'
-import { recordWalkInSaleHandler, getPeakHoursHandler, getTopServicesHandler, getBarberAnalyticsHandler, getDashboardAnalyticsHandler, getDashboardActivityHandler, getDashboardStatsHandler, getDashboardQueueHandler, getDashboardUpcomingHandler, getDashboardAppointmentsHandler, getDashboardBarbersHandler } from '@/controllers/dashboard.controller'
+import { recordWalkInSaleHandler, getPeakHoursHandler, getTopServicesHandler, getBarberAnalyticsHandler, getDashboardAnalyticsHandler, getDashboardActivityHandler, getDashboardStatsHandler, getDashboardQueueHandler, getDashboardUpcomingHandler, getDashboardAppointmentsHandler, getDashboardBarbersHandler, getShopPayoutHandler } from '@/controllers/dashboard.controller'
 
 const walkInSaleSchema = z.object({
   serviceIds: z.array(z.string().cuid()).min(1),
@@ -29,3 +29,4 @@ dashboardRouter.get('/analytics/peak-hours',   ...shopGuard, requireRole('SHOP_O
 dashboardRouter.get('/appointments',   ...shopGuard, requireRole('SHOP_OWNER', 'BARBER'), getDashboardAppointmentsHandler)
 dashboardRouter.get('/barbers',        ...shopGuard, requireRole('SHOP_OWNER', 'BARBER'), getDashboardBarbersHandler)
 dashboardRouter.post('/walk-in-sale',          ...shopGuard, requireRole('SHOP_OWNER', 'BARBER'), validate(walkInSaleSchema), recordWalkInSaleHandler)
+dashboardRouter.get( '/payout',                ...shopGuard, requireRole('SHOP_OWNER'),                                         getShopPayoutHandler)

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { ok } from '@/lib/response'
 import { recordWalkInSale, getPeakHours, getTopServices, getBarberAnalytics, getDashboardAnalytics, getDashboardActivity, getDashboardStats, getDashboardUpcoming, getDashboardAppointments, getDashboardBarbers } from '@/services/dashboard.service'
 import { getQueue } from '@/services/queue.service'
+import { getShopPayout } from '@/services/payout.service'
 import { AppError } from '@/lib/errors'
 import { prisma } from '@/config/prisma'
 
@@ -79,5 +80,16 @@ export async function getDashboardQueueHandler(req: Request, res: Response, next
     if (!shopId) throw new AppError('forbidden', 403)
     const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { vipLaneEnabled: true } })
     ok(res, await getQueue(shopId, shop?.vipLaneEnabled ?? false))
+  } catch (err) { next(err) }
+}
+
+export async function getShopPayoutHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const shopId = req.user!.shopId
+    if (!shopId) throw new AppError('forbidden', 403)
+    const now   = new Date()
+    const year  = parseInt(String(req.query['year']  ?? now.getFullYear()),  10)
+    const month = parseInt(String(req.query['month'] ?? now.getMonth() + 1), 10)
+    ok(res, await getShopPayout(shopId, year, month))
   } catch (err) { next(err) }
 }
