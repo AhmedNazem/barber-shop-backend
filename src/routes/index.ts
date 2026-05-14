@@ -19,6 +19,7 @@ import { contactRouter } from '@/routes/contact'
 import { accountRouter } from '@/routes/account'
 import { pushRouter } from '@/routes/push'
 import { subscriptionsRouter } from '@/routes/subscriptions'
+import { paymentsRouter } from '@/routes/payments'
 
 export const router = Router()
 
@@ -43,3 +44,4 @@ router.use('/contact',      contactRouter)
 router.use('/account',      accountRouter)
 router.use('/push',          pushRouter)
 router.use('/subscriptions', subscriptionsRouter)
+router.use('/payments',      paymentsRouter)

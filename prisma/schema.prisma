@@ -58,10 +58,21 @@ enum PaymentMethod {
 
 enum PaymentStatus {
   PENDING
+  PROCESSING
   AWAITING_CONFIRMATION
   PAID
+  COMPLETED
   REFUNDED
   FAILED
+  DISPUTED
+  PARTIAL_REFUND
+}
+
+enum PaymentProvider {
+  ZAINCASH
+  FIB
+  PAYTABS
+  CASH
 }
 
 enum QueueStatus {
@@ -347,6 +358,7 @@ model Booking {
   cancellationReason String?
   refundAmount       Int           @default(0)
   depositRefunded    Boolean       @default(false)
+  receiptUrl         String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -355,6 +367,7 @@ model Booking {
   review       Review?
   queue        QueueEntry?
   paymentProof ManualPaymentProof?
+  payment      Payment?
 
   @@index([customerId, status])
   @@index([shopId, status])
@@ -386,6 +399,30 @@ model ManualPaymentProof {
   rejectReason  String?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id              String          @id @default(cuid())
+  bookingId       String          @unique
+  provider        PaymentProvider
+  status          PaymentStatus   @default(PENDING)
+  amount          Int
+  depositAmount   Int             @default(0)
+  remainingAmount Int             @default(0)
+  currency        String          @default("IQD")
+  gatewayTxId     String?
+  gatewayResponse Json?
+  idempotencyKey  String          @unique
+  refundedAmount  Int             @default(0)
+  paidAt          DateTime?
+  refundedAt      DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  @@index([status])
 }
 
 model PlanPayment {

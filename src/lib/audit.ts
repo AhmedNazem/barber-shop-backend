@@ -2,7 +2,7 @@ interface AuditEntry {
   adminId: string
   action: string
   targetId: string
-  targetType: 'shop' | 'user' | 'payment' | 'platform_config'
+  targetType: 'shop' | 'user' | 'booking' | 'payment' | 'platform_config'
   detail?: Record<string, unknown>
 }
 

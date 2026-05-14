@@ -1,7 +1,7 @@
 import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { createNotification } from '@/services/notification.service'
-import { UserRole, BookingStatus, FlagStatus } from '@prisma/client'
+import { Prisma, UserRole, BookingStatus, FlagStatus } from '@prisma/client'
 
 // Role transitions blocked per §1b
 const BLOCKED_FROM: Partial<Record<UserRole, UserRole[]>> = {
@@ -399,19 +399,19 @@ export async function listAllBookings(opts: { status?: string; shopId?: string; 
   let searchCustomerIds: string[] | undefined
   if (opts.search) {
     const matches = await prisma.user.findMany({
-      where: { name: { contains: opts.search, mode: 'insensitive' } },
+      where: { name: { contains: opts.search, mode: Prisma.QueryMode.insensitive } },
       select: { id: true },
     })
     searchCustomerIds = matches.map((u) => u.id)
   }
 
-  const where = {
+  const where: Prisma.BookingWhereInput = {
     ...(statusIn ? { status: { in: statusIn as BookingStatus[] } } : {}),
     ...(opts.shopId && opts.shopId !== 'all' ? { shopId: opts.shopId } : {}),
     ...(opts.search ? {
       OR: [
-        { id: { contains: opts.search, mode: 'insensitive' } },
-        { shop: { nameEn: { contains: opts.search, mode: 'insensitive' } } },
+        { id: { contains: opts.search, mode: Prisma.QueryMode.insensitive } },
+        { shop: { nameEn: { contains: opts.search, mode: Prisma.QueryMode.insensitive } } },
         ...(searchCustomerIds?.length ? [{ customerId: { in: searchCustomerIds } }] : []),
       ],
     } : {}),
