@@ -4,7 +4,8 @@ import { signAccess, signRefresh, verifyRefresh } from '@/lib/jwt'
 import { AppError } from '@/lib/errors'
 import { UserRole } from '@prisma/client'
 
-const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000
+const REFRESH_TTL_7D  = 7  * 24 * 60 * 60 * 1000
+const REFRESH_TTL_30D = 30 * 24 * 60 * 60 * 1000
 
 export async function createOrFindUser(
   e164: string,
@@ -36,7 +37,11 @@ export async function createOrFindUser(
   return user
 }
 
-export async function issueTokens(user: { id: string; role: string; shopId: string | null }) {
+export async function issueTokens(
+  user: { id: string; role: string; shopId: string | null },
+  rememberMe = false,
+) {
+  const ttlMs = rememberMe ? REFRESH_TTL_30D : REFRESH_TTL_7D
   const payload = { id: user.id, role: user.role, shopId: user.shopId ?? undefined }
   const accessToken = signAccess(payload)
   const refreshToken = signRefresh(payload)
@@ -51,18 +56,15 @@ export async function issueTokens(user: { id: string; role: string; shopId: stri
 
   if (recentIds.length > 0) {
     await prisma.refreshToken.deleteMany({
-      where: {
-        userId: user.id,
-        id: { notIn: recentIds },
-      },
+      where: { userId: user.id, id: { notIn: recentIds } },
     })
   }
 
   await prisma.refreshToken.create({
-    data: { userId: user.id, token: refreshToken, expiresAt: new Date(Date.now() + REFRESH_TTL_MS) },
+    data: { userId: user.id, token: refreshToken, expiresAt: new Date(Date.now() + ttlMs) },
   })
 
-  return { accessToken, refreshToken }
+  return { accessToken, refreshToken, ttlMs }
 }
 
 export async function rotateAccessToken(token: string) {

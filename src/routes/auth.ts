@@ -30,6 +30,7 @@ const verifyOtpSchema = z.object({
   shopName: z.string().optional(),
   isRegister: z.boolean().optional(),
   referralCode: z.string().regex(/^REF-[0-9A-F]{8}$/).optional(),
+  rememberMe: z.boolean().optional(),
 })
 
 const otpRateLimit = rateLimit({

@@ -6,6 +6,7 @@ export type ReceiptData = {
   slot: Date
   paymentMethod: string
   totalPrice: number
+  vatAmount: number
   depositPaid: number
   barberName: string | null
   shop: { nameEn: string; nameAr: string; address: string }
@@ -28,7 +29,8 @@ export function generateReceiptHtml(b: ReceiptData): string {
     .map(s => `<tr><td>${s.nameEn} / ${s.nameAr}</td><td class="right">${fmtPrice(s.price)}</td></tr>`)
     .join('\n')
 
-  const remaining = b.totalPrice - b.depositPaid
+  const grandTotal = b.totalPrice + b.vatAmount
+  const remaining  = grandTotal - b.depositPaid
   const method = b.paymentMethod.charAt(0) + b.paymentMethod.slice(1).toLowerCase()
 
   return `<!DOCTYPE html>
@@ -53,6 +55,7 @@ export function generateReceiptHtml(b: ReceiptData): string {
   .right{text-align:right}
   .totals td{padding:8px 0;font-size:14px;border:none}
   .accent{color:#16a34a;font-weight:700}
+  .muted{color:#71717a}
   .bold{font-weight:700}
   .footer{padding:14px 20px;text-align:center;font-size:11px;color:#a1a1aa}
 </style>
@@ -79,7 +82,9 @@ export function generateReceiptHtml(b: ReceiptData): string {
   </div>
   <div class="section">
     <table class="totals"><tbody>
-      <tr><td>Total</td><td class="right">${fmtPrice(b.totalPrice)}</td></tr>
+      <tr><td>Subtotal</td><td class="right">${fmtPrice(b.totalPrice)}</td></tr>
+      <tr class="muted"><td>VAT (15%)</td><td class="right">+${fmtPrice(b.vatAmount)}</td></tr>
+      <tr class="bold"><td>Grand Total</td><td class="right">${fmtPrice(grandTotal)}</td></tr>
       <tr class="accent"><td>Deposit Paid</td><td class="right">${fmtPrice(b.depositPaid)}</td></tr>
       <tr class="bold"><td>Remaining at Shop</td><td class="right">${fmtPrice(remaining)}</td></tr>
     </tbody></table>

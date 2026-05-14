@@ -91,6 +91,10 @@ export async function getBookingForReceipt(bookingId: string, customerId: string
   })
   if (!booking) throw new AppError('not_found', 404)
   if (booking.customerId !== customerId) throw new AppError('forbidden', 403)
+  // Back-fill VAT for bookings created before this feature (vatAmount = 0 in DB)
+  if (booking.vatAmount === 0) {
+    booking.vatAmount = Math.round(booking.totalPrice * 0.15 / 250) * 250
+  }
   return booking
 }
 
@@ -136,7 +140,8 @@ export async function createBooking(customerId: string, isVip: boolean, input: C
   }
   let discountedSubtotal = Math.round(subtotal * (1 - discountPct / 100))
 
-  // 6. Deposit
+  // 6. VAT (15%) + deposit
+  const vatAmount  = Math.round(discountedSubtotal * 0.15 / 250) * 250
   let depositPaid = shop.depositRequired
     ? calcDeposit(discountedSubtotal, shop.depositPercent)
     : 0
@@ -212,6 +217,7 @@ export async function createBooking(customerId: string, isVip: boolean, input: C
         slot:          slotDate,
         refCode:       generateRefCode(),
         totalPrice:    discountedSubtotal,
+        vatAmount,
         depositPaid,
         discountPct:   discountPct || null,
         paymentMethod: input.paymentMethod,

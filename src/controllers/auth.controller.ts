@@ -14,7 +14,6 @@ import {
 } from '@/services/auth.service'
 
 const REFRESH_COOKIE_PATH = '/api/v1/auth'
-const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 export async function requestOtpHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -27,7 +26,7 @@ export async function requestOtpHandler(req: Request, res: Response, next: NextF
 
 export async function verifyOtpHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const { phone, otp, name, shopName, isRegister, referralCode } = req.body
+    const { phone, otp, name, shopName, isRegister, referralCode, rememberMe } = req.body
     const e164 = normalisePhone(phone)
     await verifyOtp(e164, otp)
     const user = await createOrFindUser(e164, { name, shopName, isRegister, referralCode })
@@ -40,14 +39,14 @@ export async function verifyOtpHandler(req: Request, res: Response, next: NextFu
       const shop = await prisma.shop.findFirst({ where: { ownerId: user.id }, select: { id: true } })
       shopId = shop?.id ?? null
     }
-    const { accessToken, refreshToken } = await issueTokens({ ...user, shopId })
+    const { accessToken, refreshToken, ttlMs } = await issueTokens({ ...user, shopId }, rememberMe ?? false)
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: REFRESH_COOKIE_PATH,
-      maxAge: REFRESH_TTL_MS,
+      maxAge: ttlMs,
     })
 
     ok(res, { accessToken, role: user.role })

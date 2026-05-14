@@ -334,6 +334,7 @@ model Booking {
   slot               DateTime
   status             BookingStatus @default(UPCOMING)
   totalPrice         Int
+  vatAmount          Int           @default(0)
   depositPaid        Int
   discountPct        Int?
   refCode            String?       @unique
