@@ -2,7 +2,7 @@ import { prisma } from '@/config/prisma'
 import { AppError } from '@/lib/errors'
 import { QueueStatus } from '@prisma/client'
 import { applyReliabilityEvent } from '@/services/reliability.service'
-import { earnPoints } from '@/services/loyalty.service'
+import { earnPoints, awardInviteBonus } from '@/services/loyalty.service'
 
 const ACTIVE_STATUSES: QueueStatus[] = ['WAITING', 'IN_CHAIR']
 
@@ -125,6 +125,7 @@ export async function updateStatus(
     if (status === 'DONE') {
       await applyReliabilityEvent(customerId, 'COMPLETION')
       await earnPoints(customerId, entry.booking!.totalPrice, entry.bookingId ?? undefined)
+      await awardInviteBonus(customerId)
     } else if (status === 'NO_SHOW') {
       await applyReliabilityEvent(customerId, 'NO_SHOW')
     }

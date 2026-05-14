@@ -27,10 +27,10 @@ export async function requestOtpHandler(req: Request, res: Response, next: NextF
 
 export async function verifyOtpHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const { phone, otp, name, shopName, isRegister } = req.body
+    const { phone, otp, name, shopName, isRegister, referralCode } = req.body
     const e164 = normalisePhone(phone)
     await verifyOtp(e164, otp)
-    const user = await createOrFindUser(e164, { name, shopName, isRegister })
+    const user = await createOrFindUser(e164, { name, shopName, isRegister, referralCode })
 
     // User.shopId is the barber's assigned shop — not set for SHOP_OWNERs.
     // Look up their owned shop so the JWT carries the correct shopId.

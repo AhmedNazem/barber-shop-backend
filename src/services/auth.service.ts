@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto'
 import { prisma } from '@/config/prisma'
 import { signAccess, signRefresh, verifyRefresh } from '@/lib/jwt'
 import { AppError } from '@/lib/errors'
@@ -7,18 +8,25 @@ const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 export async function createOrFindUser(
   e164: string,
-  opts: { name?: string; shopName?: string; isRegister?: boolean },
+  opts: { name?: string; shopName?: string; isRegister?: boolean; referralCode?: string },
 ) {
   let user = await prisma.user.findUnique({ where: { phone: e164 } })
 
   if (opts.isRegister) {
     if (user) throw new AppError('already_registered', 409)
     if (!opts.name) throw new AppError('name_required', 400)
+
+    const referrer = opts.referralCode
+      ? await prisma.user.findUnique({ where: { referralCode: opts.referralCode }, select: { id: true } })
+      : null
+
     user = await prisma.user.create({
       data: {
         phone: e164,
         name: opts.name,
         role: opts.shopName ? UserRole.SHOP_OWNER : UserRole.CUSTOMER,
+        referralCode: 'REF-' + randomBytes(4).toString('hex').toUpperCase(),
+        referredById: referrer?.id ?? null,
       },
     })
   } else {

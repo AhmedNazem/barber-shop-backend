@@ -2,8 +2,9 @@ import { Worker, Job } from 'bullmq'
 import { redisClient } from '@/lib/redis'
 import { cleanupQueue } from '@/lib/queue'
 import { prisma } from '@/config/prisma'
+import { expireOldPoints } from '@/services/loyalty.service'
 
-type CleanupJobName = 'otp-cleanup' | 'refresh-token-cleanup' | 'invite-cleanup'
+type CleanupJobName = 'otp-cleanup' | 'refresh-token-cleanup' | 'invite-cleanup' | 'loyalty-expiry'
 
 async function processJob(job: Job) {
   const name = job.name as CleanupJobName
@@ -35,6 +36,10 @@ async function processJob(job: Job) {
       })
       console.log(`[cleanup] deleted ${count} expired unused invite codes`)
 
+    } else if (name === 'loyalty-expiry') {
+      const count = await expireOldPoints()
+      console.log(`[cleanup] expired loyalty points for ${count} users`)
+
     } else {
       console.warn(`[cleanup] unknown job name: ${name}`)
     }
@@ -47,6 +52,7 @@ export async function startCleanupWorker() {
   await cleanupQueue.add('otp-cleanup',           {}, { repeat: { every: 10 * 60 * 1000 } })
   await cleanupQueue.add('refresh-token-cleanup', {}, { repeat: { every: 60 * 60 * 1000 } })
   await cleanupQueue.add('invite-cleanup',        {}, { repeat: { every: 60 * 60 * 1000 } })
+  await cleanupQueue.add('loyalty-expiry',        {}, { repeat: { every: 24 * 60 * 60 * 1000 } })
 
   const worker = new Worker('cleanup', processJob, { connection: redisClient, concurrency: 1 })
 
